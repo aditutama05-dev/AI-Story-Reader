@@ -63,6 +63,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <section class="card" aria-labelledby="import-heading">
 <h2 id="import-heading">1. Impor sumber cerita</h2>
 <label for="url">URL chapter / halaman cerita</label><div class="row"><input id="url" type="url" placeholder="https://..."><button id="importUrl">Ambil dari URL</button></div>
+<label for="continuationUrls">URL halaman lanjutan chapter (opsional, satu URL per baris)</label><textarea id="continuationUrls" rows="3" placeholder="Masukkan hanya halaman lanjutan dari chapter yang sama, sesuai urutan baca. Jangan masukkan URL chapter berikutnya."></textarea>
 <p class="hint">Website yang memblokir akses otomatis atau memerlukan login mungkin tidak bisa diimpor. Gunakan salin-tempel sebagai alternatif.</p>
 <label for="file">Upload file</label><input id="file" type="file" accept=".epub,.pdf,.txt,.md,.html,.htm,.docx">
 <button id="importFile" class="secondary">Baca file</button>
@@ -361,7 +362,7 @@ async function importResponse(response){
 $("importUrl").addEventListener("click",async()=>{
  const url=$("url").value.trim();if(!url){$("status").textContent="Masukkan URL chapter.";return}
  $("importUrl").disabled=true;$("status").textContent="Mengambil halaman...";
- try{await importResponse(await fetch(apiUrl("/api/import/url"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})}))}
+ try{const continuations=$("continuationUrls").value.split(/\n+/).map(value=>value.trim()).filter(Boolean);const urls=[url,...continuations];const endpoint=urls.length>1?"/api/import/urls":"/api/import/url";const payload=urls.length>1?{urls}:{url};await importResponse(await fetch(apiUrl(endpoint),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}))}
  catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importUrl").disabled=false}
 });
 $("importFile").addEventListener("click",async()=>{
