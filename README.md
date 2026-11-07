@@ -14,6 +14,8 @@ The product is a browser website, not a native Android or desktop application.
 - [Story data model](docs/STORY_DATA_MODEL.md)
 - [Technical architecture](docs/TECHNICAL_ARCHITECTURE.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md)
+- [Story narration standard — MASTER FORM V2](docs/STORY_NARRATION_STANDARD.md)
+- [Deployment guide](docs/DEPLOYMENT.md)
 - [Changelog](docs/CHANGELOG.md)
 
 ## Current implementation
