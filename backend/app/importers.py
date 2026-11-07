@@ -3,6 +3,8 @@ from __future__ import annotations
 import ipaddress
 import socket
 import zipfile
+import posixpath
+import xml.etree.ElementTree as ET
 from io import BytesIO
 from pathlib import PurePosixPath
 from urllib.parse import urlparse
@@ -47,15 +49,27 @@ def extract_document(filename: str, content: bytes) -> tuple[str, str]:
         if suffix == ".epub":
             pieces = []
             with zipfile.ZipFile(BytesIO(content)) as book:
-                names = sorted(
-                    name for name in book.namelist()
-                    if name.lower().endswith((".xhtml", ".html", ".htm"))
-                )
-                for name in names:
-                    _, chapter_text = _clean_html(book.read(name))
+                container = ET.fromstring(book.read("META-INF/container.xml"))
+                rootfile = next(node for node in container.iter() if node.tag.endswith("rootfile") and node.attrib.get("full-path"))
+                package_path = rootfile.attrib["full-path"]
+                package = ET.fromstring(book.read(package_path))
+                manifest = {}
+                for item in package.iter():
+                    if item.tag.endswith("item"):
+                        manifest[item.attrib.get("id", "")] = item.attrib.get("href", "")
+                spine_ids = [item.attrib.get("idref", "") for item in package.iter() if item.tag.endswith("itemref")]
+                for item_id in spine_ids:
+                    href = manifest.get(item_id)
+                    if not href:
+                        continue
+                    chapter_path = posixpath.normpath(posixpath.join(posixpath.dirname(package_path), href))
+                    _, chapter_text = _clean_html(book.read(chapter_path))
                     if chapter_text:
                         pieces.append(chapter_text)
+            if not pieces:
+                raise ValueError("EPUB tidak memiliki dokumen teks pada urutan spine.")
             return PurePosixPath(filename).stem, "\n\n".join(pieces).strip()
+
     except (zipfile.BadZipFile, KeyError, ValueError) as exc:
         raise HTTPException(status_code=400, detail="File tidak valid atau rusak.") from exc
     except Exception as exc:
