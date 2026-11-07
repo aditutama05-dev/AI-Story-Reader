@@ -8,3 +8,8 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 - Added project context, roadmap, accessibility/screen-access boundaries, source ingestion, story data model, architecture, known limitations, and changelog documentation.
 - Refined product boundary: AI Story Reader is a website; Android-native screen capture/accessibility services are not part of the deliverable.
 - Aligned the website visual direction to dark navy and bright blue, with no purple palette.
+
+- Added a GitHub Pages deployment workflow and deployment guide; Pages must be enabled in repository settings.
+- Added a public API base URL configuration file for static hosting; no provider credentials are stored in it.
+- Updated the frontend to the navy/bright-blue palette and documented the website's screen-access boundaries.
+- Added the MASTER FORM V2 narration standard.
