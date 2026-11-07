@@ -72,7 +72,7 @@ def extract_document(filename: str, content: bytes) -> tuple[str, str]:
                 if total_characters > MAX_EXTRACTED_TEXT_CHARS:
                     raise HTTPException(status_code=413, detail="Hasil ekstraksi PDF melebihi batas 20 juta karakter.")
                 pieces.append(page_text)
-            return PurePosixPath(filename).stem, "\\n\\n".join(pieces).strip()
+            return PurePosixPath(filename).stem, "\n\n".join(pieces).strip()
         if suffix == ".docx":
             with zipfile.ZipFile(BytesIO(content)) as archive:
                 _validate_archive_limits(archive)
