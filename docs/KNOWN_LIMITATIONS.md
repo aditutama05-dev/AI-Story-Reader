@@ -38,10 +38,10 @@ This document describes the current repository state. It must be updated when a 
 
 ## Audio
 
-- Browser Web Speech API remains available with active-paragraph highlighting.
+- Browser Web Speech API highlights the active word when the browser emits word-boundary events, with paragraph-level fallback.
 - Full-chapter MP3 generation uses Edge TTS and requires outbound server connectivity to the TTS service.
 - The HTML5 audio player supports native playback controls and ±15-second seek.
-- Word-level synchronized highlighting and audio playback-position persistence remain unimplemented.
+- Word-level synchronization for generated MP3 files and audio playback-position persistence remain unimplemented.
 - Reading progress and bookmarks are stored locally in IndexedDB; they do not sync between devices or browsers.
 
 ## Accessibility
