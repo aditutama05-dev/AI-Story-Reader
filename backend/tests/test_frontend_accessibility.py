@@ -77,6 +77,12 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn('apiFetch("/api/audio"', HTML)
         self.assertIn('apiFetch(endpoint', HTML)
         self.assertIn(".cbz,.zip", HTML)
+    def test_browser_tts_highlights_current_word_when_boundary_events_exist(self):
+        self.assertIn("data-word-start", HTML)
+        self.assertIn('utterance.onboundary=event=>', HTML)
+        self.assertIn('classList.add("speech-current-word")', HTML)
+        self.assertIn('aria-current","true"', HTML)
+
 
 if __name__ == "__main__":
     unittest.main()
