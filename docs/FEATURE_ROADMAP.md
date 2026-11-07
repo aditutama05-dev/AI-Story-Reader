@@ -7,15 +7,15 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Repository and initial web/backend scaffold exist.
 - [x] Record product requirements in `FEATURES.md`.
 - [x] Record project context, story model, source ingestion, architecture, accessibility boundaries, and known limitations.
-- [ ] Make the static website deployable through GitHub Pages.
+- [x] Add a GitHub Pages deployment workflow for the static website (repository Pages setting still needs enabling).
 - [ ] Provide a production API endpoint suitable for a static frontend.
 
 ## Stage 1 — Website foundation
 
 - [x] Responsive browser interface.
-- [x] Navy/blue visual theme (in progress in current UI refinement).
+- [x] Navy/blue visual theme.
 - [x] Semantic landmarks, labels, keyboard focus, and accessibility preferences.
-- [ ] Add persistent configuration for the public API base URL (never an API secret).
+- [x] Add persistent configuration point for the public API base URL (never an API secret).
 - [ ] Verify the site at mobile and desktop viewport sizes.
 - [ ] Publish through GitHub Pages after the API endpoint is ready.
 
