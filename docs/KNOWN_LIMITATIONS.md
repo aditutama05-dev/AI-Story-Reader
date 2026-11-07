@@ -34,7 +34,7 @@ This document describes the current repository state. It must be updated when a 
 
 ## Narration and continuity
 
-- Narration uses context-aware chunks but does not yet run automated source-to-narration coverage verification.
+- Narration uses context-aware chunks and flags empty, unusually compressed, or exactly duplicated chunk outputs. These structural checks cannot detect paraphrased omissions, altered event order, or semantic inaccuracies; full source-to-narration coverage verification is not implemented.
 - A local IndexedDB Series/Arc/Volume/Chapter library exists with JSON backup/restore. It is not cloud-synced; story parts have explicit type metadata for Chapter, Interlude, Ending, Epilogue, Prologue, Side Story, and custom labels.
 - Manual continuity notes can be saved per chapter. Structured character/relationship/location/event tracking with source references remains unimplemented.
 - AI output can still omit or distort source details; human review remains important.
