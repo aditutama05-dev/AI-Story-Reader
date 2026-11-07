@@ -129,6 +129,7 @@ let readingDatabasePromise=null;
 let currentReadingRecord=null;
 let progressSaveTimer=null;
 let lastAudioProgressSave=0;
+let resettingAudio=false;
 function openReadingDatabase(){
  if(!("indexedDB" in window))return Promise.reject(new Error("Penyimpanan progres tidak didukung browser ini."));
  if(readingDatabasePromise)return readingDatabasePromise;
@@ -221,10 +222,10 @@ function scheduleProgressSave(){
 }
 async function persistNewChapter(title,text){
  const audio=$("chapterAudio");
- audio.pause();audio.removeAttribute("src");audio.load();
+ resettingAudio=true;audio.pause();audio.removeAttribute("src");audio.load();
  if(generatedAudioUrl){URL.revokeObjectURL(generatedAudioUrl);generatedAudioUrl=null;}
  $("downloadMp3").hidden=true;$("downloadMp3").removeAttribute("href");
- $("seekBack").disabled=true;$("seekForward").disabled=true;
+ $("seekBack").disabled=true;$("seekForward").disabled=true;resettingAudio=false;
  currentReadingRecord={id:"current",title:title||"Chapter tanpa judul",text,updatedAt:Date.now()};
  await writeReadingStore("chapters",currentReadingRecord);
  const progress={id:"current",paragraphIndex:0,bookmarkIndex:null,audioPosition:0,updatedAt:Date.now()};
@@ -464,7 +465,7 @@ $("stop").addEventListener("click",()=>{if("speechSynthesis" in window)speechSyn
 
 async function saveAudioPosition(force=false){
  const audio=$("chapterAudio");
- if(!currentReadingRecord||!audio.src||!Number.isFinite(audio.currentTime))return;
+ if(resettingAudio||!currentReadingRecord||!audio.src||!Number.isFinite(audio.currentTime))return;
  const now=Date.now();
  if(!force&&now-lastAudioProgressSave<5000)return;
  lastAudioProgressSave=now;
