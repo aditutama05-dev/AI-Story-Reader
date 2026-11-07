@@ -85,6 +85,18 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn('progress.audioPosition<$("chapterAudio").duration', HTML)
         self.assertIn('audioPosition:0', HTML)
 
+
+    def test_library_chapters_have_independent_reading_progress_and_audio_positions(self):
+        self.assertIn('let activeReadingId="current"', HTML)
+        self.assertIn('indexedDB.open(readingDatabaseName,2)', HTML)
+        self.assertIn('readReadingStore(storeName,recordId=activeReadingId)', HTML)
+        self.assertIn('activeReadingId=libraryChapterId?"chapter:"+libraryChapterId:"current"', HTML)
+        self.assertIn('progress.id=activeReadingId', HTML)
+        self.assertIn('window.restoreStoryNarration=async(title,text,libraryChapterId=null)', HTML)
+        library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
+        self.assertIn('window.currentLibraryChapterId=chapter.id;await window.restoreStoryNarration?.(chapter.title,chapter.narration,chapter.id)', library)
+        self.assertIn('activeReadingId', HTML)
+
     def test_browser_tts_highlights_current_word_when_boundary_events_exist(self):
         self.assertIn("data-word-start", HTML)
         self.assertIn('utterance.onboundary=event=>', HTML)
