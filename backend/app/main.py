@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from .importers import extract_document, extract_webpage_report
-from .vision_ocr import build_ocr_prompt, make_gemini_vision_parts, make_openai_vision_content, normalize_page_image
+from .vision_ocr import build_document_page_prompt, build_ocr_prompt, make_gemini_vision_parts, make_openai_vision_content, normalize_page_image
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 if not (PROJECT_DIR / "frontend").is_dir():
@@ -38,7 +38,7 @@ async def protect_expensive_endpoints(request, call_next):
                 from fastapi.responses import JSONResponse
                 return JSONResponse(status_code=401, content={"detail": "Token akses aplikasi tidak valid atau belum diisi."}, headers={"WWW-Authenticate": "Bearer"})
         client_ip = request.client.host if request.client else "unknown"
-        bucket = "ai" if path in {"/api/narrate", "/api/import/comic", "/api/audio"} else "import"
+        bucket = "ai" if path in {"/api/narrate", "/api/import/comic", "/api/import/pdf-ocr", "/api/audio"} else "import"
         limit = int(os.getenv("AI_REQUESTS_PER_MINUTE" if bucket == "ai" else "IMPORT_REQUESTS_PER_MINUTE", "8" if bucket == "ai" else "20"))
         now = time.monotonic()
         key = (client_ip, bucket)
@@ -175,6 +175,71 @@ async def import_file(file: UploadFile = File(...)):
     if not text:
         raise HTTPException(status_code=422, detail="Teks tidak ditemukan. PDF hasil scan memerlukan OCR.")
     return {"title": title, "text": text, "characters": len(text), "filename": filename}
+
+@app.post("/api/import/pdf-ocr")
+async def import_scanned_pdf(
+    file: UploadFile = File(...),
+    provider: Literal["openai", "openrouter", "gemini", "custom"] | None = Form(None),
+    model: str | None = Form(None),
+):
+    """Render scanned PDF pages and transcribe them with a vision model."""
+    if not (file.filename or "").lower().endswith(".pdf"):
+        raise HTTPException(status_code=415, detail="Pilih file PDF.")
+    raw_pdf = await file.read(40 * 1024 * 1024 + 1)
+    if len(raw_pdf) > 40 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="PDF melebihi batas 40 MB.")
+    try:
+        import fitz
+        document = fitz.open(stream=raw_pdf, filetype="pdf")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="PDF rusak atau tidak dapat dibuka.") from exc
+    if document.needs_pass:
+        document.close()
+        raise HTTPException(status_code=403, detail="PDF terenkripsi atau memerlukan kata sandi.")
+    if len(document) > 30:
+        document.close()
+        raise HTTPException(status_code=413, detail="OCR PDF dibatasi 30 halaman per proses.")
+    if not len(document):
+        document.close()
+        raise HTTPException(status_code=422, detail="PDF tidak memiliki halaman.")
+    page_images = []
+    try:
+        for index, page in enumerate(document, start=1):
+            pixmap = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False)
+            image_data = pixmap.tobytes("png")
+            page_images.append((index, normalize_page_image(image_data, "image/png")))
+    finally:
+        document.close()
+    selected, selected_model, api_key, base_url = provider_config(provider, model)
+    if not api_key:
+        raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
+    transcriptions = []
+    try:
+        async with httpx.AsyncClient(timeout=180) as client:
+            for index, image_bytes in page_images:
+                prompt = build_document_page_prompt(index, len(page_images))
+                if selected == "gemini":
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{selected_model}:generateContent?key={api_key}"
+                    response = await client.post(url, json={"contents": [{"role": "user", "parts": make_gemini_vision_parts(prompt, image_bytes)}], "generationConfig": {"temperature": 0.1}})
+                    response.raise_for_status()
+                    text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+                else:
+                    if not base_url:
+                        raise HTTPException(status_code=503, detail="AI_BASE_URL belum diatur.")
+                    response = await client.post(f"{base_url}/chat/completions", headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, json={"model": selected_model, "temperature": 0.1, "messages": [{"role": "user", "content": make_openai_vision_content(prompt, image_bytes)}]})
+                    response.raise_for_status()
+                    text = response.json()["choices"][0]["message"]["content"]
+                transcriptions.append({"page": index, "text": text.strip()})
+        combined = "\n\n".join(item["text"] for item in transcriptions)
+        return {"title": Path(file.filename or "scanned-document.pdf").stem, "pages": transcriptions, "text": combined, "characters": len(combined), "provider": selected, "model": selected_model, "verification": {"status": "review_required", "page_count": len(transcriptions), "warnings": ["Hasil OCR harus diperiksa terhadap halaman PDF asli, terutama nama, angka, tanda baca, dan tata letak kompleks."]}}
+    except HTTPException:
+        raise
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=502, detail=f"Provider OCR mengembalikan HTTP {exc.response.status_code}.") from exc
+    except (KeyError, IndexError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail="Respons OCR dari provider tidak sesuai format.") from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Tidak dapat terhubung ke provider OCR.") from exc
 
 @app.post("/api/narrate", response_model=NarrateResponse)
 async def narrate(request: NarrateRequest):
