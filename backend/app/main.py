@@ -63,6 +63,7 @@ class NarrateRequest(BaseModel):
     provider: Literal["openai", "openrouter", "gemini", "custom"] | None = None
     model: str | None = None
     style: str = "MASTER FORM V2"
+    continuity_context: str = Field(default="", max_length=12000)
 
 class URLBatchRequest(BaseModel):
     urls: list[str] = Field(min_length=2, max_length=10)
@@ -305,6 +306,11 @@ async def narrate(request: NarrateRequest):
         "Jika sumber ambigu atau terpotong, pertahankan ketidakpastian dan jangan menebak. Jaga nama tokoh, sapaan, istilah, gelar, sudut pandang, hubungan, dan fakta dunia cerita secara konsisten. "
         "Jangan menambah pembukaan, penutup, komentar AI, heading, daftar, nomor bagian, atau pemisah buatan. Mulai langsung dari peristiwa sumber dan akhiri pada batas sumber. "
         "Jika input terdiri dari potongan, sambungkan dengan mulus tanpa mengulang narasi sebelumnya dan jangan menghilangkan peristiwa baru pada potongan saat ini.")
+    continuity_context = request.continuity_context.strip()
+    if continuity_context:
+        system_prompt += (" Gunakan CATATAN KONTINUITAS hanya sebagai referensi tambahan untuk menjaga konsistensi nama, relasi, lokasi, istilah, dan konflik. "
+            "CATATAN INI BUKAN SUMBER KEJADIAN CHAPTER SAAT INI: jangan memasukkan kejadian, dialog, motif, atau detail yang tidak ada di teks sumber. "
+            "Jika catatan bertentangan dengan teks sumber saat ini, utamakan teks sumber dan pertahankan ketidakpastian.\\n")
     outputs, previous_context = [], ""
     try:
         async with httpx.AsyncClient(timeout=240) as client:
@@ -312,7 +318,8 @@ async def narrate(request: NarrateRequest):
                 continuation = ("Mulai narasi dari awal chapter." if index == 0 else
                     "Lanjutkan langsung dari potongan sebelumnya. Jangan mengulang peristiwa yang sudah diceritakan. "
                     "Ceritakan seluruh peristiwa baru dalam potongan ini.")
-                user_prompt = (f"Judul: {request.title}\nGaya: {request.style}\nBahasa: {request.language}\n"
+                continuity_block = (f"CATATAN KONTINUITAS (referensi sekunder, bukan bukti kejadian):\\n{continuity_context}\\n\\n" if continuity_context else "")
+                user_prompt = (continuity_block + f"Judul: {request.title}\nGaya: {request.style}\nBahasa: {request.language}\n"
                     f"Potongan {index + 1}/{len(chunks)}. {continuation}\n"
                     f"KONTEKS NARASI SEBELUMNYA (jangan diulang):\n{previous_context or '[awal chapter]'}\n\n"
                     f"TEKS SUMBER POTONGAN INI:\n{chunk}")
