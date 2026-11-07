@@ -7,7 +7,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from .importers import extract_document, extract_webpage
+from .importers import extract_document, extract_webpage_report
 from .vision_ocr import build_ocr_prompt, make_gemini_vision_parts, make_openai_vision_content, normalize_page_image
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -98,8 +98,7 @@ async def import_url(payload: dict):
     url = str(payload.get("url", "")).strip()
     if not url:
         raise HTTPException(status_code=400, detail="Masukkan URL chapter.")
-    title, text = await extract_webpage(url)
-    return {"title": title, "text": text, "characters": len(text), "source_url": url}
+    return await extract_webpage_report(url)
 
 @app.post("/api/import/file")
 async def import_file(file: UploadFile = File(...)):
