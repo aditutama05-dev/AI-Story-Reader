@@ -27,8 +27,8 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Source URL validation and structured source metadata (basic generic adapter report).
 - [x] Generic HTML article extraction with extraction diagnostics.
 - [x] Modular source adapter interface and registry (generic fallback is active; domain-specific adapters remain planned).
-- [ ] Detect same-chapter continuation pages without following unrelated links.
-- [x] User-specified same-domain multi-page chapter assembly in explicit URL order with review warnings.\n- [ ] Automatic same-chapter continuation detection without following next-chapter links.
+- [x] User-specified same-domain multi-page chapter assembly in explicit URL order with review warnings.
+- [ ] Automatic same-chapter continuation detection without following next-chapter links.
 - [x] Source completeness report with explicit uncertainty warnings for single-page and manually assembled imports.
 - [x] CBZ/ZIP comic archive ingestion with natural page sorting and decompression limits.
 - [ ] OCR for scanned PDF pages.
