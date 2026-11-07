@@ -152,6 +152,18 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.status_code, 413)
         self.assertIn("Resolusi atau total area", response.json()["detail"])
 
+    def test_find_source_span_returns_original_offsets_across_whitespace(self):
+        source = "Awal\n\nRaka  memasuki   kastil tua. Akhir."
+        span = main_module.find_source_span(source, "Raka memasuki kastil tua.")
+        self.assertIsNotNone(span)
+        self.assertEqual(source[span[0]:span[1]], "Raka  memasuki   kastil tua.")
+
+    def test_find_source_span_is_case_insensitive_and_rejects_missing_quote(self):
+        source = "Sang Naga menjaga gerbang."
+        span = main_module.find_source_span(source, "sang naga MENJAGA gerbang.")
+        self.assertEqual(source[span[0]:span[1]], source)
+        self.assertIsNone(main_module.find_source_span(source, "Naga membakar gerbang."))
+
     def test_continuity_extraction_rejects_quotes_not_present_in_source(self):
         source = "Mira memasuki aula dan memperkenalkan dirinya sebagai kapten penjaga."
         async def fake_generate(*args, **kwargs):
@@ -167,6 +179,8 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(data["accepted"], 1)
         self.assertEqual(data["rejected"], 1)
         self.assertEqual(data["facts"][0]["category"], "character")
+        span = data["facts"][0]["sourceStart"], data["facts"][0]["sourceEnd"]
+        self.assertEqual(source[span[0]:span[1]], data["facts"][0]["sourceExcerpt"])
         self.assertEqual(data["verification"]["method"], "verbatim_source_excerpt_match")
 
 
@@ -188,6 +202,8 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(data["rejected"], 2)
         self.assertEqual(data["contradictions"][0]["prior_fact"], facts[0]["fact"])
         self.assertEqual(data["verification"]["method"], "prior_fact_index_and_verbatim_current_excerpt_match")
+        item = data["contradictions"][0]
+        self.assertEqual(source[item["current_start"]:item["current_end"]], item["current_excerpt"])
 
     def test_continuity_check_requires_prior_facts(self):
         response = self.client.post("/api/continuity/check", json={"text":"Teks baru","prior_facts":[]})
