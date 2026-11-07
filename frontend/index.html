@@ -224,6 +224,7 @@ function scheduleProgressSave(){
  progressSaveTimer=setTimeout(()=>saveProgressPosition().catch(()=>{}),800);
 }
 async function persistNewChapter(title,text,libraryChapterId=null){
+ libraryChapterId=libraryChapterId||window.currentLibraryChapterId||null;
  const audio=$("chapterAudio");
  activeReadingId=libraryChapterId?"chapter:"+libraryChapterId:"current";
  resettingAudio=true;audio.pause();audio.removeAttribute("src");audio.load();
