@@ -65,6 +65,14 @@ class NarrateRequest(BaseModel):
     style: str = "MASTER FORM V2"
     continuity_context: str = Field(default="", max_length=12000)
 
+class ContinuityExtractRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=120000)
+    title: str = Field(default="Chapter tanpa judul", max_length=200)
+    existing_facts: list[dict] = Field(default_factory=list, max_length=100)
+    provider: Literal["openai", "openrouter", "gemini", "custom"] | None = None
+    model: str | None = None
+
+
 class URLBatchRequest(BaseModel):
     urls: list[str] = Field(min_length=2, max_length=10)
 
@@ -286,6 +294,56 @@ def build_narration_verification(chunks: list[str], outputs: list[str]) -> dict:
     if duplicates:
         warnings.insert(0, "Ada potongan yang menghasilkan narasi identik dengan potongan sebelumnya; periksa kemungkinan pengulangan.")
     return {"status":"review_required","method":"chunk_length_and_duplicate_output_checks","chunks":metrics,"empty_chunks":empty,"compressed_chunks":compressed,"duplicate_output_chunks":duplicates,"warnings":warnings}
+
+
+@app.post("/api/continuity/extract")
+async def extract_continuity_facts(request: ContinuityExtractRequest):
+    provider, model, api_key, base_url = provider_config(request.provider, request.model)
+    if not api_key:
+        raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
+    system = (
+        "Ekstrak fakta kontinuitas yang eksplisit dari teks cerita. Kembalikan HANYA JSON valid berbentuk "
+        '{"facts":[{"category":"character|relationship|location|term|event|conflict","fact":"...","sourceExcerpt":"..."}]}. '
+        "Jangan simpulkan hal yang tidak dinyatakan. Kutipan sumber harus disalin verbatim dari teks input, bukan diparafrase. "
+        "Jangan mengubah fakta lama; usulkan hanya fakta yang benar-benar didukung teks. Maksimal 30 fakta paling penting. "
+        "Utamakan identitas tokoh, relasi yang dinyatakan, lokasi, istilah/kemampuan bernama, peristiwa penting, dan konflik aktif. "
+        "Abaikan spekulasi, prediksi, dan opini narator."
+    )
+    user = f"Bagian: {request.title}\nFakta yang sudah tersimpan (hindari duplikasi): {request.existing_facts[:100]}\n\nTEKS SUMBER:\n{request.text}"
+    try:
+        async with httpx.AsyncClient(timeout=180) as client:
+            raw = await generate_text(client, provider, model, api_key, base_url, system, user)
+        match = re.search(r"\{[\s\S]*\}", raw)
+        if not match:
+            raise ValueError("JSON tidak ditemukan")
+        payload = __import__("json").loads(match.group(0))
+        candidates = payload.get("facts", [])
+        if not isinstance(candidates, list):
+            raise ValueError("facts bukan array")
+    except HTTPException:
+        raise
+    except (httpx.HTTPError, KeyError, IndexError) as exc:
+        raise HTTPException(status_code=502, detail="Gagal mengambil fakta dari provider AI.") from exc
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=502, detail="AI mengembalikan format fakta yang tidak valid.") from exc
+    allowed = {"character", "relationship", "location", "term", "event", "conflict"}
+    normalized_source = re.sub(r"\s+", " ", request.text).casefold()
+    accepted, rejected = [], 0
+    for item in candidates[:30]:
+        if not isinstance(item, dict):
+            rejected += 1
+            continue
+        category = str(item.get("category", "")).strip().lower()
+        fact = str(item.get("fact", "")).strip()[:500]
+        excerpt = str(item.get("sourceExcerpt", "")).strip()[:500]
+        normalized_excerpt = re.sub(r"\s+", " ", excerpt).casefold()
+        if category not in allowed or not fact or not excerpt or normalized_excerpt not in normalized_source:
+            rejected += 1
+            continue
+        accepted.append({"category": category, "fact": fact, "sourceExcerpt": excerpt})
+    return {"facts": accepted, "accepted": len(accepted), "rejected": rejected,
+            "verification": {"status": "review_required", "method": "verbatim_source_excerpt_match",
+            "warnings": ["Fakta diusulkan AI dan wajib ditinjau sebelum disimpan.", "Kutipan diperiksa sebagai teks verbatim setelah normalisasi spasi; makna fakta tidak diverifikasi otomatis."]}}
 
 
 @app.post("/api/narrate", response_model=NarrateResponse)
