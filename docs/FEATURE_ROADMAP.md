@@ -29,7 +29,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Modular source adapter interface and registry (generic fallback is active; domain-specific adapters remain planned).
 - [ ] Detect same-chapter continuation pages without following unrelated links.
 - [x] User-specified same-domain multi-page chapter assembly in explicit URL order with review warnings.\n- [ ] Automatic same-chapter continuation detection without following next-chapter links.
-- [ ] Source completeness report with explicit uncertainty states.
+- [x] Source completeness report with explicit uncertainty warnings for single-page and manually assembled imports.
 - [x] CBZ/ZIP comic archive ingestion with natural page sorting and decompression limits.
 - [ ] OCR for scanned PDF pages.
 
@@ -68,7 +68,7 @@ This roadmap separates the desired product from what is currently implemented. P
 
 - [x] Multi-page image transcription via vision model.
 - [x] Reading direction options: RTL, LTR, and vertical.
-- [ ] CBZ/ZIP page extraction.
+- [x] CBZ/ZIP page extraction with natural filename ordering and archive size limits.
 - [ ] Panel segmentation and reading-order validation.
 - [ ] Character identity tracking grounded in visual evidence.
 - [ ] Dialogue, caption, thought, and SFX association with panels.
