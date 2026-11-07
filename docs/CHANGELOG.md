@@ -4,6 +4,8 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 
 ## 2026-11-07
 
+- Added source-evidence character offsets for AI-extracted continuity facts and contradiction findings, plus accessible controls to select the exact quoted excerpt in the source editor.
+
 - Added AI-assisted continuity contradiction checks against structured facts from preceding parts. Candidate findings require a valid prior-fact index and a verbatim current-source excerpt; results are review-only and never modify saved facts.
 
 - Added AI-assisted extraction of structured continuity facts from a selected chapter, with source-excerpt matching, duplicate-aware merge, and mandatory user review before saving.
