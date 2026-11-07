@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ipaddress
+import re
 import socket
 import zipfile
 from io import BytesIO
@@ -16,16 +17,62 @@ from pypdf import PdfReader
 
 MAX_UPLOAD_BYTES = 40 * 1024 * 1024
 MAX_URL_BYTES = 8 * 1024 * 1024
+NOISE_TOKEN = re.compile(
+    r"(^|[-_\\s])(advertisement|advert|ads|comment|comments|related|recommendations|"
+    r"recommended|sidebar|breadcrumb|pagination|social|share|navigation|navbar|menu)([-_\\s]|$)",
+    re.IGNORECASE,
+)
+
+
+def _parse_html(raw: bytes, encoding: str | None = None) -> tuple[str, str, int, str]:
+    soup = BeautifulSoup(raw, "html.parser", from_encoding=encoding)
+
+    for node in soup(["script", "style", "noscript", "svg", "nav", "footer", "header", "form", "iframe"]):
+        node.decompose()
+
+    for node in list(soup.find_all(True)):
+        marker = " ".join(
+            [str(node.get("id", "")), " ".join(str(item) for item in (node.get("class") or []))]
+        )
+        if NOISE_TOKEN.search(marker) or node.get("role") in {"navigation", "complementary"}:
+            node.decompose()
+
+    title = ""
+    h1 = soup.find("h1")
+    if h1:
+        title = h1.get_text(" ", strip=True)
+    if not title:
+        og_title = soup.find("meta", attrs={"property": "og:title"})
+        if og_title:
+            title = str(og_title.get("content", "")).strip()
+    if not title and soup.title:
+        title = soup.title.get_text(" ", strip=True)
+
+    candidates = []
+    for selector in ("article", '[itemprop="articleBody"]', "main", '[role="main"]', "body"):
+        candidates.extend(soup.select(selector))
+    if not candidates:
+        candidates = [soup]
+
+    def score(node) -> tuple[float, int]:
+        text = node.get_text("\\n", strip=True)
+        paragraphs = len(node.find_all("p"))
+        linked = sum(len(link.get_text(" ", strip=True)) for link in node.find_all("a"))
+        return (len(text) + paragraphs * 120 - linked * 1.5, len(text))
+
+    main = max(candidates, key=score)
+    paragraphs = [p.get_text(" ", strip=True) for p in main.find_all("p")]
+    if paragraphs:
+        text = "\\n\\n".join(value for value in paragraphs if value)
+    else:
+        lines = [line.strip() for line in main.get_text("\\n").splitlines()]
+        text = "\\n".join(line for line in lines if line)
+    paragraph_count = len([p for p in paragraphs if p]) if paragraphs else len([line for line in text.splitlines() if line.strip()])
+    return title, text.strip(), paragraph_count, getattr(main, "name", "document")
 
 
 def _clean_html(raw: bytes, encoding: str | None = None) -> tuple[str, str]:
-    soup = BeautifulSoup(raw, "html.parser", from_encoding=encoding)
-    for node in soup(["script", "style", "noscript", "svg", "nav", "footer", "header", "form"]):
-        node.decompose()
-    title = soup.title.get_text(" ", strip=True) if soup.title else ""
-    main = soup.find("article") or soup.find("main") or soup.body or soup
-    lines = [line.strip() for line in main.get_text("\n").splitlines()]
-    text = "\n".join(line for line in lines if line)
+    title, text, _, _ = _parse_html(raw, encoding)
     return title, text
 
 
@@ -40,11 +87,11 @@ def extract_document(filename: str, content: bytes) -> tuple[str, str]:
             return _clean_html(content)
         if suffix == ".pdf":
             reader = PdfReader(BytesIO(content))
-            text = "\n\n".join((page.extract_text() or "") for page in reader.pages)
+            text = "\\n\\n".join((page.extract_text() or "") for page in reader.pages)
             return PurePosixPath(filename).stem, text.strip()
         if suffix == ".docx":
             document = Document(BytesIO(content))
-            text = "\n".join(p.text for p in document.paragraphs if p.text.strip())
+            text = "\\n".join(p.text for p in document.paragraphs if p.text.strip())
             return PurePosixPath(filename).stem, text.strip()
         if suffix == ".epub":
             pieces = []
@@ -57,7 +104,7 @@ def extract_document(filename: str, content: bytes) -> tuple[str, str]:
                     _, chapter_text = _clean_html(book.read(name))
                     if chapter_text:
                         pieces.append(chapter_text)
-            return PurePosixPath(filename).stem, "\n\n".join(pieces).strip()
+            return PurePosixPath(filename).stem, "\\n\\n".join(pieces).strip()
     except (zipfile.BadZipFile, KeyError, ValueError) as exc:
         raise HTTPException(status_code=400, detail="File tidak valid atau rusak.") from exc
     except Exception as exc:
@@ -92,13 +139,15 @@ def _validate_public_url(url: str) -> str:
     return url
 
 
-async def extract_webpage(url: str) -> tuple[str, str]:
+async def extract_webpage_report(url: str) -> dict:
     safe_url = _validate_public_url(url)
+    parsed = urlparse(safe_url)
     try:
         async with httpx.AsyncClient(
             timeout=25,
             follow_redirects=False,
-            headers={"User-Agent": "AIStoryReader/0.1 (+chapter text extraction)"},
+            trust_env=False,
+            headers={"User-Agent": "AIStoryReader/0.2 (+chapter text extraction)"},
         ) as client:
             response = await client.get(safe_url)
             if response.is_redirect:
@@ -112,13 +161,52 @@ async def extract_webpage(url: str) -> tuple[str, str]:
             content_type = response.headers.get("content-type", "").lower()
             if "html" not in content_type and "text/plain" not in content_type:
                 raise HTTPException(status_code=415, detail="URL bukan halaman HTML atau teks biasa.")
-            title, text = _clean_html(response.content, response.encoding)
+            if "text/plain" in content_type:
+                title, text = parsed.path.rsplit("/", 1)[-1] or parsed.hostname, response.text.strip()
+                paragraph_count = len([part for part in text.splitlines() if part.strip()])
+                container = "plain-text"
+            else:
+                title, text, paragraph_count, container = _parse_html(response.content, response.encoding)
             if not text:
                 raise HTTPException(status_code=422, detail="Teks utama tidak ditemukan di halaman tersebut.")
-            return title or safe_url, text
+
+            warnings = [
+                "Kelengkapan chapter belum dapat dipastikan hanya dari satu halaman yang berhasil diambil.",
+                "Halaman lanjutan belum digabung otomatis; periksa apakah sumber membagi chapter menjadi beberapa URL.",
+            ]
+            if paragraph_count <= 1:
+                warnings.append("Struktur paragraf tidak terdeteksi dengan jelas; periksa hasil ekstraksi.")
+            return {
+                "title": title or safe_url,
+                "text": text,
+                "characters": len(text),
+                "source_url": safe_url,
+                "source_domain": parsed.hostname,
+                "source_type": "html" if "html" in content_type else "text",
+                "adapter": {"id": "generic-html", "version": "1"},
+                "segments": [{
+                    "index": 1,
+                    "url": safe_url,
+                    "container": container,
+                    "paragraphs": paragraph_count,
+                    "characters": len(text),
+                }],
+                "verification": {
+                    "status": "review_required",
+                    "page_count": 1,
+                    "paragraph_count": paragraph_count,
+                    "warnings": warnings,
+                },
+            }
     except HTTPException:
         raise
     except httpx.HTTPStatusError as exc:
         raise HTTPException(status_code=502, detail=f"Website sumber mengembalikan HTTP {exc.response.status_code}.") from exc
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Tidak dapat mengambil halaman dari URL tersebut.") from exc
+
+
+async def extract_webpage(url: str) -> tuple[str, str]:
+    """Compatibility wrapper retained for existing callers."""
+    result = await extract_webpage_report(url)
+    return result["title"], result["text"]
