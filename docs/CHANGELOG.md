@@ -13,3 +13,6 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 - Added a public API base URL configuration file for static hosting; no provider credentials are stored in it.
 - Updated the frontend to the navy/bright-blue palette and documented the website's screen-access boundaries.
 - Added the MASTER FORM V2 narration standard.
+
+- Improved generic HTML extraction to prefer semantic story containers, remove common navigation/ad elements, and return adapter, segment, paragraph, and verification metadata. URL imports default to review-required rather than claiming completeness.
+- Added unit tests for article extraction, noise removal, and private/non-HTTP URL rejection.
