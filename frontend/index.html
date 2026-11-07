@@ -128,6 +128,7 @@ const readingDatabaseName="ai-story-reader-reading-v1";
 let readingDatabasePromise=null;
 let currentReadingRecord=null;
 let progressSaveTimer=null;
+let lastAudioProgressSave=0;
 function openReadingDatabase(){
  if(!("indexedDB" in window))return Promise.reject(new Error("Penyimpanan progres tidak didukung browser ini."));
  if(readingDatabasePromise)return readingDatabasePromise;
@@ -219,9 +220,14 @@ function scheduleProgressSave(){
  progressSaveTimer=setTimeout(()=>saveProgressPosition().catch(()=>{}),800);
 }
 async function persistNewChapter(title,text){
+ const audio=$("chapterAudio");
+ audio.pause();audio.removeAttribute("src");audio.load();
+ if(generatedAudioUrl){URL.revokeObjectURL(generatedAudioUrl);generatedAudioUrl=null;}
+ $("downloadMp3").hidden=true;$("downloadMp3").removeAttribute("href");
+ $("seekBack").disabled=true;$("seekForward").disabled=true;
  currentReadingRecord={id:"current",title:title||"Chapter tanpa judul",text,updatedAt:Date.now()};
  await writeReadingStore("chapters",currentReadingRecord);
- const progress={id:"current",paragraphIndex:0,bookmarkIndex:null,updatedAt:Date.now()};
+ const progress={id:"current",paragraphIndex:0,bookmarkIndex:null,audioPosition:0,updatedAt:Date.now()};
  await writeReadingStore("progress",progress);
  currentReadingRecord={...currentReadingRecord,...progress};
  $("resumeReading").disabled=false;$("clearProgress").disabled=false;
@@ -266,7 +272,7 @@ $("clearProgress").addEventListener("click",async()=>{
  }catch(error){$("status").textContent="Progres tidak dapat dihapus: "+error.message;}
 });
 window.addEventListener("scroll",scheduleProgressSave,{passive:true});
-window.addEventListener("pagehide",()=>{if(currentReadingRecord)saveProgressPosition().catch(()=>{});});
+window.addEventListener("pagehide",()=>{if(currentReadingRecord){saveProgressPosition().catch(()=>{});saveAudioPosition(true).catch(()=>{});}});
 
 const root=document.body;
 const preferenceKey="ai-story-reader-accessibility-v1";
@@ -454,6 +460,30 @@ $("play").addEventListener("click",speakText);
 $("pause").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.pause()});
 $("resume").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.resume()});
 $("stop").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.cancel();speechIndex=speechChunks.length;$("status").textContent="Pembacaan suara dihentikan.";});
+
+
+async function saveAudioPosition(force=false){
+ const audio=$("chapterAudio");
+ if(!currentReadingRecord||!audio.src||!Number.isFinite(audio.currentTime))return;
+ const now=Date.now();
+ if(!force&&now-lastAudioProgressSave<5000)return;
+ lastAudioProgressSave=now;
+ const progress=await readReadingStore("progress")||{id:"current",paragraphIndex:0,bookmarkIndex:null};
+ progress.audioPosition=audio.currentTime;progress.updatedAt=now;
+ await writeReadingStore("progress",progress);
+ currentReadingRecord={...currentReadingRecord,...progress};
+}
+$("chapterAudio").addEventListener("timeupdate",()=>saveAudioPosition().catch(()=>{}));
+$("chapterAudio").addEventListener("pause",()=>saveAudioPosition(true).catch(()=>{}));
+$("chapterAudio").addEventListener("loadedmetadata",async()=>{
+ try{
+  const progress=await readReadingStore("progress");
+  if(Number.isFinite(progress?.audioPosition)&&progress.audioPosition>0&&progress.audioPosition<$("chapterAudio").duration){
+   $("chapterAudio").currentTime=progress.audioPosition;
+   $("status").textContent="Posisi audio chapter sebelumnya dipulihkan.";
+  }
+ }catch{}
+});
 
 let generatedAudioUrl=null;
 $("generateMp3").addEventListener("click",async()=>{
