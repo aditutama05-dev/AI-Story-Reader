@@ -44,3 +44,55 @@ class HTMLExtractionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class URLStreamingImportTests(unittest.IsolatedAsyncioTestCase):
+    async def test_rejects_oversized_content_length_before_reading_body(self):
+        import httpx
+        from unittest.mock import patch
+        from app.importers import MAX_URL_BYTES, extract_webpage_report
+
+        async def handler(request):
+            return httpx.Response(
+                200,
+                headers={"content-type": "text/plain; charset=utf-8", "content-length": str(MAX_URL_BYTES + 1)},
+                content=b"",
+                request=request,
+            )
+
+        original_client = httpx.AsyncClient
+
+        def client_factory(**kwargs):
+            return original_client(transport=httpx.MockTransport(handler), **kwargs)
+
+        with patch("app.importers._validate_public_url", return_value="https://example.com/story.txt"), patch(
+            "app.importers.httpx.AsyncClient", side_effect=client_factory
+        ):
+            with self.assertRaises(HTTPException) as error:
+                await extract_webpage_report("https://example.com/story.txt")
+        self.assertEqual(error.exception.status_code, 413)
+
+    async def test_streams_and_decodes_plain_text_response(self):
+        import httpx
+        from unittest.mock import patch
+        from app.importers import extract_webpage_report
+
+        async def handler(request):
+            return httpx.Response(
+                200,
+                headers={"content-type": "text/plain; charset=utf-8"},
+                content="Bab pertama\\n\\nCerita berlanjut.".encode(),
+                request=request,
+            )
+
+        original_client = httpx.AsyncClient
+
+        def client_factory(**kwargs):
+            return original_client(transport=httpx.MockTransport(handler), **kwargs)
+
+        with patch("app.importers._validate_public_url", return_value="https://example.com/chapter.txt"), patch(
+            "app.importers.httpx.AsyncClient", side_effect=client_factory
+        ):
+            result = await extract_webpage_report("https://example.com/chapter.txt")
+        self.assertIn("Cerita berlanjut.", result["text"])
+        self.assertEqual(result["verification"]["page_count"], 1)
