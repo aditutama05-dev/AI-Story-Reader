@@ -94,10 +94,24 @@ async function deleteChapter(sid,aid,vid,cid){if(!confirm("Hapus chapter ini?"))
 function openChapter(chapter){$("title").value=chapter.title;$("source").value=chapter.originalSource||chapter.text||"";window.currentLibraryChapterId=chapter.id;status.textContent="Teks sumber asli dimuat ke editor. Narasi tersimpan terpisah.";$("editor-heading").scrollIntoView({behavior:"smooth"});$("source").focus()}
 function openNarration(chapter){if(!chapter.narration)return;$("title").value=chapter.title;const output=$("output");output.replaceChildren();String(chapter.narration).split(/\n{2,}/).filter(Boolean).forEach((part,index)=>{const paragraph=document.createElement("p");paragraph.id="narration-paragraph-"+index;paragraph.dataset.paragraphIndex=String(index);paragraph.textContent=part;output.append(paragraph)});window.currentLibraryChapterId=chapter.id;status.textContent="Narasi tersimpan dibuka. Sumber asli tidak diubah.";$("result-heading").scrollIntoView({behavior:"smooth"})}
 async function saveChapter(title,narration,originalSource){
- const all=read();let found=false;
- const updated=all.map(s=>({...s,arcs:(s.arcs||[]).map(a=>({...a,volumes:(a.volumes||[]).map(v=>({...v,chapters:(v.chapters||[]).map(ch=>{if((window.currentLibraryChapterId&&ch.id===window.currentLibraryChapterId&&ch.title===title)||(!window.currentLibraryChapterId&&ch.title===title)){found=true;return {...ch,narration,originalSource:originalSource||ch.originalSource||"",updatedAt:new Date().toISOString()}}return ch})}))}))}));
- if(!found){const next=updated.length?updated:[{id:id(),title:"Cerita saya",arcs:[]}];let s=next[0];if(!s.arcs.length)s.arcs.push({id:id(),title:"Arc 1",volumes:[]});let a=s.arcs[0];if(!a.volumes.length)a.volumes.push({id:id(),title:"Volume 1",chapters:[]});a.volumes[0].chapters.push({id:id(),title,originalSource:originalSource||"",narration,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});}
- await persist(found?updated:(updated.length?updated:[{id:id(),title:"Cerita saya",arcs:[]} ]));
+ let found=false;
+ let next=read().map(s=>({...s,arcs:(s.arcs||[]).map(a=>({...a,volumes:(a.volumes||[]).map(v=>({...v,chapters:(v.chapters||[]).map(ch=>{
+  const selected=window.currentLibraryChapterId&&ch.id===window.currentLibraryChapterId&&ch.title===title;
+  const titleMatch=!window.currentLibraryChapterId&&ch.title===title;
+  if(selected||titleMatch){found=true;return {...ch,narration,originalSource:originalSource||ch.originalSource||"",updatedAt:new Date().toISOString()}}
+  return ch;
+ })}))}))}));
+ if(!found){
+  if(!next.length)next.push({id:id(),title:"Cerita saya",arcs:[]});
+  let series=next[0];if(!series.arcs)series.arcs=[];
+  if(!series.arcs.length)series.arcs.push({id:id(),title:"Arc 1",volumes:[]});
+  let arc=series.arcs[0];if(!arc.volumes)arc.volumes=[];
+  if(!arc.volumes.length)arc.volumes.push({id:id(),title:"Volume 1",chapters:[]});
+  const chapterId=id();
+  arc.volumes[0].chapters.push({id:chapterId,title,originalSource:originalSource||"",narration,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+  window.currentLibraryChapterId=chapterId;
+ }
+ await persist(next);
  status.textContent="Sumber asli dan narasi disimpan terpisah di perpustakaan.";
 }
 function exportLibrary(){const blob=new Blob([JSON.stringify({format:"ai-story-reader-library",version:1,exportedAt:new Date().toISOString(),series:read()},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="ai-story-reader-library.json";a.click();URL.revokeObjectURL(url);status.textContent="Cadangan perpustakaan diunduh."}
