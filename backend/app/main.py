@@ -7,9 +7,11 @@ from typing import Literal
 import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 APP_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = APP_DIR.parents[1]
 app = FastAPI(title="AI Story Reader API", version="0.1.0")
 
 app.add_middleware(
@@ -48,6 +50,8 @@ def provider_config(provider: str | None, model: str | None):
         base_url = os.getenv("AI_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
     elif selected == "custom":
         base_url = os.getenv("AI_BASE_URL", "").rstrip("/")
+    elif selected == "gemini":
+        selected_model = model or os.getenv("AI_MODEL", "gemini-2.5-flash")
     return selected, selected_model, api_key, base_url
 
 
@@ -58,7 +62,7 @@ def health():
 
 @app.get("/api/config")
 def public_config():
-    # Deliberately never return API keys or secret values to the browser.
+    # Never return API keys or secret values to the browser.
     return {
         "configured": bool(os.getenv("AI_API_KEY")),
         "provider": os.getenv("AI_PROVIDER", "openrouter"),
@@ -88,8 +92,7 @@ async def narrate(request: NarrateRequest):
     )
     user_prompt = (
         f"Judul sumber: {request.title}\nGaya: {request.style}\n"
-        f"Bahasa keluaran: {request.language}\n\n"
-        "SUMBER:\n" + request.text
+        f"Bahasa keluaran: {request.language}\n\nSUMBER:\n{request.text}"
     )
 
     try:
@@ -134,3 +137,7 @@ async def narrate(request: NarrateRequest):
         raise HTTPException(status_code=502, detail="Respons dari provider AI tidak sesuai format.") from exc
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Tidak dapat terhubung ke provider AI.") from exc
+
+
+# Keep the catch-all frontend mount last so API routes remain reachable.
+app.mount("/", StaticFiles(directory=PROJECT_DIR / "frontend", html=True), name="frontend")
