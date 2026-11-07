@@ -372,7 +372,7 @@ $("go").addEventListener("click",async()=>{
   const r=await fetch(apiUrl("/api/narrate"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await r.json();if(!r.ok)throw new Error(data.detail||"Permintaan gagal");
   renderNarration(data.narration);
-  await persistNewChapter($("title").value||"Chapter tanpa judul",data.narration);\n  window.storyLibrary?.saveChapter($("title").value||"Chapter tanpa judul",data.narration);
+  await persistNewChapter($("title").value||"Chapter tanpa judul",data.narration);\n  window.storyLibrary?.saveChapter($("title").value||"Chapter tanpa judul",data.narration,body.text);
   $("status").textContent="Selesai · "+data.provider+" / "+data.model+" · "+data.chunks_processed+" potongan";
  }catch(e){$("status").textContent="Belum berhasil: "+e.message}finally{$("go").disabled=false}
 });
