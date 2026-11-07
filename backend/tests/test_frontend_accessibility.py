@@ -77,6 +77,14 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn('apiFetch("/api/audio"', HTML)
         self.assertIn('apiFetch(endpoint', HTML)
         self.assertIn(".cbz,.zip", HTML)
+
+    def test_mp3_playback_position_is_persisted_and_restored(self):
+        self.assertIn('progress.audioPosition=audio.currentTime', HTML)
+        self.assertIn('addEventListener("timeupdate"', HTML)
+        self.assertIn('addEventListener("loadedmetadata"', HTML)
+        self.assertIn('progress.audioPosition<$("chapterAudio").duration', HTML)
+        self.assertIn('audioPosition:0', HTML)
+
     def test_browser_tts_highlights_current_word_when_boundary_events_exist(self):
         self.assertIn("data-word-start", HTML)
         self.assertIn('utterance.onboundary=event=>', HTML)
