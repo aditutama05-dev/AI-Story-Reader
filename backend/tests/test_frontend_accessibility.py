@@ -86,9 +86,13 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn('/api/continuity/check', HTML)
         self.assertIn('getPriorContinuityFacts?.(chapterId)', HTML)
         self.assertIn("Tidak ada fakta yang diubah", HTML)
+        self.assertIn('id="continuityResults"', HTML)
+        self.assertIn("setSelectionRange(item.start,item.end)", HTML)
+        self.assertIn("current_start", HTML)
         library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
         self.assertIn("function getPriorContinuityFacts(chapterId)", library)
         self.assertIn("getPriorContinuityFacts,", library)
+        self.assertIn("sourceStart:Number.isInteger(fact.sourceStart)", library)
 
     def test_story_library_uses_indexeddb_and_keeps_source_separate(self):
         library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
