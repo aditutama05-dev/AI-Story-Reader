@@ -66,6 +66,8 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn("function addArcTo", library)
         self.assertIn("function addVolume", library)
         self.assertIn("function addChapter", library)
+        self.assertIn("function editNotes", library)
+        self.assertIn("notesUpdatedAt", library)
 
     def test_full_chapter_mp3_and_multi_page_import_controls_exist(self):
         for control_id in ("generateMp3", "chapterAudio", "downloadMp3", "seekBack", "seekForward", "audioVoice", "continuationUrls"):
