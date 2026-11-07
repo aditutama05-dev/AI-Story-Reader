@@ -312,10 +312,10 @@ async def narrate(request: NarrateRequest):
                 continuation = ("Mulai narasi dari awal chapter." if index == 0 else
                     "Lanjutkan langsung dari potongan sebelumnya. Jangan mengulang peristiwa yang sudah diceritakan. "
                     "Ceritakan seluruh peristiwa baru dalam potongan ini.")
-                user_prompt = (f"Judul: {request.title}\\nGaya: {request.style}\\nBahasa: {request.language}\\n"
-                    f"Potongan {index + 1}/{len(chunks)}. {continuation}\\n"
-                    f"KONTEKS NARASI SEBELUMNYA (jangan diulang):\\n{previous_context or '[awal chapter]'}\\n\\n"
-                    f"TEKS SUMBER POTONGAN INI:\\n{chunk}")
+                user_prompt = (f"Judul: {request.title}\nGaya: {request.style}\nBahasa: {request.language}\n"
+                    f"Potongan {index + 1}/{len(chunks)}. {continuation}\n"
+                    f"KONTEKS NARASI SEBELUMNYA (jangan diulang):\n{previous_context or '[awal chapter]'}\n\n"
+                    f"TEKS SUMBER POTONGAN INI:\n{chunk}")
                 output = (await generate_text(client, provider, model, api_key, base_url, system_prompt, user_prompt)).strip()
                 outputs.append(output)
                 previous_context = output[-2200:]
