@@ -310,7 +310,7 @@ async def narrate(request: NarrateRequest):
     if continuity_context:
         system_prompt += (" Gunakan CATATAN KONTINUITAS hanya sebagai referensi tambahan untuk menjaga konsistensi nama, relasi, lokasi, istilah, dan konflik. "
             "CATATAN INI BUKAN SUMBER KEJADIAN CHAPTER SAAT INI: jangan memasukkan kejadian, dialog, motif, atau detail yang tidak ada di teks sumber. "
-            "Jika catatan bertentangan dengan teks sumber saat ini, utamakan teks sumber dan pertahankan ketidakpastian.\\n")
+            "Jika catatan bertentangan dengan teks sumber saat ini, utamakan teks sumber dan pertahankan ketidakpastian.\n")
     outputs, previous_context = [], ""
     try:
         async with httpx.AsyncClient(timeout=240) as client:
@@ -318,7 +318,7 @@ async def narrate(request: NarrateRequest):
                 continuation = ("Mulai narasi dari awal chapter." if index == 0 else
                     "Lanjutkan langsung dari potongan sebelumnya. Jangan mengulang peristiwa yang sudah diceritakan. "
                     "Ceritakan seluruh peristiwa baru dalam potongan ini.")
-                continuity_block = (f"CATATAN KONTINUITAS (referensi sekunder, bukan bukti kejadian):\\n{continuity_context}\\n\\n" if continuity_context else "")
+                continuity_block = (f"CATATAN KONTINUITAS (referensi sekunder, bukan bukti kejadian):\n{continuity_context}\n\n" if continuity_context else "")
                 user_prompt = (continuity_block + f"Judul: {request.title}\nGaya: {request.style}\nBahasa: {request.language}\n"
                     f"Potongan {index + 1}/{len(chunks)}. {continuation}\n"
                     f"KONTEKS NARASI SEBELUMNYA (jangan diulang):\n{previous_context or '[awal chapter]'}\n\n"
