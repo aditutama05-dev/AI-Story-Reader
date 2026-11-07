@@ -6,7 +6,8 @@ import zipfile
 
 from fastapi.testclient import TestClient
 
-from app.main import app, _rate_buckets\nimport app.main as main_module
+from app.main import app, _rate_buckets
+import app.main as main_module
 
 
 class APISafetyTests(unittest.TestCase):
