@@ -33,7 +33,7 @@ jobs:
           script = html.split("<script>", 1)[1].split("</script>", 1)[0]
           Path("/tmp/ai-story-reader.js").write_text(script, encoding="utf-8")
           PY
-          node --check /tmp/ai-story-reader.js
+          node --check /tmp/ai-story-reader.js\n          node --check frontend/library.js
       - name: Compile backend
         working-directory: backend
         run: python -m compileall -q app
