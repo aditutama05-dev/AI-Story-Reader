@@ -136,7 +136,7 @@ function getPriorContinuityFacts(chapterId){
  const facts=[];
  for(const chapter of ordered.slice(-20)){
   for(const fact of (chapter.continuityFacts||[]).slice(0,100)){
-   if(fact&&fact.fact)facts.push({category:fact.category||"term",fact:String(fact.fact).slice(0,500),sourceExcerpt:String(fact.sourceExcerpt||"").slice(0,500),chapterTitle:chapter.title||""});
+   if(fact&&fact.fact)facts.push({category:fact.category||"term",fact:String(fact.fact).slice(0,500),sourceExcerpt:String(fact.sourceExcerpt||"").slice(0,500),sourceStart:Number.isInteger(fact.sourceStart)?fact.sourceStart:null,sourceEnd:Number.isInteger(fact.sourceEnd)?fact.sourceEnd:null,chapterTitle:chapter.title||""});
   }
  }
  return facts.slice(-240);
