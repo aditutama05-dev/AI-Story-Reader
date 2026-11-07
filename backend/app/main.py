@@ -13,7 +13,7 @@ from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from .importers import _validate_public_url, extract_document, extract_webpage_report
+from .importers import _validate_archive_limits, _validate_public_url, extract_document, extract_webpage_report
 from .vision_ocr import build_document_page_prompt, build_ocr_prompt, make_gemini_vision_parts, make_openai_vision_content, normalize_page_image
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -334,6 +334,7 @@ async def import_comic_pages(
             if len(archive_bytes) > 40 * 1024 * 1024:
                 raise HTTPException(status_code=413, detail="Arsip komik melebihi batas 40 MB.")
             with zipfile.ZipFile(BytesIO(archive_bytes)) as archive:
+                _validate_archive_limits(archive)
                 image_names = [name for name in archive.namelist() if name.lower().endswith((".jpg", ".jpeg", ".png", ".webp")) and not name.startswith("__MACOSX/")]
                 image_names.sort(key=lambda name: [(0, int(part)) if part.isdigit() else (1, part.casefold()) for part in re.split(r"(\d+)", name)])
                 if not image_names:
