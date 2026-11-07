@@ -19,7 +19,7 @@ Allow a user to provide one chapter/part URL or upload a supported file, then ex
 
 ## Source adapters
 
-Adapters are independent modules selected by hostname and source characteristics. A future adapter contract should provide:
+Adapters are independent modules selected by hostname and source characteristics. The current code now includes a `SourceAdapter` protocol, registry, and generic HTML fallback in `backend/app/source_adapters.py`. Domain-specific adapters can be registered without rewriting the fetch pipeline. A future domain adapter should provide:
 
 - adapter identifier and version;
 - supported hostnames;
@@ -37,7 +37,7 @@ A domain adapter must not assume every link on a page belongs to the chapter. Pr
 
 The generic adapter should prefer semantic content containers such as `article`, `main`, and known reading-content containers. It should compare candidate content blocks and avoid blindly taking all text from the body.
 
-The current backend uses a generic BeautifulSoup adapter that prefers semantic article/main containers, removes common navigation and advertisement elements, extracts title and paragraph text, and returns basic source metadata (domain, adapter ID/version, segment count, paragraph count, and warnings). It does not yet execute JavaScript, render a browser DOM, or recognize multi-page chapter navigation. A page that requires JavaScript or an authenticated session may fail. The current URL verification state is deliberately `review_required`; a single successful HTTP response is not proof that the full chapter was captured.
+The current backend uses a registered generic BeautifulSoup adapter that prefers semantic article/main containers, removes common navigation and advertisement elements, extracts title and paragraph text, and returns basic source metadata (domain, adapter ID/version, segment count, paragraph count, and warnings). It does not yet execute JavaScript, render a browser DOM, or recognize multi-page chapter navigation. A page that requires JavaScript or an authenticated session may fail. The current URL verification state is deliberately `review_required`; a single successful HTTP response is not proof that the full chapter was captured.
 
 ## Multi-page chapter rules
 
