@@ -66,6 +66,8 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn("function addArcTo", library)
         self.assertIn("function addVolume", library)
         self.assertIn("function addChapter", library)
+        self.assertIn("partType", library)
+        self.assertIn("Interlude, Ending, Epilogue", library)
         self.assertIn("function editNotes", library)
         self.assertIn("notesUpdatedAt", library)
 
