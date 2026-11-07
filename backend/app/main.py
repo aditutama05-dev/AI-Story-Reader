@@ -353,10 +353,14 @@ async def import_comic_pages(
         else:
             if len(files) > 30:
                 raise HTTPException(status_code=413, detail="Maksimal 30 halaman per proses.")
+            total_upload_bytes = 0
             for upload in files:
                 raw = await upload.read(15 * 1024 * 1024 + 1)
                 if len(raw) > 15 * 1024 * 1024:
                     raise HTTPException(status_code=413, detail="Setiap halaman dibatasi 15 MB.")
+                total_upload_bytes += len(raw)
+                if total_upload_bytes > 100 * 1024 * 1024:
+                    raise HTTPException(status_code=413, detail="Total seluruh halaman komik dibatasi 100 MB per proses.")
                 page_inputs.append((upload.filename or "page", raw, upload.content_type or ""))
     except zipfile.BadZipFile as exc:
         raise HTTPException(status_code=400, detail="Arsip CBZ/ZIP rusak atau tidak valid.") from exc
