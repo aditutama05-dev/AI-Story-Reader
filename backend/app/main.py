@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Literal
 import httpx
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -47,6 +48,11 @@ class NarrateRequest(BaseModel):
     provider: Literal["openai", "openrouter", "gemini", "custom"] | None = None
     model: str | None = None
     style: str = "MASTER FORM V2"
+
+class AudioRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=1_000_000)
+    voice: str = "id-ID-GadisNeural"
+    rate: int = Field(default=0, ge=-50, le=50)
 
 class NarrateResponse(BaseModel):
     narration: str
@@ -170,6 +176,29 @@ async def narrate(request: NarrateRequest):
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Tidak dapat terhubung ke provider AI.") from exc
 
+
+@app.post("/api/audio")
+async def generate_chapter_audio(payload: AudioRequest):
+    """Generate one MP3 for the complete story part using Edge TTS."""
+    try:
+        import edge_tts
+        communicate = edge_tts.Communicate(payload.text, payload.voice, rate=f"{payload.rate:+d}%")
+        chunks = []
+        total_bytes = 0
+        async for item in communicate.stream():
+            if item.get("type") == "audio":
+                data = item.get("data", b"")
+                total_bytes += len(data)
+                if total_bytes > 80 * 1024 * 1024:
+                    raise HTTPException(status_code=413, detail="Audio chapter melebihi batas 80 MB.")
+                chunks.append(data)
+        if not chunks:
+            raise HTTPException(status_code=502, detail="Provider TTS tidak menghasilkan audio.")
+        return Response(content=b"".join(chunks), media_type="audio/mpeg", headers={"Content-Disposition": 'attachment; filename="ai-story-reader-chapter.mp3"', "Cache-Control": "no-store"})
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Gagal membuat MP3. Periksa koneksi server ke layanan TTS dan coba lagi.") from exc
 
 @app.post("/api/import/comic")
 async def import_comic_pages(
