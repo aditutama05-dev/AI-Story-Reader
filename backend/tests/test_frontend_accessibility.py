@@ -38,6 +38,10 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertNotIn("#c6a7ff", HTML)
         self.assertIn("AI_STORY_READER_API_BASE", HTML)
 
+    def test_url_import_surfaces_verification_warnings(self):
+        self.assertIn("data.verification.warnings", HTML)
+        self.assertIn("status: perlu diperiksa", HTML)
+
     def test_reading_progress_and_bookmarks_are_persisted(self):
         for control_id in ("saveBookmark", "resumeReading", "clearProgress"):
             self.assertIn(f'id="{control_id}"', HTML)
