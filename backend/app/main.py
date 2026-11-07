@@ -24,7 +24,7 @@ async def protect_expensive_endpoints(request, call_next):
     path = request.url.path
     if path.startswith("/api/") and path not in {"/api/health", "/api/config"}:
         client_ip = request.client.host if request.client else "unknown"
-        bucket = "ai" if path in {"/api/narrate", "/api/import/comic"} else "import"
+        bucket = "ai" if path in {"/api/narrate", "/api/import/comic", "/api/audio"} else "import"
         limit = int(os.getenv("AI_REQUESTS_PER_MINUTE" if bucket == "ai" else "IMPORT_REQUESTS_PER_MINUTE", "8" if bucket == "ai" else "20"))
         now = time.monotonic()
         key = (client_ip, bucket)
