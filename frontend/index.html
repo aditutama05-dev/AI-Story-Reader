@@ -32,7 +32,7 @@ input,textarea,select{width:100%;background:#091a2c;border:1px solid #31516f;bor
 textarea{min-height:240px;resize:vertical;line-height:1.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 button{background:#2f8cff;color:#06172a;border:0;border-radius:10px;padding:12px 17px;font-weight:700;font-size:.95rem;cursor:pointer;margin:8px 7px 0 0}
 button.secondary{background:#1d3b5b;color:#eef6ff}button:disabled{opacity:.55;cursor:wait}
-.status{color:#79bdff;min-height:24px;margin-top:14px}.output{white-space:pre-wrap;line-height:1.85;color:#eee;margin-top:18px}.output p{padding:3px 8px;border-radius:8px}.output p.speech-current{background:#174b79;outline:2px solid #66b2ff}
+.status{color:#79bdff;min-height:24px;margin-top:14px}.output{white-space:pre-wrap;line-height:1.85;color:#eee;margin-top:18px}.output p{padding:3px 8px;border-radius:8px}.output p.speech-current{background:#174b79;outline:2px solid #66b2ff}.speech-current-word{background:#ffd166;color:#06172a;border-radius:3px}
 small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library-series,.library-arc{border:1px solid #31516f;border-radius:12px;padding:12px;margin:10px 0}.library-arc{margin-left:14px;background:#0b1d30}.library-volume{margin:12px 0 12px 22px;padding:10px;border-left:2px solid #31516f}.library-chapter{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 8px 14px}.library-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.library-actions button,.library-chapter button{margin:4px 4px 4px 0}.library-import{display:inline-flex;align-items:center;background:#1d3b5b;color:#eef6ff;border-radius:10px;padding:12px 17px;min-height:44px;cursor:pointer;font-weight:700}\n.hint{font-size:.85rem;color:#a9bfd5;line-height:1.5}
 @media(max-width:620px){.row{grid-template-columns:1fr}main{padding:26px 14px}.card{padding:17px}}
 </style></head>
@@ -178,7 +178,8 @@ function renderNarration(text){
   const paragraph=document.createElement("p");
   paragraph.id="narration-paragraph-"+index;
   paragraph.dataset.paragraphIndex=String(index);
-  paragraph.textContent=value;
+  let offset=0;
+  for(const token of value.match(/\\S+|\\s+/gu)||[]){if(/^\\s+$/u.test(token)){paragraph.appendChild(document.createTextNode(token))}else{const word=document.createElement("span");word.className="speech-word";word.dataset.wordStart=String(offset);word.dataset.wordEnd=String(offset+token.length);word.textContent=token;paragraph.appendChild(word)}offset+=token.length}
   output.appendChild(paragraph);
  });
 }
@@ -437,6 +438,7 @@ function speakText(){
   clearSpeechHighlight();paragraph.classList.add("speech-current");
   paragraph.scrollIntoView({behavior:root.classList.contains("reduce-motion")?"auto":"smooth",block:"center"});
   paragraph.setAttribute("aria-current","true");
+  utterance.onboundary=event=>{if(event.name&&event.name!=="word")return;const offset=Number(event.charIndex)||0;paragraph.querySelectorAll(".speech-current-word").forEach(node=>{node.classList.remove("speech-current-word");node.removeAttribute("aria-current")});const active=Array.from(paragraph.querySelectorAll("[data-word-start]")).find(node=>offset>=Number(node.dataset.wordStart)&&offset<Number(node.dataset.wordEnd));if(active){active.classList.add("speech-current-word");active.setAttribute("aria-current","true")}};
   utterance.lang="id-ID";utterance.rate=Number($("speechRate").value)||1;
   if(selectedVoice!==""){const voice=availableVoices.find(v=>v.voiceURI===selectedVoice)||availableVoices[Number(selectedVoice)];if(voice)utterance.voice=voice}
   else{const idVoice=availableVoices.find(v=>/^id(-|_)/i.test(v.lang));if(idVoice)utterance.voice=idVoice}
