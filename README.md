@@ -1,70 +1,97 @@
 # AI Story Reader
 
-AI Story Reader is a web application for turning novels, light novels, web novels, manga, manhwa, and manhua into detailed Indonesian narration.
+AI Story Reader is a personal **website** for turning novels, light novels, web novels, digital books, manga, manhwa, manhua, and comics into detailed Indonesian narration that can be read and listened to in a browser.
 
-## Product goals
+The product is a browser website, not a native Android or desktop application.
 
-- Import a chapter from a URL, pasted text, or uploaded EPUB/TXT/PDF/DOCX file.
-- Keep volume, chapter, interlude, ending, and epilogue as distinct content units.
-- Narrate chronologically in natural Indonesian using the **MASTER FORM V2** approach: preserve events, actions, important dialogue (paraphrased), expressions, emotions, atmosphere, battles, and conflict development.
-- Process long chapters in context-aware chunks without exposing artificial chunk boundaries in the final narration.
-- Maintain story context such as characters, relationships, locations, terminology, current conditions, and unresolved conflicts.
-- Provide playback controls, reading progress, text highlighting, adjustable speed, and downloadable chapter audio.
-- Support configurable AI providers (OpenAI, OpenRouter, Gemini, and compatible custom endpoints) without exposing API keys in browser code or Git.
+## Product requirements and project documents
 
-## Architecture
+- [Feature specification](FEATURES.md)
+- [Project context](docs/PROJECT_CONTEXT.md)
+- [Feature roadmap](docs/FEATURE_ROADMAP.md)
+- [Accessibility and screen-access boundaries](docs/ACCESSIBILITY_AND_SCREEN_ACCESS.md)
+- [URL and file source ingestion](docs/SOURCE_INGESTION.md)
+- [Story data model](docs/STORY_DATA_MODEL.md)
+- [Technical architecture](docs/TECHNICAL_ARCHITECTURE.md)
+- [Known limitations](docs/KNOWN_LIMITATIONS.md)
+- [Changelog](docs/CHANGELOG.md)
 
-- **Backend:** Python + FastAPI.
-- **Frontend:** lightweight responsive web application.
-- **Storage:** SQLite for the initial single-instance deployment.
-- **AI:** provider adapter layer; credentials are supplied at runtime through environment variables or the app's protected settings flow.
-- **Deployment:** container-friendly; can be deployed to a managed application host.
+## Current implementation
 
-## Security
+### Website frontend
 
-Never commit API keys, passwords, tokens, uploaded books, or generated private media. Use environment variables/secrets for production credentials. The browser must never receive server-side provider secrets.
+- Responsive HTML/CSS/JavaScript interface.
+- Dark navy and bright-blue visual palette.
+- Accessibility baseline: semantic landmarks, labels, keyboard focus, skip navigation, high contrast, text sizing, reading spacing, reduced motion, and local preference persistence.
+- TalkBack and screen-reader-compatible story text.
+- Optional browser speech synthesis with voice and speed selection.
+- URL, file, pasted-text, and multi-image input controls.
+- Configurable public API base URL in `frontend/config.js`. This file may contain a public API origin only; never put API keys or provider secrets in it.
 
-## Project status
+### Python API backend
 
-Initial repository scaffold. Features will be implemented incrementally, with source extraction, narration, and provider configuration forming the first milestones.
+- FastAPI application in `backend/app/main.py`.
+- URL import with basic HTML extraction.
+- TXT, Markdown, HTML, text-based PDF, DOCX, and EPUB extraction.
+- Multi-image OCR for JPG, PNG, and WEBP using a vision-capable provider.
+- Context-aware chunked Indonesian narration.
+- Provider configuration for OpenAI, OpenRouter, Gemini, and compatible endpoints through server environment variables.
 
-## Development
+## Run locally
 
-The backend application will live in `backend/`. See `backend/requirements.txt` and `backend/app/main.py` as the implementation is added.
-
-
-## Manga and manhwa image OCR
-
-The initial multi-page comic OCR flow is available in the web interface:
-
-- Upload up to 30 JPG, PNG, or WEBP page images per request (15 MB per image).
-- Choose Japanese manga right-to-left, left-to-right comics, or vertical webtoon/manhwa reading direction.
-- Images are EXIF-corrected, converted to JPEG, and resized before being sent to a vision-capable model.
-- OCR requests preserve the original language, identify panel order, separate speech/captions/thoughts/SFX when recognizable, and mark unreadable text instead of guessing.
-- Page transcriptions are joined in upload order and placed into the chapter editor for review before narration.
-- OpenAI-compatible vision models (including compatible OpenRouter routes) and Gemini vision models are supported by the backend adapter.
-
-The model configured in `AI_MODEL` must support image input. The OCR endpoint is `POST /api/import/comic` using multipart form fields `files`, `direction`, and optional `provider` / `model`.
-
-### OCR tests
-
-From the `backend/` directory, run:
+From the repository root:
 
 ```bash
-python -m unittest discover -s tests
+python -m venv .venv
+# Windows: .venv\\Scripts\\activate
+# macOS/Linux: source .venv/bin/activate
+pip install -r backend/requirements.txt
 ```
 
-This first OCR increment uses a vision model for page transcription; it does not yet perform dedicated object-detection panel segmentation, speech-bubble geometry extraction, translation overlays, CBZ archive import, or OCR correction UI.
+Copy `.env.example` to `.env`, then configure the provider key in the server environment. Do not commit `.env`.
 
-## Accessibility and assistive technology
+Run:
 
-The web interface includes an accessibility baseline intended to support blind and low-vision readers and keyboard users:
+```bash
+uvicorn backend.app.main:app --reload
+```
 
-- Semantic page landmarks, heading structure, explicit form labels, a skip-to-content link, visible keyboard focus, and large touch targets.
-- Narration is retained as selectable, navigable HTML text in a named region so Android TalkBack and other screen readers can read it; browser TTS is an optional companion, not a replacement for screen-reader support.
-- Live status messages announce import, OCR, and narration progress to assistive technology.
-- Optional high-contrast mode, larger text, increased reading spacing, and reduced motion; these preferences are saved locally in the browser.
-- A quick-navigation landmark links directly to the major app sections, and the long narration region is navigable without forcing a screen reader to announce the entire chapter automatically.
-- Browser/device speech voices can be selected where the Web Speech API is available, with playback speed, pause, resume, and stop controls.
+Open the local address shown by Uvicorn (normally `http://127.0.0.1:8000`).
 
-On Android, enable TalkBack in the device Accessibility settings, then navigate the page using swipe navigation or the TalkBack reading controls. The app does not need to intercept TalkBack gestures. Actual voice availability and behavior depend on Android's installed speech engine and browser. Automated checks cover accessible structure and JavaScript syntax in CI. This is an ongoing accessibility implementation and still requires hands-on testing with TalkBack across supported devices; it is not a claim of formal WCAG certification.
+If running from inside the `backend/` directory instead, use:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+## Tests
+
+```bash
+cd backend
+python -m unittest discover -s tests -v
+```
+
+GitHub Actions also checks Python tests, frontend JavaScript syntax, and backend compilation.
+
+## Hosting direction
+
+The intended low-cost hosting split is:
+
+- Website: GitHub Pages (static files from `frontend/`).
+- API: a separately deployed backend service.
+- Cloudflare Workers is a candidate for the API, but it requires a JavaScript/TypeScript implementation; it cannot run this FastAPI backend unchanged.
+
+When the API is deployed separately, set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the public API origin and configure CORS on the API for the GitHub Pages origin. The API base URL is public configuration, not a secret.
+
+GitHub Pages publication still requires the repository's Pages setting to use GitHub Actions. A workflow can prepare and deploy the static frontend, but the repository owner must enable Pages in Settings if it has not already been enabled.
+
+## Security and privacy
+
+- Never commit API keys, passwords, tokens, private source files, or generated private audio.
+- Keep provider credentials in server-side environment variables or platform secrets.
+- URL fetching must reject private/local network destinations and must not bypass login, paywalls, CAPTCHA, or other access controls.
+- Imported story content should not be logged unnecessarily.
+
+## Current limitations
+
+The repository is an active implementation, not yet a finished public service. See [Known Limitations](docs/KNOWN_LIMITATIONS.md) and [Feature Roadmap](docs/FEATURE_ROADMAP.md) for what remains.
