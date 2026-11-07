@@ -89,6 +89,14 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.headers.get("content-type"), "audio/mpeg")
         self.assertEqual(response.content, b"MP3-PART-1MP3-PART-2")
 
+
+    def test_audio_endpoint_rejects_unsupported_voice(self):
+        response = self.client.post(
+            "/api/audio",
+            json={"text": "Narasi lengkap", "voice": "unsupported-voice"},
+        )
+        self.assertEqual(response.status_code, 422)
+
     def test_private_api_token_is_required_when_configured(self):
         with patch.dict(os.environ, {"APP_ACCESS_TOKEN": "private-test-token"}):
             denied = self.client.post("/api/import/url", json={"url": ""})
