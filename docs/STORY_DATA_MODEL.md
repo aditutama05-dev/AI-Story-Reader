@@ -67,3 +67,7 @@ The browser can assemble manually entered notes from up to the 12 most recent pr
 ## Structured continuity facts
 
 Each chapter may store up to 100 user-curated facts with category (`character`, `relationship`, `location`, `term`, `event`, `conflict`), a concise fact statement, and a supporting source excerpt. Each statement and excerpt is limited to 500 characters. Facts from preceding parts in the same series are assembled with part titles and sent as secondary narration context, capped at 12,000 characters. This is not automatic extraction or evidence verification; the active chapter source remains authoritative.
+
+### AI-proposed continuity facts
+
+AI suggestions use the same per-chapter `continuityFacts` structure as manually entered facts. The extraction endpoint returns only suggestions with a verbatim source excerpt match (whitespace-normalized); rejected suggestions are counted. The browser displays all accepted suggestions and asks for user approval before merging them into the chapter. Existing facts are preserved and exact category/fact/excerpt duplicates are not re-added. The AI output is still a proposal, not verified canon.
