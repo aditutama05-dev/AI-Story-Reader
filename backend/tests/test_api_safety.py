@@ -167,7 +167,8 @@ class APISafetyTests(unittest.TestCase):
             })
         self.assertEqual(response.status_code, 200)
         self.assertIn("Penjaga mengenal tokoh utama", prompts[0][1])
-        self.assertIn("referensi sekunder", prompts[0][0])
+        self.assertIn("referensi tambahan", prompts[0][0])
+        self.assertIn("referensi sekunder", prompts[0][1])
         self.assertIn("utamakan teks sumber", prompts[0][0])
 
     def test_narration_verification_flags_empty_compressed_and_duplicate_chunks(self):
