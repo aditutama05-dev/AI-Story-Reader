@@ -304,6 +304,20 @@ def build_narration_verification(chunks: list[str], outputs: list[str]) -> dict:
     return {"status":"review_required","method":"chunk_length_and_duplicate_output_checks","chunks":metrics,"empty_chunks":empty,"compressed_chunks":compressed,"duplicate_output_chunks":duplicates,"warnings":warnings}
 
 
+def find_source_span(source: str, excerpt: str) -> tuple[int, int] | None:
+    """Locate a whitespace-tolerant exact token sequence and return original character offsets."""
+    source_tokens = list(re.finditer(r"\S+", source))
+    excerpt_tokens = [token.casefold() for token in re.findall(r"\S+", excerpt)]
+    if not excerpt_tokens:
+        return None
+    normalized_source = [match.group(0).casefold() for match in source_tokens]
+    width = len(excerpt_tokens)
+    for index in range(0, len(normalized_source) - width + 1):
+        if normalized_source[index:index + width] == excerpt_tokens:
+            return source_tokens[index].start(), source_tokens[index + width - 1].end()
+    return None
+
+
 @app.post("/api/continuity/extract")
 async def extract_continuity_facts(request: ContinuityExtractRequest):
     provider, model, api_key, base_url = provider_config(request.provider, request.model)
@@ -348,7 +362,12 @@ async def extract_continuity_facts(request: ContinuityExtractRequest):
         if category not in allowed or not fact or not excerpt or normalized_excerpt not in normalized_source:
             rejected += 1
             continue
-        accepted.append({"category": category, "fact": fact, "sourceExcerpt": excerpt})
+        span = find_source_span(request.text, excerpt)
+        if not span:
+            rejected += 1
+            continue
+        accepted.append({"category": category, "fact": fact, "sourceExcerpt": excerpt,
+                         "sourceStart": span[0], "sourceEnd": span[1]})
     return {"facts": accepted, "accepted": len(accepted), "rejected": rejected,
             "verification": {"status": "review_required", "method": "verbatim_source_excerpt_match",
             "warnings": ["Fakta diusulkan AI dan wajib ditinjau sebelum disimpan.", "Kutipan diperiksa sebagai teks verbatim setelah normalisasi spasi; makna fakta tidak diverifikasi otomatis."]}}
@@ -407,8 +426,14 @@ async def check_continuity_contradictions(request: ContinuityCheckRequest):
             rejected += 1
             continue
         fact = facts[fact_index]
+        span = find_source_span(request.text, excerpt)
+        if not span:
+            rejected += 1
+            continue
         accepted.append({
             "fact_index": fact_index,
+            "current_start": span[0],
+            "current_end": span[1],
             "prior_fact": str(fact.get("fact", ""))[:500],
             "prior_category": str(fact.get("category", ""))[:40],
             "prior_chapter": str(fact.get("chapterTitle", ""))[:200],
