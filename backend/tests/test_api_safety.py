@@ -155,9 +155,9 @@ class APISafetyTests(unittest.TestCase):
     def test_continuity_extraction_rejects_quotes_not_present_in_source(self):
         source = "Mira memasuki aula dan memperkenalkan dirinya sebagai kapten penjaga."
         async def fake_generate(*args, **kwargs):
-            return '{"facts":['
+            return ('{"facts":['
                 '{"category":"character","fact":"Mira adalah kapten penjaga","sourceExcerpt":"memperkenalkan dirinya sebagai kapten penjaga"},'
-                '{"category":"location","fact":"Aula berada di ibu kota","sourceExcerpt":"aula megah di ibu kota"}]}'
+                '{"category":"location","fact":"Aula berada di ibu kota","sourceExcerpt":"aula megah di ibu kota"}]}')
         with patch.object(main_module, "provider_config", return_value=("openrouter", "test-model", "test-key", "https://example.com/v1")), patch.object(
             main_module, "generate_text", side_effect=fake_generate
         ):
