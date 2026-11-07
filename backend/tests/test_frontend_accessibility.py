@@ -56,6 +56,23 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn('utterance.lang="id-ID"', HTML)
         self.assertIn('utterance.rate=Number($("speechRate").value)||1', HTML)
 
+    def test_story_library_uses_indexeddb_and_keeps_source_separate(self):
+        library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
+        for control_id in ("library-heading", "addSeries", "exportLibrary", "importLibrary", "libraryTree"):
+            self.assertIn('id="' + control_id + '"', HTML)
+        self.assertIn("indexedDB.open(DB_NAME,1)", library)
+        self.assertIn("originalSource", library)
+        self.assertIn("narration", library)
+        self.assertIn("function addArcTo", library)
+        self.assertIn("function addVolume", library)
+        self.assertIn("function addChapter", library)
+
+    def test_full_chapter_mp3_and_multi_page_import_controls_exist(self):
+        for control_id in ("generateMp3", "chapterAudio", "downloadMp3", "seekBack", "seekForward", "audioVoice", "continuationUrls"):
+            self.assertIn('id="' + control_id + '"', HTML)
+        self.assertIn('fetch(apiUrl("/api/audio")', HTML)
+        self.assertIn('fetch(apiUrl(endpoint)', HTML)
+        self.assertIn(".cbz,.zip", HTML)
 
 if __name__ == "__main__":
     unittest.main()
