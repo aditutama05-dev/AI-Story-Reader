@@ -6,42 +6,87 @@
 <style>
 :root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#101116;color:#f4f2f8}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0%,#30264a 0,transparent 34%),#101116;min-height:100vh}
-main{max-width:920px;margin:auto;padding:44px 20px}.brand{color:#c6a7ff;font-weight:700;letter-spacing:.12em;font-size:.8rem}
-h1{font-size:clamp(2rem,6vw,3.5rem);margin:.5rem 0}.sub{color:#aaa5b7;line-height:1.6;max-width:680px}
-.card{margin-top:28px;background:#1a1b24;border:1px solid #343342;border-radius:18px;padding:22px;box-shadow:0 20px 60px #0005}
+main{max-width:960px;margin:auto;padding:40px 20px}.brand{color:#c6a7ff;font-weight:700;letter-spacing:.12em;font-size:.8rem}
+h1{font-size:clamp(2rem,6vw,3.4rem);margin:.5rem 0}.sub{color:#aaa5b7;line-height:1.6;max-width:720px}
+.card{margin-top:24px;background:#1a1b24;border:1px solid #343342;border-radius:18px;padding:22px;box-shadow:0 20px 60px #0005}
 label{display:block;font-size:.9rem;color:#d9d3e6;margin:14px 0 8px}
 input,textarea,select{width:100%;background:#11121a;border:1px solid #454255;border-radius:10px;color:#fff;padding:12px;font:inherit}
-textarea{min-height:260px;resize:vertical;line-height:1.6}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-button{margin-top:18px;background:#a987ef;color:#171020;border:0;border-radius:10px;padding:13px 20px;font-weight:700;font-size:1rem;cursor:pointer}
-button:disabled{opacity:.55;cursor:wait}.status{color:#c6a7ff;min-height:24px;margin-top:14px}
-.output{white-space:pre-wrap;line-height:1.8;color:#eee;margin-top:18px}
-small{color:#9893a5}@media(max-width:600px){.row{grid-template-columns:1fr}main{padding:28px 15px}}
+textarea{min-height:240px;resize:vertical;line-height:1.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+button{background:#a987ef;color:#171020;border:0;border-radius:10px;padding:12px 17px;font-weight:700;font-size:.95rem;cursor:pointer;margin:8px 7px 0 0}
+button.secondary{background:#353143;color:#eee}button:disabled{opacity:.55;cursor:wait}
+.status{color:#c6a7ff;min-height:24px;margin-top:14px}.output{white-space:pre-wrap;line-height:1.85;color:#eee;margin-top:18px}
+small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
+@media(max-width:620px){.row{grid-template-columns:1fr}main{padding:26px 14px}.card{padding:17px}}
 </style></head>
 <body><main>
 <div class="brand">AI STORY READER</div>
 <h1>Baca cerita dengan cara baru.</h1>
-<p class="sub">Ubah teks novel atau chapter menjadi narasi bahasa Indonesia yang mengalir, kronologis, dan menjaga detail cerita. Ini adalah fondasi awal; fitur impor file, URL, audio, dan riwayat akan ditambahkan bertahap.</p>
+<p class="sub">Impor chapter dari URL atau file, lalu ubah menjadi narasi bahasa Indonesia yang kronologis dan menjaga detail cerita. Pemrosesan chapter panjang dilakukan bertahap dengan konteks kesinambungan.</p>
+
 <section class="card">
-<label for="title">Judul chapter</label><input id="title" placeholder="Contoh: Chapter 1 — Awal Perjalanan">
-<label for="source">Teks sumber</label><textarea id="source" placeholder="Tempel teks chapter di sini..."></textarea>
+<h2>1. Impor sumber cerita</h2>
+<label for="url">URL chapter / halaman cerita</label><div class="row"><input id="url" type="url" placeholder="https://..."><button id="importUrl">Ambil dari URL</button></div>
+<p class="hint">Website yang memblokir akses otomatis atau memerlukan login mungkin tidak bisa diimpor. Gunakan salin-tempel sebagai alternatif.</p>
+<label for="file">Upload file</label><input id="file" type="file" accept=".epub,.pdf,.txt,.md,.html,.htm,.docx">
+<button id="importFile" class="secondary">Baca file</button>
+<p class="hint">Format: EPUB, PDF berbasis teks, TXT, Markdown, HTML, DOCX. PDF hasil scan dan gambar manga memerlukan OCR yang belum tersedia.</p>
+</section>
+
+<section class="card">
+<h2>2. Siapkan chapter</h2>
+<label for="title">Judul chapter / bagian</label><input id="title" placeholder="Contoh: Chapter 1 — Awal Perjalanan">
+<label for="source">Teks sumber</label><textarea id="source" placeholder="Teks hasil impor akan muncul di sini. Lu juga bisa langsung menempel teks chapter..."></textarea>
 <div class="row"><div><label for="provider">Provider AI</label><select id="provider"><option value="">Gunakan pengaturan server</option><option value="openrouter">OpenRouter</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option><option value="custom">Custom OpenAI-compatible</option></select></div>
 <div><label for="model">Model (opsional)</label><input id="model" placeholder="Kosongkan untuk model default"></div></div>
-<button id="go">Buat narasi</button><div class="status" id="status"></div><article class="output" id="output"></article>
-</section><p><small>API key disimpan di environment backend, bukan di browser atau repository.</small></p>
-</main><script>
+<button id="go">Buat narasi</button><div class="status" id="status" aria-live="polite"></div>
+</section>
+
+<section class="card"><h2>3. Hasil narasi</h2><div><button id="play">▶ Putar narasi</button><button id="pause" class="secondary">⏸ Jeda</button><button id="resume" class="secondary">Lanjutkan</button><button id="stop" class="secondary">Hentikan</button></div>
+<p class="hint">Pemutaran saat ini memakai suara bawaan browser/perangkat. TTS server dan ekspor MP3 akan ditambahkan pada tahap berikutnya.</p>
+<article class="output" id="output"></article></section>
+<p><small>API key tetap berada di environment backend, tidak dikirim ke browser dan tidak disimpan di repository.</small></p>
+</main>
+<script>
 const $=id=>document.getElementById(id);
+async function importResponse(response){
+ const data=await response.json();if(!response.ok)throw new Error(data.detail||"Impor gagal");
+ $("title").value=data.title||$("title").value;$("source").value=data.text||"";
+ $("status").textContent="Berhasil mengimpor "+(data.characters||data.text?.length||0).toLocaleString("id-ID")+" karakter.";
+}
+$("importUrl").addEventListener("click",async()=>{
+ const url=$("url").value.trim();if(!url){$("status").textContent="Masukkan URL chapter.";return}
+ $("importUrl").disabled=true;$("status").textContent="Mengambil halaman...";
+ try{await importResponse(await fetch("/api/import/url",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})}))}
+ catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importUrl").disabled=false}
+});
+$("importFile").addEventListener("click",async()=>{
+ const file=$("file").files[0];if(!file){$("status").textContent="Pilih file terlebih dahulu.";return}
+ const form=new FormData();form.append("file",file);$("importFile").disabled=true;$("status").textContent="Membaca file...";
+ try{await importResponse(await fetch("/api/import/file",{method:"POST",body:form}))}
+ catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importFile").disabled=false}
+});
 $("go").addEventListener("click",async()=>{
- const text=$("source").value.trim(); if(!text){$("status").textContent="Masukkan teks chapter terlebih dahulu.";return}
- $("go").disabled=true;$("status").textContent="Sedang menyusun narasi...";$("output").textContent="";
+ const text=$("source").value.trim();if(!text){$("status").textContent="Masukkan atau impor teks chapter terlebih dahulu.";return}
+ $("go").disabled=true;$("status").textContent="Sedang menyusun narasi. Chapter panjang diproses per potongan...";$("output").textContent="";
  try{
   const body={text,title:$("title").value||"Bab tanpa judul"};
-  if($("provider").value)body.provider=$("provider").value;
-  if($("model").value.trim())body.model=$("model").value.trim();
+  if($("provider").value)body.provider=$("provider").value;if($("model").value.trim())body.model=$("model").value.trim();
   const r=await fetch("/api/narrate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await r.json();if(!r.ok)throw new Error(data.detail||"Permintaan gagal");
-  $("output").textContent=data.narration;$("status").textContent="Narasi selesai · "+data.provider+" / "+data.model;
- }catch(e){$("status").textContent="Belum berhasil: "+e.message}
- finally{$("go").disabled=false}
+  $("output").textContent=data.narration;
+  $("status").textContent="Selesai · "+data.provider+" / "+data.model+" · "+data.chunks_processed+" potongan";
+ }catch(e){$("status").textContent="Belum berhasil: "+e.message}finally{$("go").disabled=false}
 });
+function speakText(){
+ if(!("speechSynthesis" in window)){ $("status").textContent="Browser ini tidak mendukung pembacaan suara.";return}
+ const text=$("output").textContent.trim();if(!text){$("status").textContent="Belum ada narasi untuk diputar.";return}
+ speechSynthesis.cancel();
+ const chunks=text.match(/[\s\S]{1,2200}(?:\s|$)/g)||[text];let index=0;
+ const speakNext=()=>{if(index>=chunks.length)return;const utterance=new SpeechSynthesisUtterance(chunks[index++]);utterance.lang="id-ID";utterance.onend=speakNext;speechSynthesis.speak(utterance)};
+ speakNext();
+}
+$("play").addEventListener("click",speakText);
+$("pause").addEventListener("click",()=>speechSynthesis.pause());
+$("resume").addEventListener("click",()=>speechSynthesis.resume());
+$("stop").addEventListener("click",()=>speechSynthesis.cancel());
 </script></body></html>
