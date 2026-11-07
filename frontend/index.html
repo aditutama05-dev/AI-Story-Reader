@@ -120,7 +120,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <script>
 const API_BASE=(window.AI_STORY_READER_API_BASE||"").replace(/\/+$/,"");
 const apiUrl=path=>`${API_BASE}${path}`;
-const apiFetch=(path,options={})=>{const headers=new Headers(options.headers||{});const token=sessionStorage.getItem("ai-story-reader-access-token")||"";if(token)headers.set("Authorization","Bearer "+token);return apiFetch(path),{...options,headers})};
+const apiFetch=(path,options={})=>{const headers=new Headers(options.headers||{});const token=sessionStorage.getItem("ai-story-reader-access-token")||"";if(token)headers.set("Authorization","Bearer "+token);return fetch(apiUrl(path),{...options,headers})};
 const $=id=>document.getElementById(id);
 const readingDatabaseName="ai-story-reader-reading-v1";
 let readingDatabasePromise=null;
@@ -367,13 +367,13 @@ async function importResponse(response){
 $("importUrl").addEventListener("click",async()=>{
  const url=$("url").value.trim();if(!url){$("status").textContent="Masukkan URL chapter.";return}
  $("importUrl").disabled=true;$("status").textContent="Mengambil halaman...";
- try{const continuations=$("continuationUrls").value.split(/\n+/).map(value=>value.trim()).filter(Boolean);const urls=[url,...continuations];const endpoint=urls.length>1?"/api/import/urls":"/api/import/url";const payload=urls.length>1?{urls}:{url};await importResponse(await fetch(apiUrl(endpoint),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}))}
+ try{const continuations=$("continuationUrls").value.split(/\n+/).map(value=>value.trim()).filter(Boolean);const urls=[url,...continuations];const endpoint=urls.length>1?"/api/import/urls":"/api/import/url";const payload=urls.length>1?{urls}:{url};await importResponse(await apiFetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}))}
  catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importUrl").disabled=false}
 });
 $("importFile").addEventListener("click",async()=>{
  const file=$("file").files[0];if(!file){$("status").textContent="Pilih file terlebih dahulu.";return}
  const form=new FormData();form.append("file",file);$("importFile").disabled=true;$("status").textContent="Membaca file...";
- try{await importResponse(await fetch(apiUrl("/api/import/file"),{method:"POST",body:form}))}
+ try{await importResponse(await apiFetch("/api/import/file",{method:"POST",body:form}))}
  catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importFile").disabled=false}
 });
 $("go").addEventListener("click",async()=>{
@@ -382,7 +382,7 @@ $("go").addEventListener("click",async()=>{
  try{
   const body={text,title:$("title").value||"Bab tanpa judul"};
   if($("provider").value)body.provider=$("provider").value;if($("model").value.trim())body.model=$("model").value.trim();
-  const r=await fetch(apiUrl("/api/narrate"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const r=await apiFetch("/api/narrate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await r.json();if(!r.ok)throw new Error(data.detail||"Permintaan gagal");
   renderNarration(data.narration);
   await persistNewChapter($("title").value||"Chapter tanpa judul",data.narration);
@@ -402,7 +402,7 @@ $("readComic").addEventListener("click",async()=>{
  if($("comicModel").value.trim())form.append("model",$("comicModel").value.trim());
  $("readComic").disabled=true;$("status").textContent="Membaca gambar dan mengenali teks per halaman...";
  try{
-  const response=await fetch(apiUrl("/api/import/comic"),{method:"POST",body:form});
+  const response=await apiFetch("/api/import/comic",{method:"POST",body:form});
   const data=await response.json();if(!response.ok)throw new Error(data.detail||"OCR gagal");
   $("title").value=data.title;$("source").value=data.text;
   $("status").textContent="OCR selesai · "+data.pages.length+" halaman · "+data.characters.toLocaleString("id-ID")+" karakter. Periksa hasilnya sebelum membuat narasi.";
@@ -446,7 +446,7 @@ $("generateMp3").addEventListener("click",async()=>{
  const text=getNarrationText().trim();if(!text){$("status").textContent="Belum ada narasi untuk dibuat menjadi MP3.";return}
  const button=$("generateMp3");button.disabled=true;$("status").textContent="Membuat satu file MP3 untuk seluruh chapter...";
  try{
-  const response=await fetch(apiUrl("/api/audio"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,voice:$("audioVoice").value,rate:Math.round((Number($("speechRate").value)-1)*100)})});
+  const response=await apiFetch("/api/audio",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,voice:$("audioVoice").value,rate:Math.round((Number($("speechRate").value)-1)*100)})});
   if(!response.ok){let message="Pembuatan MP3 gagal.";try{message=(await response.json()).detail||message}catch{}throw new Error(message)}
   const blob=await response.blob();if(generatedAudioUrl)URL.revokeObjectURL(generatedAudioUrl);
   generatedAudioUrl=URL.createObjectURL(blob);$("chapterAudio").src=generatedAudioUrl;
