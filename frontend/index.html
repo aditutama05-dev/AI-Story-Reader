@@ -97,6 +97,13 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <label for="speechRate">Kecepatan suara</label><select id="speechRate"><option value="0.75">0,75× lambat</option><option value="0.9">0,9×</option><option value="1" selected>Normal</option><option value="1.15">1,15×</option><option value="1.3">1,3×</option><option value="1.5">1,5×</option></select>
 <label for="voiceSelect">Suara TTS perangkat</label><select id="voiceSelect"><option value="">Otomatis (Bahasa Indonesia jika tersedia)</option></select>
 </div>
+<div class="card" aria-labelledby="mp3-heading">
+<h3 id="mp3-heading">Audio MP3 satu chapter penuh</h3>
+<p class="hint">Buat satu file MP3 untuk seluruh narasi chapter. Pembuatan audio memerlukan koneksi server ke layanan TTS.</p>
+<div class="library-actions"><label for="audioVoice">Suara MP3</label><select id="audioVoice"><option value="id-ID-GadisNeural">Indonesia — Gadis</option><option value="id-ID-ArdiNeural">Indonesia — Ardi</option></select><button id="generateMp3" type="button">Buat MP3 lengkap</button><button id="seekBack" type="button" class="secondary" disabled>Mundur 15 detik</button><button id="seekForward" type="button" class="secondary" disabled>Maju 15 detik</button></div>
+<audio id="chapterAudio" controls preload="none" aria-label="Pemutar audio MP3 chapter" style="width:100%;margin-top:12px"></audio>
+<a id="downloadMp3" class="secondary" hidden download="ai-story-reader-chapter.mp3">Unduh MP3</a>
+</div>
 <p class="hint">TalkBack dapat membaca teks narasi di bawah ini seperti teks web biasa. Tombol TTS adalah pilihan tambahan; suara yang tersedia bergantung pada Android/browser dan paket suara yang terpasang.</p>
 <div class="accessibility-tools" role="group" aria-label="Bookmark dan progres membaca">
 <button id="saveBookmark" type="button" class="secondary">Tandai posisi</button>
@@ -427,4 +434,22 @@ $("play").addEventListener("click",speakText);
 $("pause").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.pause()});
 $("resume").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.resume()});
 $("stop").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.cancel();speechIndex=speechChunks.length;$("status").textContent="Pembacaan suara dihentikan.";});
+
+let generatedAudioUrl=null;
+$("generateMp3").addEventListener("click",async()=>{
+ const text=getNarrationText().trim();if(!text){$("status").textContent="Belum ada narasi untuk dibuat menjadi MP3.";return}
+ const button=$("generateMp3");button.disabled=true;$("status").textContent="Membuat satu file MP3 untuk seluruh chapter...";
+ try{
+  const response=await fetch(apiUrl("/api/audio"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,voice:$("audioVoice").value,rate:Math.round((Number($("speechRate").value)-1)*100)})});
+  if(!response.ok){let message="Pembuatan MP3 gagal.";try{message=(await response.json()).detail||message}catch{}throw new Error(message)}
+  const blob=await response.blob();if(generatedAudioUrl)URL.revokeObjectURL(generatedAudioUrl);
+  generatedAudioUrl=URL.createObjectURL(blob);$("chapterAudio").src=generatedAudioUrl;
+  $("downloadMp3").href=generatedAudioUrl;$("downloadMp3").hidden=false;
+  $("seekBack").disabled=false;$("seekForward").disabled=false;
+  $("status").textContent="MP3 chapter lengkap berhasil dibuat. Audio siap diputar atau diunduh.";
+ }catch(error){$("status").textContent="MP3 gagal dibuat: "+error.message}
+ finally{button.disabled=false}
+});
+$("seekBack").addEventListener("click",()=>{const audio=$("chapterAudio");audio.currentTime=Math.max(0,audio.currentTime-15)});
+$("seekForward").addEventListener("click",()=>{const audio=$("chapterAudio");if(Number.isFinite(audio.duration))audio.currentTime=Math.min(audio.duration,audio.currentTime+15)});
 </script><script src="./library.js"></script></body></html>
