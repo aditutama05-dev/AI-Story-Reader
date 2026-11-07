@@ -63,7 +63,8 @@ The web interface includes an accessibility baseline intended to support blind a
 - Semantic page landmarks, heading structure, explicit form labels, a skip-to-content link, visible keyboard focus, and large touch targets.
 - Narration is retained as selectable, navigable HTML text in a named region so Android TalkBack and other screen readers can read it; browser TTS is an optional companion, not a replacement for screen-reader support.
 - Live status messages announce import, OCR, and narration progress to assistive technology.
-- Optional high-contrast mode, larger text, increased reading spacing, and reduced motion.
+- Optional high-contrast mode, larger text, increased reading spacing, and reduced motion; these preferences are saved locally in the browser.
+- A quick-navigation landmark links directly to the major app sections, and the long narration region is navigable without forcing a screen reader to announce the entire chapter automatically.
 - Browser/device speech voices can be selected where the Web Speech API is available, with playback speed, pause, resume, and stop controls.
 
-On Android, enable TalkBack in the device Accessibility settings, then navigate the page using swipe navigation or the TalkBack reading controls. The app does not need to intercept TalkBack gestures. Actual voice availability and behavior depend on Android's installed speech engine and browser. This is an ongoing accessibility implementation and still requires hands-on testing with TalkBack across supported devices; it is not a claim of formal WCAG certification.
+On Android, enable TalkBack in the device Accessibility settings, then navigate the page using swipe navigation or the TalkBack reading controls. The app does not need to intercept TalkBack gestures. Actual voice availability and behavior depend on Android's installed speech engine and browser. Automated checks cover accessible structure and JavaScript syntax in CI. This is an ongoing accessibility implementation and still requires hands-on testing with TalkBack across supported devices; it is not a claim of formal WCAG certification.
