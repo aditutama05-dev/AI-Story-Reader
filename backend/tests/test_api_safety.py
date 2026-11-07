@@ -155,7 +155,7 @@ class APISafetyTests(unittest.TestCase):
     def test_narration_verification_flags_empty_compressed_and_duplicate_chunks(self):
         from app.main import build_narration_verification
 
-        chunks = ["A" * 500, "B" * 500, "C" * 500, "D" * 500]
+        chunks = ["A" * 3000, "B" * 3000, "C" * 3000, "D" * 3000]
         repeated = "Narasi yang sama dan cukup panjang untuk diuji. " * 8
         outputs = [repeated, repeated, "", "pendek"]
         report = build_narration_verification(chunks, outputs)
