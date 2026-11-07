@@ -155,7 +155,7 @@ async function deleteReadingState(){
 function renderNarration(text){
  const output=$("output");
  output.replaceChildren();
- const paragraphs=String(text||"").split(/\\n{2,}/).map(value=>value.trim()).filter(Boolean);
+ const paragraphs=String(text||"").split(/\n{2,}/).map(value=>value.trim()).filter(Boolean);
  if(!paragraphs.length&&text)paragraphs.push(String(text));
  paragraphs.forEach((value,index)=>{
   const paragraph=document.createElement("p");
@@ -167,7 +167,7 @@ function renderNarration(text){
 }
 function getNarrationText(){
  return Array.from($("output").querySelectorAll("[data-paragraph-index]"))
-  .map(paragraph=>paragraph.textContent).join("\\n\\n");
+  .map(paragraph=>paragraph.textContent).join("\n\n");
 }
 function getVisibleParagraphIndex(){
  const paragraphs=Array.from($("output").querySelectorAll("[data-paragraph-index]"));
