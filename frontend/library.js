@@ -109,7 +109,7 @@ async function saveChapter(title,narration,originalSource){
   let arc=series.arcs[0];if(!arc.volumes)arc.volumes=[];
   if(!arc.volumes.length)arc.volumes.push({id:id(),title:"Volume 1",chapters:[]});
   const chapterId=id();
-  arc.volumes[0].chapters.push({id:chapterId,title,originalSource:originalSource||"",narration,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+  arc.volumes[0].chapters.push({id:chapterId,partType:"Chapter",title,originalSource:originalSource||"",narration,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
   window.currentLibraryChapterId=chapterId;
  }
  await persist(next);
