@@ -46,7 +46,7 @@ This roadmap separates the desired product from what is currently implemented. P
 ## Stage 4 — Narration and verification
 
 - [x] Initial context-aware chunked narration endpoint.
-- [ ] MASTER FORM V2 prompt and regression tests covering detailed chronological narration.
+- [x] MASTER FORM V2 prompt strengthened for complete chronological narration, dialogue fidelity, detail preservation, and no invention, with regression tests.
 - [ ] Source-to-narration coverage checks.
 - [ ] Detection of missing, repeated, or reordered source sections.
 - [ ] Explicit uncertainty reporting; never claim guaranteed completeness without evidence.
