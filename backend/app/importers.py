@@ -117,11 +117,17 @@ def extract_document(filename: str, content: bytes) -> tuple[str, str]:
 
 
 def _validate_public_url(url: str) -> str:
-    parsed = urlparse(url)
+    try:
+        parsed = urlparse(url)
+        port = parsed.port
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Format URL atau nomor port tidak valid.") from exc
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
         raise HTTPException(status_code=400, detail="URL harus menggunakan http:// atau https://.")
     if parsed.username or parsed.password:
         raise HTTPException(status_code=400, detail="URL dengan kredensial tidak diizinkan.")
+    if port is not None and not 1 <= port <= 65535:
+        raise HTTPException(status_code=400, detail="Nomor port URL tidak valid.")
     host = parsed.hostname
     try:
         addresses = [ipaddress.ip_address(host)]
@@ -129,7 +135,7 @@ def _validate_public_url(url: str) -> str:
         try:
             addresses = [
                 ipaddress.ip_address(item[4][0])
-                for item in socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == "https" else 80))
+                for item in socket.getaddrinfo(host, port or (443 if parsed.scheme == "https" else 80))
             ]
         except OSError as exc:
             raise HTTPException(status_code=400, detail="Domain tidak dapat ditemukan.") from exc
