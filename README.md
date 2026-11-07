@@ -27,6 +27,7 @@ The product is a browser website, not a native Android or desktop application.
 - Accessibility baseline: semantic landmarks, labels, keyboard focus, skip navigation, high contrast, text sizing, reading spacing, reduced motion, and local preference persistence.
 - TalkBack and screen-reader-compatible story text.
 - Optional browser speech synthesis with voice and speed selection.
+- Local chapter restoration, automatic reading-position persistence, bookmark, and resume controls using browser IndexedDB.
 - URL, file, pasted-text, and multi-image input controls.
 - Configurable public API base URL in `frontend/config.js`. This file may contain a public API origin only; never put API keys or provider secrets in it.
 
