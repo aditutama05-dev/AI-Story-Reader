@@ -170,6 +170,18 @@ Pilihan arsitektur final belum ditetapkan. Kelayakan teknis, batas runtime, peny
 - Perubahan keputusan harus diperbarui dalam dokumentasi repository agar tidak hanya bergantung pada riwayat percakapan.
 - Hasil akhir produk tetap berupa **website**.
 
+## Dokumen Acuan Repository
+
+- [Konteks proyek](docs/PROJECT_CONTEXT.md)
+- [Roadmap fitur](docs/FEATURE_ROADMAP.md)
+- [Batas akses layar dan aksesibilitas](docs/ACCESSIBILITY_AND_SCREEN_ACCESS.md)
+- [Sistem pengambilan sumber](docs/SOURCE_INGESTION.md)
+- [Model data cerita](docs/STORY_DATA_MODEL.md)
+- [Standar narasi MASTER FORM V2](docs/STORY_NARRATION_STANDARD.md)
+- [Arsitektur teknis](docs/TECHNICAL_ARCHITECTURE.md)
+- [Panduan deployment website](docs/DEPLOYMENT.md)
+- [Batasan yang diketahui](docs/KNOWN_LIMITATIONS.md)
+
 ## Topik Pembahasan Berikutnya
 
 1. Sistem URL dan pengenalan sumber.
