@@ -30,7 +30,7 @@ def _validate_archive_limits(book: zipfile.ZipFile) -> None:
         raise HTTPException(status_code=413, detail="Arsip berisi terlalu banyak file.")
     total_size = 0
     for member in members:
-        name = member.filename.replace("\\\\", "/")
+        name = member.filename.replace("\\", "/")
         path = PurePosixPath(name)
         if path.is_absolute() or ".." in path.parts:
             raise HTTPException(status_code=400, detail="Arsip berisi jalur file yang tidak aman.")
