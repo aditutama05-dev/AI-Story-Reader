@@ -35,10 +35,10 @@ This roadmap separates the desired product from what is currently implemented. P
 
 ## Stage 3 — Story library and continuity
 
-- [ ] Persistent Series / Arc / Volume / Story Part / Chapter library.
+- [x] Local browser library for Series / Arc / Volume / Chapter hierarchy, with chapter creation, editing, deletion, and JSON backup/restore. (Local to one browser; cloud sync remains planned.)
 - [ ] Explicit distinction between Arc, Volume, Chapter, Interlude, Ending, Epilogue, and other parts.
 - [ ] One source URL maps to one story part unless the source explicitly proves otherwise.
-- [ ] Store original source text separately from Indonesian narration.
+- [x] Store original source text separately from Indonesian narration in the local story library.
 - [ ] Continuity notes for characters, relationships, locations, events, terms, and active conflicts.
 - [ ] Continuity notes never replace or override source evidence.
 
@@ -59,7 +59,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] High contrast, text sizing, spacing, and reduced-motion preferences.
 - [x] Persist the current narration and reading position in browser IndexedDB; restore it after reload.
 - [x] Accessible bookmark, resume, and clear-progress controls.
-- [ ] Synchronized word highlighting for generated audio.
+- [x] Browser TTS highlights the active paragraph and exposes the active paragraph state to assistive technology. (Word-level synchronization remains planned.)
 - [ ] Stable audio player with progress, pause/resume, and ±15-second seek.
 - [ ] Server-generated MP3 export as one complete file per story part.
 - [ ] Verify audio completeness against the full narration text.
@@ -80,7 +80,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [ ] Deploy frontend to GitHub Pages.
 - [ ] Deploy API to the selected supported backend platform.
 - [ ] Configure runtime secrets outside the repository.
-- [ ] Add rate limits, request size limits, and abuse protection.
+- [x] Add per-client in-memory rate limits to expensive/import API routes.\n- [ ] Add distributed rate limiting, authentication, request quotas, and production abuse protection.
 - [ ] Add privacy/data-retention controls for imported source content and generated audio.
 - [ ] Run automated tests and manual TalkBack testing on real Android devices.
 - [ ] Document deployment, backup, and recovery procedures.
