@@ -91,6 +91,7 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn('indexedDB.open(readingDatabaseName,2)', HTML)
         self.assertIn('readReadingStore(storeName,recordId=activeReadingId)', HTML)
         self.assertIn('activeReadingId=libraryChapterId?"chapter:"+libraryChapterId:"current"', HTML)
+        self.assertIn('libraryChapterId=libraryChapterId||window.currentLibraryChapterId||null', HTML)
         self.assertIn('progress.id=activeReadingId', HTML)
         self.assertIn('window.restoreStoryNarration=async(title,text,libraryChapterId=null)', HTML)
         library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
