@@ -55,3 +55,15 @@ python -m unittest discover -s tests
 ```
 
 This first OCR increment uses a vision model for page transcription; it does not yet perform dedicated object-detection panel segmentation, speech-bubble geometry extraction, translation overlays, CBZ archive import, or OCR correction UI.
+
+## Accessibility and assistive technology
+
+The web interface includes an accessibility baseline intended to support blind and low-vision readers and keyboard users:
+
+- Semantic page landmarks, heading structure, explicit form labels, a skip-to-content link, visible keyboard focus, and large touch targets.
+- Narration is retained as selectable, navigable HTML text in a named region so Android TalkBack and other screen readers can read it; browser TTS is an optional companion, not a replacement for screen-reader support.
+- Live status messages announce import, OCR, and narration progress to assistive technology.
+- Optional high-contrast mode, larger text, increased reading spacing, and reduced motion.
+- Browser/device speech voices can be selected where the Web Speech API is available, with playback speed, pause, resume, and stop controls.
+
+On Android, enable TalkBack in the device Accessibility settings, then navigate the page using swipe navigation or the TalkBack reading controls. The app does not need to intercept TalkBack gestures. Actual voice availability and behavior depend on Android's installed speech engine and browser. This is an ongoing accessibility implementation and still requires hands-on testing with TalkBack across supported devices; it is not a claim of formal WCAG certification.
