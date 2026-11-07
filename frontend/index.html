@@ -32,7 +32,7 @@ input,textarea,select{width:100%;background:#091a2c;border:1px solid #31516f;bor
 textarea{min-height:240px;resize:vertical;line-height:1.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 button{background:#2f8cff;color:#06172a;border:0;border-radius:10px;padding:12px 17px;font-weight:700;font-size:.95rem;cursor:pointer;margin:8px 7px 0 0}
 button.secondary{background:#1d3b5b;color:#eef6ff}button:disabled{opacity:.55;cursor:wait}
-.status{color:#79bdff;min-height:24px;margin-top:14px}.output{white-space:pre-wrap;line-height:1.85;color:#eee;margin-top:18px}
+.status{color:#79bdff;min-height:24px;margin-top:14px}.output{white-space:pre-wrap;line-height:1.85;color:#eee;margin-top:18px}.output p{padding:3px 8px;border-radius:8px}.output p.speech-current{background:#174b79;outline:2px solid #66b2ff}
 small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library-series,.library-arc{border:1px solid #31516f;border-radius:12px;padding:12px;margin:10px 0}.library-arc{margin-left:14px;background:#0b1d30}.library-volume{margin:12px 0 12px 22px;padding:10px;border-left:2px solid #31516f}.library-chapter{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 8px 14px}.library-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.library-actions button,.library-chapter button{margin:4px 4px 4px 0}.library-import{display:inline-flex;align-items:center;background:#1d3b5b;color:#eef6ff;border-radius:10px;padding:12px 17px;min-height:44px;cursor:pointer;font-weight:700}\n.hint{font-size:.85rem;color:#a9bfd5;line-height:1.5}
 @media(max-width:620px){.row{grid-template-columns:1fr}main{padding:26px 14px}.card{padding:17px}}
 </style></head>
@@ -397,18 +397,30 @@ $("readComic").addEventListener("click",async()=>{
 });
 
 $("speechRate").addEventListener("change",savePreferences);$("voiceSelect").addEventListener("change",savePreferences);
-let speechChunks=[],speechIndex=0;
+let speechChunks=[],speechIndex=0,speechParagraphs=[];
+function clearSpeechHighlight(){
+ document.querySelectorAll(".speech-current").forEach(node=>node.classList.remove("speech-current"));
+}
 function speakText(){
- if(!("speechSynthesis" in window)){ $("status").textContent="Browser ini tidak mendukung TTS. Coba aktifkan TalkBack untuk membaca teks narasi.";return}
- const text=getNarrationText().trim();if(!text){$("status").textContent="Belum ada narasi untuk diputar.";return}
- speechSynthesis.cancel();speechChunks=text.match(/[\s\S]{1,1800}(?:\s|$)/g)||[text];speechIndex=0;
+ if(!("speechSynthesis" in window)){$("status").textContent="Browser ini tidak mendukung TTS. Coba aktifkan TalkBack.";return}
+ speechParagraphs=Array.from($("output").querySelectorAll("[data-paragraph-index]"));
+ if(!speechParagraphs.length){$("status").textContent="Belum ada narasi untuk diputar.";return}
+ speechSynthesis.cancel();clearSpeechHighlight();speechIndex=0;
  const selectedVoice=$("voiceSelect").value;
- const speakNext=()=>{if(speechIndex>=speechChunks.length){$("status").textContent="Pembacaan suara selesai.";return}
- const utterance=new SpeechSynthesisUtterance(speechChunks[speechIndex++]);utterance.lang="id-ID";utterance.rate=Number($("speechRate").value)||1;
- if(selectedVoice!==""){const voice=availableVoices.find(v=>v.voiceURI===selectedVoice)||availableVoices[Number(selectedVoice)];if(voice)utterance.voice=voice;}
- else {const idVoice=availableVoices.find(v=>/^id(-|_)/i.test(v.lang));if(idVoice)utterance.voice=idVoice}
- utterance.onend=speakNext;utterance.onerror=event=>{$("status").textContent="TTS terhenti: "+event.error};speechSynthesis.speak(utterance)};
- speakNext();$("status").textContent="TTS mulai membaca narasi.";
+ const speakNext=()=>{
+  if(speechIndex>=speechParagraphs.length){clearSpeechHighlight();$("status").textContent="Pembacaan suara selesai.";return}
+  const index=speechIndex++,paragraph=speechParagraphs[index],utterance=new SpeechSynthesisUtterance(paragraph.textContent);
+  clearSpeechHighlight();paragraph.classList.add("speech-current");
+  paragraph.scrollIntoView({behavior:root.classList.contains("reduce-motion")?"auto":"smooth",block:"center"});
+  paragraph.setAttribute("aria-current","true");
+  utterance.lang="id-ID";utterance.rate=Number($("speechRate").value)||1;
+  if(selectedVoice!==""){const voice=availableVoices.find(v=>v.voiceURI===selectedVoice)||availableVoices[Number(selectedVoice)];if(voice)utterance.voice=voice}
+  else{const idVoice=availableVoices.find(v=>/^id(-|_)/i.test(v.lang));if(idVoice)utterance.voice=idVoice}
+  utterance.onend=()=>{paragraph.removeAttribute("aria-current");speakNext()};
+  utterance.onerror=event=>{$("status").textContent="TTS terhenti: "+event.error};
+  speechSynthesis.speak(utterance);
+ };
+ speakNext();$("status").textContent="TTS mulai membaca. Paragraf yang sedang dibacakan akan disorot.";
 }
 $("play").addEventListener("click",speakText);
 $("pause").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.pause()});
