@@ -24,7 +24,8 @@ This document describes the current repository state. It must be updated when a 
 
 ## File and comic import
 
-- EPUB extraction follows the package spine order. Complex fixed-layout EPUBs and unusual navigation structures may still need review.
+- EPUB extraction follows the package spine order. Complex fixed-layout EPUBs and unusual navigation structures may still need review. ZIP-based EPUB/DOCX inputs are guarded by entry-count, per-member, and total uncompressed-size limits.
+- URL response bodies are streamed and capped at 8 MB before parsing. Text PDFs are limited to 500 pages and 20 million extracted characters; scanned-PDF OCR remains capped at 30 pages.
 - Text-based PDF extraction reads the text layer; scanned PDF OCR is available through the separate vision-model action, limited to 30 pages per request.
 - CBZ/ZIP comic archives are supported for image pages, up to 30 pages per request.
 - Comic OCR is vision-model transcription, not geometric panel segmentation or dedicated character tracking.
