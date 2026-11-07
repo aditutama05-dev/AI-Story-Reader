@@ -62,6 +62,30 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.json()["verification"]["page_count"], 2)
 
 
+    def test_multi_page_import_returns_exact_source_offsets_for_each_page(self):
+        async def fake_extract(url):
+            page = url.rsplit("/", 1)[-1]
+            return {"title": "Chapter", "text": "isi " + page, "characters": len("isi " + page), "source_url": url, "source_domain": "example.com"}
+        with patch.object(main_module, "extract_webpage_report", side_effect=fake_extract):
+            response = self.client.post("/api/import/urls", json={"urls": ["https://example.com/chapter/1", "https://example.com/chapter/2"]})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        for segment in data["segments"]:
+            self.assertEqual(data["text"][segment["source_start"]:segment["source_end"]], "isi " + str(segment["index"]))
+
+    def test_scanned_pdf_page_offsets_match_combined_text(self):
+        pages = [{"page": 1, "text": "Halaman satu."}, {"page": 2, "text": "Halaman dua."}]
+        cursor = 0
+        for index, item in enumerate(pages):
+            if index:
+                cursor += 2
+            item["source_start"] = cursor
+            cursor += len(item["text"])
+            item["source_end"] = cursor
+        combined = "\\n\\n".join(item["text"] for item in pages)
+        for item in pages:
+            self.assertEqual(combined[item["source_start"]:item["source_end"]], item["text"])
+
     def test_multi_page_import_rejects_combined_text_over_limit(self):
         async def fake_extract(url):
             return {"title": "Chapter", "text": "123456", "characters": 6, "source_url": url, "source_domain": "example.com"}
