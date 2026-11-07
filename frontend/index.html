@@ -342,6 +342,7 @@ function loadVoices(){
  window.pendingVoiceURI=select.value;
  savePreferences();
 }
+window.restoreStoryNarration=async(title,text)=>{renderNarration(text);await persistNewChapter(title,text)};
 restorePreferences();
 restoreSavedChapter();
 if("speechSynthesis" in window){
