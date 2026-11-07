@@ -121,5 +121,6 @@ $("exportLibrary").addEventListener("click",exportLibrary);
 $("importLibrary").addEventListener("change",event=>safe(()=>importLibrary(event.target.files[0])));
 window.storyLibrary={saveChapter,render};
 status.textContent="Memuat perpustakaan cerita...";
-loadState().then(()=>{render();status.textContent="Perpustakaan siap. Data disimpan di IndexedDB perangkat ini."}).catch(error=>{status.textContent="Perpustakaan tidak dapat dibuka: "+error.message;render()});
+$("addSeries").disabled=true;$("exportLibrary").disabled=true;$("importLibrary").disabled=true;
+loadState().then(()=>{render();$("addSeries").disabled=false;$("exportLibrary").disabled=false;$("importLibrary").disabled=false;status.textContent="Perpustakaan siap. Data disimpan di IndexedDB perangkat ini."}).catch(error=>{status.textContent="Perpustakaan tidak dapat dibuka: "+error.message;render()});
 })();
