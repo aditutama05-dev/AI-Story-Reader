@@ -72,6 +72,32 @@ class URLStreamingImportTests(unittest.IsolatedAsyncioTestCase):
                 await extract_webpage_report("https://example.com/story.txt")
         self.assertEqual(error.exception.status_code, 413)
 
+
+    async def test_rejects_streamed_body_over_limit_without_content_length(self):
+        import httpx
+        from unittest.mock import patch
+        from app.importers import MAX_URL_BYTES, extract_webpage_report
+
+        async def handler(request):
+            return httpx.Response(
+                200,
+                headers={"content-type": "text/plain; charset=utf-8"},
+                content=b"x" * (MAX_URL_BYTES + 1),
+                request=request,
+            )
+
+        original_client = httpx.AsyncClient
+
+        def client_factory(**kwargs):
+            return original_client(transport=httpx.MockTransport(handler), **kwargs)
+
+        with patch("app.importers._validate_public_url", return_value="https://example.com/large.txt"), patch(
+            "app.importers.httpx.AsyncClient", side_effect=client_factory
+        ):
+            with self.assertRaises(HTTPException) as error:
+                await extract_webpage_report("https://example.com/large.txt")
+        self.assertEqual(error.exception.status_code, 413)
+
     async def test_streams_and_decodes_plain_text_response(self):
         import httpx
         from unittest.mock import patch
