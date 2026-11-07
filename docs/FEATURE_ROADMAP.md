@@ -31,7 +31,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [ ] Automatic same-chapter continuation detection without following next-chapter links.
 - [x] Source completeness report with explicit uncertainty warnings for single-page and manually assembled imports.
 - [x] CBZ/ZIP comic archive ingestion with natural page sorting and decompression limits.
-- [ ] OCR for scanned PDF pages.
+- [x] Scanned PDF rendering and OCR through a vision model, with a 30-page limit and review warnings.
 
 ## Stage 3 — Story library and continuity
 
