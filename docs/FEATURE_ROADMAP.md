@@ -40,6 +40,8 @@ This roadmap separates the desired product from what is currently implemented. P
 - [ ] One source URL maps to one story part unless the source explicitly proves otherwise.
 - [x] Store original source text separately from Indonesian narration in the local story library.
 - [x] Manual continuity notes stored per chapter and kept separate from source text/narration.
+- [x] Automatically include notes from preceding parts in the same series as secondary context for narration, with source text taking priority.
+- [ ] Structured character, relationship, location, event, term, and active-conflict tracking with source references.
 - [ ] Structured character, relationship, location, event, term, and active-conflict tracking with source references.
 - [ ] Continuity notes never replace or override source evidence.
 
