@@ -53,8 +53,8 @@ small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
 </div>
 </section>
 
-<section class="card">
-<h2>1. Impor sumber cerita</h2>
+<section class="card" aria-labelledby="import-heading">
+<h2 id="import-heading">1. Impor sumber cerita</h2>
 <label for="url">URL chapter / halaman cerita</label><div class="row"><input id="url" type="url" placeholder="https://..."><button id="importUrl">Ambil dari URL</button></div>
 <p class="hint">Website yang memblokir akses otomatis atau memerlukan login mungkin tidak bisa diimpor. Gunakan salin-tempel sebagai alternatif.</p>
 <label for="file">Upload file</label><input id="file" type="file" accept=".epub,.pdf,.txt,.md,.html,.htm,.docx">
@@ -63,8 +63,8 @@ small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
 </section>
 
 
-<section class="card">
-<h2>2. Baca manga / manhwa dari gambar</h2>
+<section class="card" aria-labelledby="comic-heading">
+<h2 id="comic-heading">2. Baca manga / manhwa dari gambar</h2>
 <label for="comicFiles">Pilih halaman gambar (urutkan sebelum upload)</label>
 <input id="comicFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple>
 <div class="row">
@@ -75,8 +75,8 @@ small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
 <p class="hint">Pilih maksimal 30 halaman JPG, PNG, atau WEBP. Gunakan model AI yang mendukung gambar/vision. Hasil transkripsi akan dimasukkan ke editor chapter dan tetap bisa diedit sebelum dibuat narasi.</p>
 </section>
 
-<section class="card">
-<h2>3. Siapkan chapter</h2>
+<section class="card" aria-labelledby="editor-heading">
+<h2 id="editor-heading">3. Siapkan chapter</h2>
 <label for="title">Judul chapter / bagian</label><input id="title" placeholder="Contoh: Chapter 1 — Awal Perjalanan">
 <label for="source">Teks sumber</label><textarea id="source" placeholder="Teks hasil impor akan muncul di sini. Lu juga bisa langsung menempel teks chapter..."></textarea>
 <div class="row"><div><label for="provider">Provider AI</label><select id="provider"><option value="">Gunakan pengaturan server</option><option value="openrouter">OpenRouter</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option><option value="custom">Custom OpenAI-compatible</option></select></div>
@@ -242,7 +242,7 @@ function speakText(){
  if(selectedVoice!==""){const voice=availableVoices.find(v=>v.voiceURI===selectedVoice)||availableVoices[Number(selectedVoice)];if(voice)utterance.voice=voice;}
  else {const idVoice=availableVoices.find(v=>/^id(-|_)/i.test(v.lang));if(idVoice)utterance.voice=idVoice}
  utterance.onend=speakNext;utterance.onerror=event=>{$("status").textContent="TTS terhenti: "+event.error};speechSynthesis.speak(utterance)};
- speakNext();
+ speakNext();$("status").textContent="TTS mulai membaca narasi.";
 }
 $("play").addEventListener("click",speakText);
 $("pause").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.pause()});
