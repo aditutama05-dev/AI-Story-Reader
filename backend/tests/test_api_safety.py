@@ -64,5 +64,14 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.headers.get("content-type"), "audio/mpeg")
         self.assertEqual(response.content, b"MP3-PART-1MP3-PART-2")
 
+    def test_private_api_token_is_required_when_configured(self):
+        with patch.dict(os.environ, {"APP_ACCESS_TOKEN": "private-test-token"}):
+            denied = self.client.post("/api/import/url", json={"url": ""})
+            allowed = self.client.post("/api/import/url", json={"url": ""}, headers={"Authorization": "Bearer private-test-token"})
+            health = self.client.get("/api/health")
+        self.assertEqual(denied.status_code, 401)
+        self.assertEqual(allowed.status_code, 400)
+        self.assertEqual(health.status_code, 200)
+
 if __name__ == "__main__":
     unittest.main()
