@@ -109,12 +109,10 @@ class ArchiveSafetyTests(unittest.TestCase):
         self.assertEqual(error.exception.status_code, 400)
 
     def test_rejects_oversized_uncompressed_archive_member(self):
-        archive_bytes = BytesIO()
-        info = zipfile.ZipInfo("large.txt")
-        info.file_size = 25 * 1024 * 1024 + 1
-        with zipfile.ZipFile(archive_bytes, "w") as archive:
-            archive.writestr(info, b"x")
-        with zipfile.ZipFile(BytesIO(archive_bytes.getvalue())) as archive:
-            with self.assertRaises(HTTPException) as error:
-                _validate_archive_limits(archive)
+        from types import SimpleNamespace
+        fake_archive = SimpleNamespace(
+            infolist=lambda: [SimpleNamespace(filename="large.txt", file_size=25 * 1024 * 1024 + 1)]
+        )
+        with self.assertRaises(HTTPException) as error:
+            _validate_archive_limits(fake_archive)
         self.assertEqual(error.exception.status_code, 413)
