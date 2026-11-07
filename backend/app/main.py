@@ -187,10 +187,7 @@ async def import_comic_pages(
                     response.raise_for_status()
                     transcription = response.json()["choices"][0]["message"]["content"]
                 pages.append({"page": index, "filename": upload.filename or f"page-{index}", "text": transcription.strip()})
-        combined = "
-
-".join(f"[Halaman {page['page']}]
-{page['text']}" for page in pages)
+        combined = "\\n\\n".join(f"[Halaman {page['page']}]\\n{page['text']}" for page in pages)
         return {"title": "Hasil OCR komik", "pages": pages, "text": combined, "characters": len(combined),
                 "provider": selected, "model": selected_model, "reading_direction": direction}
     except HTTPException:
