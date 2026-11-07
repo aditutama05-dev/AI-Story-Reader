@@ -40,6 +40,13 @@ class VisionOCRTests(unittest.TestCase):
             normalize_page_image(self.make_png(), "image/gif")
         self.assertEqual(error.exception.status_code, 415)
 
+
+    def test_converts_pillow_decompression_bomb_into_client_error(self):
+        with patch("app.vision_ocr.Image.open", side_effect=Image.DecompressionBombError("too many pixels")):
+            with self.assertRaises(HTTPException) as error:
+                normalize_page_image(b"image-bytes", "image/png")
+        self.assertEqual(error.exception.status_code, 400)
+
     def test_rejects_empty_image(self):
         with self.assertRaises(HTTPException) as error:
             normalize_page_image(b"", "image/png")
