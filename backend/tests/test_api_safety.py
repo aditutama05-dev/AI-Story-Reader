@@ -169,6 +169,30 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(data["facts"][0]["category"], "character")
         self.assertEqual(data["verification"]["method"], "verbatim_source_excerpt_match")
 
+
+    def test_continuity_check_accepts_only_valid_prior_index_and_current_source_quote(self):
+        source = "Raka membuka pintu dengan tangan kirinya. Ia lalu memasuki ruangan."
+        async def fake_generate(*args, **kwargs):
+            return ('{"contradictions":['
+                '{"fact_index":0,"current_excerpt":"membuka pintu dengan tangan kirinya","explanation":"Fakta lama menyebut Raka selalu kehilangan tangan kiri.","severity":"high"},'
+                '{"fact_index":9,"current_excerpt":"memasuki ruangan","explanation":"Indeks fakta tidak ada.","severity":"low"},'
+                '{"fact_index":0,"current_excerpt":"Raka membuka pintu dengan tangan kanannya","explanation":"Kutipan tidak ada di sumber.","severity":"medium"}]}')
+        facts = [{"category":"character","fact":"Raka tidak memiliki tangan kiri","chapterTitle":"Chapter 1"}]
+        with patch.object(main_module, "provider_config", return_value=("openrouter", "test-model", "test-key", "https://example.com/v1")), patch.object(
+            main_module, "generate_text", side_effect=fake_generate
+        ):
+            response = self.client.post("/api/continuity/check", json={"text":source,"title":"Chapter 2","prior_facts":facts})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["accepted"], 1)
+        self.assertEqual(data["rejected"], 2)
+        self.assertEqual(data["contradictions"][0]["prior_fact"], facts[0]["fact"])
+        self.assertEqual(data["verification"]["method"], "prior_fact_index_and_verbatim_current_excerpt_match")
+
+    def test_continuity_check_requires_prior_facts(self):
+        response = self.client.post("/api/continuity/check", json={"text":"Teks baru","prior_facts":[]})
+        self.assertEqual(response.status_code, 422)
+
     def test_narration_accepts_continuity_context_as_secondary_reference(self):
         prompts = []
         async def fake_generate(client, provider, model, api_key, base_url, system_prompt, user_prompt):
