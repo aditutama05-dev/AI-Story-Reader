@@ -51,6 +51,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 \n<section class="card" aria-labelledby="accessibility-heading">
 <h2 id="accessibility-heading">Aksesibilitas &amp; kenyamanan membaca</h2>
 <p class="hint">Kontrol ini membantu pengguna low vision dan pengguna keyboard. Seluruh teks narasi tetap tersedia sebagai teks yang bisa dibaca TalkBack atau pembaca layar lain. Website ini tidak dapat membaca layar aplikasi lain atau mengambil screenshot perangkat secara diam-diam.</p>
+<div class="library-volume"><h3>Keamanan koneksi API</h3><label for="apiAccessToken">Token akses aplikasi (jika diminta server)</label><input id="apiAccessToken" type="password" autocomplete="off" placeholder="Masukkan token akses pribadi"><div class="library-actions"><button id="saveApiToken" type="button" class="secondary">Simpan untuk sesi ini</button><button id="clearApiToken" type="button" class="secondary">Hapus token sesi</button></div><p class="hint">Token akses hanya disimpan sementara di sesi browser. Kunci provider AI tetap berada di server dan tidak pernah dimasukkan di sini.</p></div>
 <div class="accessibility-tools" role="group" aria-label="Pengaturan tampilan dan aksesibilitas">
 <label for="textSize">Ukuran teks</label>
 <select id="textSize" aria-label="Ukuran teks"><option value="normal">Normal</option><option value="large">Besar</option><option value="extra">Sangat besar</option></select>
@@ -119,6 +120,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <script>
 const API_BASE=(window.AI_STORY_READER_API_BASE||"").replace(/\/+$/,"");
 const apiUrl=path=>`${API_BASE}${path}`;
+const apiFetch=(path,options={})=>{const headers=new Headers(options.headers||{});const token=sessionStorage.getItem("ai-story-reader-access-token")||"";if(token)headers.set("Authorization","Bearer "+token);return apiFetch(path),{...options,headers})};
 const $=id=>document.getElementById(id);
 const readingDatabaseName="ai-story-reader-reading-v1";
 let readingDatabasePromise=null;
@@ -343,6 +345,8 @@ function loadVoices(){
  savePreferences();
 }
 window.restoreStoryNarration=async(title,text)=>{renderNarration(text);await persistNewChapter(title,text)};
+$("saveApiToken").addEventListener("click",()=>{const token=$("apiAccessToken").value.trim();if(token)sessionStorage.setItem("ai-story-reader-access-token",token);else sessionStorage.removeItem("ai-story-reader-access-token");$("status").textContent=token?"Token akses disimpan untuk sesi browser ini.":"Token kosong; proteksi token server mungkin menolak permintaan."});
+$("clearApiToken").addEventListener("click",()=>{sessionStorage.removeItem("ai-story-reader-access-token");$("apiAccessToken").value="";$("status").textContent="Token akses sesi dihapus."});
 restorePreferences();
 restoreSavedChapter();
 if("speechSynthesis" in window){
