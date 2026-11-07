@@ -31,3 +31,27 @@ Initial repository scaffold. Features will be implemented incrementally, with so
 ## Development
 
 The backend application will live in `backend/`. See `backend/requirements.txt` and `backend/app/main.py` as the implementation is added.
+
+
+## Manga and manhwa image OCR
+
+The initial multi-page comic OCR flow is available in the web interface:
+
+- Upload up to 30 JPG, PNG, or WEBP page images per request (15 MB per image).
+- Choose Japanese manga right-to-left, left-to-right comics, or vertical webtoon/manhwa reading direction.
+- Images are EXIF-corrected, converted to JPEG, and resized before being sent to a vision-capable model.
+- OCR requests preserve the original language, identify panel order, separate speech/captions/thoughts/SFX when recognizable, and mark unreadable text instead of guessing.
+- Page transcriptions are joined in upload order and placed into the chapter editor for review before narration.
+- OpenAI-compatible vision models (including compatible OpenRouter routes) and Gemini vision models are supported by the backend adapter.
+
+The model configured in `AI_MODEL` must support image input. The OCR endpoint is `POST /api/import/comic` using multipart form fields `files`, `direction`, and optional `provider` / `model`.
+
+### OCR tests
+
+From the `backend/` directory, run:
+
+```bash
+python -m unittest discover -s tests
+```
+
+This first OCR increment uses a vision model for page transcription; it does not yet perform dedicated object-detection panel segmentation, speech-bubble geometry extraction, translation overlays, CBZ archive import, or OCR correction UI.
