@@ -4,6 +4,8 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 
 ## 2026-11-07
 
+- Added AI-assisted extraction of structured continuity facts from a selected chapter, with source-excerpt matching, duplicate-aware merge, and mandatory user review before saving.
+
 - Added manually curated structured continuity facts by category (character, relationship, location, term, event, conflict), paired with source excerpts and included in later narration as secondary context.
 
 - Added prior-chapter continuity context: manually maintained notes from earlier parts in the same series are sent with narration requests as secondary reference, capped at 12,000 characters. Current source text remains authoritative.
