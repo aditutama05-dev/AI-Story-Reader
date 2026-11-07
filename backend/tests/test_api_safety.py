@@ -37,5 +37,17 @@ class APISafetyTests(unittest.TestCase):
         self.assertIn("AI belum dikonfigurasi", response.json()["detail"])
 
 
+    def test_multi_page_import_combines_explicit_urls_in_order(self):
+        async def fake_extract(url):
+            return {"title": "Chapter", "text": url.rsplit("/", 1)[-1], "characters": 2, "source_url": url, "source_domain": "example.com"}
+        with patch.object(main_module, "extract_webpage_report", side_effect=fake_extract):
+            response = self.client.post("/api/import/urls", json={"urls": ["https://example.com/chapter/page-1", "https://example.com/chapter/page-2"]})
+        self.assertEqual(response.status_code, 200)
+        self.assertLess(response.json()["text"].index("page-1"), response.json()["text"].index("page-2"))
+        self.assertEqual(response.json()["verification"]["page_count"], 2)
+
+    def test_multi_page_import_rejects_mixed_domains(self):
+        response = self.client.post("/api/import/urls", json={"urls": ["https://example.com/chapter/1", "https://other.example/chapter/2"]})
+        self.assertEqual(response.status_code, 400)
 if __name__ == "__main__":
     unittest.main()
