@@ -38,6 +38,14 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertNotIn("#c6a7ff", HTML)
         self.assertIn("AI_STORY_READER_API_BASE", HTML)
 
+    def test_reading_progress_and_bookmarks_are_persisted(self):
+        for control_id in ("saveBookmark", "resumeReading", "clearProgress"):
+            self.assertIn(f'id="{control_id}"', HTML)
+        self.assertIn("indexedDB.open(readingDatabaseName,1)", HTML)
+        self.assertIn("restoreSavedChapter();", HTML)
+        self.assertIn("scrollToParagraph(index)", HTML)
+        self.assertIn("renderNarration(data.narration)", HTML)
+
     def test_tts_controls_are_labelled_and_configurable(self):
         for control_id in ("play", "pause", "resume", "stop", "speechRate", "voiceSelect"):
             self.assertIn(f'id="{control_id}"', HTML)
