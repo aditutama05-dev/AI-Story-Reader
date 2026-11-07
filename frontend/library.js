@@ -72,7 +72,7 @@ function render(){
      const open=document.createElement("button");open.className="secondary";open.textContent="Buka "+(chapter.partType||"Chapter")+": "+chapter.title;open.onclick=()=>openChapter(chapter);
      const narration=document.createElement("button");narration.className="secondary";narration.textContent="Buka narasi";narration.disabled=!chapter.narration;narration.onclick=()=>safe(()=>openNarration(chapter));
      const del=document.createElement("button");del.className="secondary";del.textContent="Hapus";del.onclick=()=>safe(()=>deleteChapter(s.id,a.id,v.id,chapter.id));
-     const notes=document.createElement("button");notes.className="secondary";notes.textContent="Catatan kontinuitas";notes.onclick=()=>safe(()=>editNotes(s.id,a.id,v.id,chapter.id));row.append(open,narration,notes,del);vol.append(row);if(chapter.notes){const note=document.createElement("p");note.className="hint";note.textContent="Catatan: "+chapter.notes;vol.append(note)}
+     const notes=document.createElement("button");notes.className="secondary";notes.textContent="Catatan kontinuitas";notes.onclick=()=>safe(()=>editNotes(s.id,a.id,v.id,chapter.id));const facts=document.createElement("button");facts.className="secondary";facts.textContent="Fakta terstruktur";facts.onclick=()=>safe(()=>editContinuityFacts(s.id,a.id,v.id,chapter.id));row.append(open,narration,notes,facts,del);vol.append(row);if(chapter.notes){const note=document.createElement("p");note.className="hint";note.textContent="Catatan: "+chapter.notes;vol.append(note)}
     }
     arc.append(vol);
    }
@@ -91,6 +91,26 @@ async function renameSeries(sid){const all=read(),s=all.find(x=>x.id===sid),titl
 async function renameNode(sid,nid,type){let found=false;const all=read().map(s=>s.id!==sid?s:{...s,arcs:s.arcs.map(a=>{if(type==="arc"&&a.id===nid){found=true;const title=ask("Nama arc:",a.title);return title?{...a,title}:a}return {...a,volumes:a.volumes.map(v=>{if(type==="volume"&&v.id===nid){found=true;const title=ask("Nama volume:",v.title);return title?{...v,title}:v}return v})}})});if(found)await persist(all)}
 async function removeSeries(sid){if(!confirm("Hapus seri beserta semua arc, volume, dan chapter di dalamnya?"))return;await persist(read().filter(s=>s.id!==sid))}
 async function editNotes(sid,aid,vid,cid){const all=read();let current="";for(const s of all)if(s.id===sid)for(const a of s.arcs||[])if(a.id===aid)for(const v of a.volumes||[])if(v.id===vid)for(const ch of v.chapters||[])if(ch.id===cid)current=ch.notes||"";const notes=prompt("Catatan kontinuitas chapter ini (tokoh, relasi, lokasi, istilah, kejadian):",current);if(notes===null)return;const updated=all.map(s=>s.id!==sid?s:{...s,arcs:s.arcs.map(a=>a.id!==aid?a:{...a,volumes:a.volumes.map(v=>v.id!==vid?v:{...v,chapters:v.chapters.map(ch=>ch.id===cid?{...ch,notes,notesUpdatedAt:new Date().toISOString()}:ch)})})});await persist(updated)}
+async function editContinuityFacts(sid,aid,vid,cid){
+ const all=read();let chapter=null;
+ for(const s of all)if(s.id===sid)for(const a of s.arcs||[])if(a.id===aid)for(const v of a.volumes||[])if(v.id===vid)chapter=(v.chapters||[]).find(ch=>ch.id===cid)||chapter;
+ if(!chapter)return;
+ const existing=(chapter.continuityFacts||[]).map(f=>[f.category,f.fact,f.sourceExcerpt||""].join(" | ")).join("\n");
+ const raw=prompt("Fakta terstruktur, satu per baris dengan format KATEGORI | FAKTA | KUTIPAN SUMBER. Kategori: character, relationship, location, term, event, conflict. Kutipan harus berasal dari sumber chapter ini.\nContoh: character | Arlen adalah kapten penjaga | Arlen memperkenalkan dirinya sebagai kapten penjaga.",existing);
+ if(raw===null)return;
+ const allowed=new Set(["character","relationship","location","term","event","conflict"]);
+ const facts=[];
+ for(const [index,line] of raw.split(/\r?\n/).entries()){
+  if(!line.trim())continue;
+  const parts=line.split("|").map(value=>value.trim());
+  if(parts.length<3||!allowed.has(parts[0])||!parts[1]||!parts[2])throw new Error("Baris "+(index+1)+" harus berisi kategori valid, fakta, dan kutipan sumber.");
+  if(parts[1].length>500||parts.slice(2).join(" | ").length>500)throw new Error("Fakta dan kutipan maksimal 500 karakter per baris.");
+  facts.push({category:parts[0],fact:parts[1],sourceExcerpt:parts.slice(2).join(" | ").slice(0,500)});
+ }
+ if(facts.length>100)throw new Error("Maksimal 100 fakta kontinuitas per chapter.");
+ const updated=all.map(s=>s.id!==sid?s:{...s,arcs:s.arcs.map(a=>a.id!==aid?a:{...a,volumes:a.volumes.map(v=>v.id!==vid?v:{...v,chapters:v.chapters.map(ch=>ch.id===cid?{...ch,continuityFacts:facts,continuityFactsUpdatedAt:new Date().toISOString()}:ch)})})});
+ await persist(updated);status.textContent=facts.length+" fakta kontinuitas tersimpan dengan kutipan sumber.";
+}
 async function deleteChapter(sid,aid,vid,cid){if(!confirm("Hapus chapter ini?"))return;const all=read().map(s=>s.id!==sid?s:{...s,arcs:s.arcs.map(a=>a.id!==aid?a:{...a,volumes:a.volumes.map(v=>v.id!==vid?v:{...v,chapters:v.chapters.filter(c=>c.id!==cid)})})});await persist(all)}
 function buildContinuityContext(chapterId){
  let selected=null,selectedSeries=null,ordered=[];
@@ -101,10 +121,17 @@ function buildContinuityContext(chapterId){
   if(index>=0){selected=parts[index];selectedSeries=series;ordered=parts.slice(0,index);break}
  }
  if(!selected||!selectedSeries)return "";
- const entries=ordered.filter(chapter=>chapter.notes?.trim()).slice(-12).map(chapter=>"- "+(chapter.partType||"Chapter")+" "+chapter.title+": "+chapter.notes.trim());
+ const entries=[];
+ for(const chapter of ordered.slice(-20)){
+  if(chapter.notes?.trim())entries.push("- Catatan "+(chapter.partType||"Chapter")+" "+chapter.title+": "+chapter.notes.trim());
+  for(const fact of (chapter.continuityFacts||[]).slice(0,100)){
+   entries.push("- ["+fact.category+"] "+fact.fact+" (bagian sumber: "+chapter.title+"; kutipan: "+fact.sourceExcerpt+")");
+  }
+ }
  if(selected.notes?.trim())entries.push("- Catatan bagian aktif ("+(selected.partType||"Chapter")+" "+selected.title+"): "+selected.notes.trim());
+ for(const fact of (selected.continuityFacts||[]).slice(0,100))entries.push("- ["+fact.category+"] "+fact.fact+" (kutipan sumber: "+fact.sourceExcerpt+")");
  if(!entries.length)return "";
- return ("Seri: "+selectedSeries.title+"\n"+entries.join("\n")).slice(0,12000);
+ return ("Seri: "+selectedSeries.title+"\nFAKTA KONTINUITAS TERIKAT KE SUMBER:\n"+entries.join("\n")).slice(0,12000);
 }
 function openChapter(chapter){$("title").value=chapter.title;$("source").value=chapter.originalSource||chapter.text||"";window.currentLibraryChapterId=chapter.id;status.textContent="Teks sumber asli dimuat ke editor. Narasi tersimpan terpisah.";$("editor-heading").scrollIntoView({behavior:"smooth"});$("source").focus()}
 async function openNarration(chapter){if(!chapter.narration)return;$("title").value=chapter.title;window.currentLibraryChapterId=chapter.id;await window.restoreStoryNarration?.(chapter.title,chapter.narration,chapter.id);status.textContent="Narasi tersimpan dibuka. Progres dan bookmark chapter ini dipulihkan secara terpisah.";$("result-heading").scrollIntoView({behavior:"smooth"})}
