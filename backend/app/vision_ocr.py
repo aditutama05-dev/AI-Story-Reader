@@ -27,7 +27,7 @@ def normalize_page_image(content: bytes, content_type: str) -> bytes:
             output = BytesIO()
             image.save(output, format="JPEG", quality=88, optimize=True)
             return output.getvalue()
-    except (UnidentifiedImageError, OSError, ValueError) as exc:
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError) as exc:
         raise HTTPException(status_code=400, detail="Gambar tidak dapat dibaca atau rusak.") from exc
 
 
