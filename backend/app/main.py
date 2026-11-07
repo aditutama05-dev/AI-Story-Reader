@@ -20,6 +20,7 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 if not (PROJECT_DIR / "frontend").is_dir():
     PROJECT_DIR = PROJECT_DIR.parent
 app = FastAPI(title="AI Story Reader API", version="0.2.0")
+MAX_BATCH_IMPORT_CHARS = 20_000_000
 app.add_middleware(CORSMiddleware, allow_origins=os.getenv("CORS_ORIGINS", "*").split(","), allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
 # Lightweight per-process abuse guard. Configure limits through environment variables.
@@ -165,8 +166,12 @@ async def import_url_pages(payload: URLBatchRequest):
     if len(hosts) != 1:
         raise HTTPException(status_code=400, detail="Semua halaman harus berasal dari domain yang sama.")
     results = []
+    total_characters = 0
     for index, url in enumerate(validated_urls, start=1):
         result = await extract_webpage_report(url)
+        total_characters += len(result["text"])
+        if total_characters > MAX_BATCH_IMPORT_CHARS:
+            raise HTTPException(status_code=413, detail="Gabungan halaman chapter melebihi batas 20 juta karakter.")
         results.append(result)
     combined = "\n\n".join(f"[Halaman {index}]\n{item['text']}" for index, item in enumerate(results, start=1))
     warnings = ["Halaman digabung sesuai urutan URL yang dimasukkan pengguna.", "Pastikan semua URL adalah bagian dari chapter yang sama; endpoint tidak menebak atau mengikuti tautan chapter berikutnya."]
