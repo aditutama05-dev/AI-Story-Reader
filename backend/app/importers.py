@@ -22,6 +22,8 @@ MAX_URL_BYTES = 8 * 1024 * 1024
 MAX_ARCHIVE_ENTRIES = 5000
 MAX_ARCHIVE_MEMBER_BYTES = 25 * 1024 * 1024
 MAX_ARCHIVE_UNCOMPRESSED_BYTES = 100 * 1024 * 1024
+MAX_PDF_PAGES = 500
+MAX_EXTRACTED_TEXT_CHARS = 20_000_000
 
 
 def _validate_archive_limits(book: zipfile.ZipFile) -> None:
@@ -60,8 +62,17 @@ def extract_document(filename: str, content: bytes) -> tuple[str, str]:
             return _clean_html(content)
         if suffix == ".pdf":
             reader = PdfReader(BytesIO(content))
-            text = "\n\n".join((page.extract_text() or "") for page in reader.pages)
-            return PurePosixPath(filename).stem, text.strip()
+            if len(reader.pages) > MAX_PDF_PAGES:
+                raise HTTPException(status_code=413, detail="PDF teks dibatasi maksimal 500 halaman.")
+            pieces = []
+            total_characters = 0
+            for page in reader.pages:
+                page_text = page.extract_text() or ""
+                total_characters += len(page_text)
+                if total_characters > MAX_EXTRACTED_TEXT_CHARS:
+                    raise HTTPException(status_code=413, detail="Hasil ekstraksi PDF melebihi batas 20 juta karakter.")
+                pieces.append(page_text)
+            return PurePosixPath(filename).stem, "\\n\\n".join(pieces).strip()
         if suffix == ".docx":
             with zipfile.ZipFile(BytesIO(content)) as archive:
                 _validate_archive_limits(archive)
