@@ -190,9 +190,21 @@ async def import_url_pages(payload: URLBatchRequest):
         if total_characters > MAX_BATCH_IMPORT_CHARS:
             raise HTTPException(status_code=413, detail="Gabungan halaman chapter melebihi batas 20 juta karakter.")
         results.append(result)
-    combined = "\n\n".join(f"[Halaman {index}]\n{item['text']}" for index, item in enumerate(results, start=1))
+    combined_parts = []
+    segments = []
+    cursor = 0
+    for index, item in enumerate(results, start=1):
+        prefix = f"[Halaman {index}]\n"
+        if combined_parts:
+            cursor += 2
+        cursor += len(prefix)
+        start = cursor
+        combined_parts.append(prefix + item["text"])
+        cursor += len(item["text"])
+        segments.append({"index": index, "url": item["source_url"], "characters": len(item["text"]), "source_start": start, "source_end": cursor})
+    combined = "\n\n".join(combined_parts)
     warnings = ["Halaman digabung sesuai urutan URL yang dimasukkan pengguna.", "Pastikan semua URL adalah bagian dari chapter yang sama; endpoint tidak menebak atau mengikuti tautan chapter berikutnya."]
-    return {"title": results[0]["title"], "text": combined, "characters": len(combined), "source_domain": next(iter(hosts)), "segments": [{"index": index, "url": item["source_url"], "characters": len(item["text"])} for index, item in enumerate(results, start=1)], "verification": {"status": "review_required", "page_count": len(results), "warnings": warnings}}
+    return {"title": results[0]["title"], "text": combined, "characters": len(combined), "source_domain": next(iter(hosts)), "segments": segments, "verification": {"status": "review_required", "page_count": len(results), "warnings": warnings}}
 
 @app.post("/api/import/file")
 async def import_file(file: UploadFile = File(...)):
@@ -264,8 +276,15 @@ async def import_scanned_pdf(
                     response.raise_for_status()
                     text = response.json()["choices"][0]["message"]["content"]
                 transcriptions.append({"page": index, "text": text.strip()})
+        cursor = 0
+        for index, item in enumerate(transcriptions):
+            if index:
+                cursor += 2
+            item["source_start"] = cursor
+            cursor += len(item["text"])
+            item["source_end"] = cursor
         combined = "\n\n".join(item["text"] for item in transcriptions)
-        return {"title": Path(file.filename or "scanned-document.pdf").stem, "pages": transcriptions, "text": combined, "characters": len(combined), "provider": selected, "model": selected_model, "verification": {"status": "review_required", "page_count": len(transcriptions), "warnings": ["Hasil OCR harus diperiksa terhadap halaman PDF asli, terutama nama, angka, tanda baca, dan tata letak kompleks."]}}
+        return {"title": Path(file.filename or "scanned-document.pdf").stem, "pages": transcriptions, "segments": [{"index": item["page"], "characters": len(item["text"]), "source_start": item["source_start"], "source_end": item["source_end"]} for item in transcriptions], "text": combined, "characters": len(combined), "provider": selected, "model": selected_model, "verification": {"status": "review_required", "page_count": len(transcriptions), "warnings": ["Hasil OCR harus diperiksa terhadap halaman PDF asli, terutama nama, angka, tanda baca, dan tata letak kompleks."]}}
     except HTTPException:
         raise
     except httpx.HTTPStatusError as exc:
