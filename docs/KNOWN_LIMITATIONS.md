@@ -36,7 +36,7 @@ This document describes the current repository state. It must be updated when a 
 
 - Narration uses context-aware chunks and flags empty, unusually compressed, or exactly duplicated chunk outputs. These structural checks cannot detect paraphrased omissions, altered event order, or semantic inaccuracies; full source-to-narration coverage verification is not implemented.
 - A local IndexedDB Series/Arc/Volume/Chapter library exists with JSON backup/restore. It is not cloud-synced; story parts have explicit type metadata for Chapter, Interlude, Ending, Epilogue, Prologue, Side Story, and custom labels.
-- Manual notes and manually curated structured facts (character, relationship, location, term, event, conflict) can be stored per chapter with a supporting source excerpt. Facts are not automatically extracted or verified, excerpts are user-entered rather than independently checked against source text, and precise paragraph/page offsets are not stored.
+- Manual notes and manually curated structured facts (character, relationship, location, term, event, conflict) can be stored per chapter with a supporting source excerpt. Facts are not automatically extracted or verified, excerpts are user-entered rather than independently checked against source text, and AI-proposed facts now store character offsets into the source text, but manually curated legacy facts may not have offsets and page-level evidence mapping is not implemented. Offsets can become stale if source text is edited; re-extract facts after source changes..
 - AI output can still omit or distort source details; human review remains important.
 
 ## Audio
@@ -70,3 +70,7 @@ The user can request up to 30 AI-proposed facts from the active chapter. The bac
 ### AI-assisted continuity contradiction checks
 
 The user can compare the active chapter against up to 240 structured facts from preceding parts in the same series. The API accepts a candidate only when its prior-fact index is valid and its quoted current-chapter excerpt matches the source after whitespace normalization. Results are suggestions only: the model can misinterpret context, and the feature does not prove semantic contradiction, detect every inconsistency, or modify saved facts. It requires an active library chapter and a configured AI provider.
+
+### Source evidence offsets
+
+Offsets are zero-based character positions into the exact text submitted to the API, not stable identifiers across edits or re-imports. The current locator matches token sequences case-insensitively and tolerates whitespace differences; ambiguous repeated excerpts resolve to the first occurrence. Page-level mapping is not available for ordinary text imports, and older/manual facts may lack offsets.
