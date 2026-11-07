@@ -64,6 +64,14 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn("getContinuityContext?.(window.currentLibraryChapterId)", HTML)
         self.assertIn("body.continuity_context=continuity", HTML)
 
+    def test_automatic_continuity_extraction_requires_user_review_before_save(self):
+        self.assertIn('id="extractFacts"', HTML)
+        self.assertIn('/api/continuity/extract', HTML)
+        self.assertIn('if(!confirm("Periksa usulan fakta berikut.', HTML)
+        library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
+        self.assertIn("async function storeExtractedFacts", library)
+        self.assertIn("storeExtractedFacts};", library)
+
     def test_library_supports_structured_source_grounded_continuity_facts(self):
         library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
         self.assertIn("async function editContinuityFacts", library)
