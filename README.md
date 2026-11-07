@@ -36,8 +36,8 @@ The product is a browser website, not a native Android or desktop application.
 
 - FastAPI application in `backend/app/main.py`.
 - URL import with generic HTML extraction, source warnings, and explicit multi-page chapter assembly.\n- In-memory per-client rate limits for import and AI/audio endpoints.
-- TXT, Markdown, HTML, text-based PDF, DOCX, and EPUB extraction.
-- Multi-image and CBZ/ZIP OCR for JPG, PNG, and WEBP using a vision-capable provider.
+- TXT, Markdown, HTML, text-based PDF, scanned PDF OCR (vision model), DOCX, and EPUB extraction.
+- Multi-image, CBZ/ZIP, and scanned-PDF OCR for JPG, PNG, and WEBP page images using a vision-capable provider.
 - Full-chapter MP3 generation using Edge TTS.
 - Context-aware chunked Indonesian narration.
 - Provider configuration for OpenAI, OpenRouter, Gemini, and compatible endpoints through server environment variables.
