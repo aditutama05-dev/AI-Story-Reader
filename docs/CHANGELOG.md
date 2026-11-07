@@ -16,3 +16,5 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 
 - Improved generic HTML extraction to prefer semantic story containers, remove common navigation/ad elements, and return adapter, segment, paragraph, and verification metadata. URL imports default to review-required rather than claiming completeness.
 - Added unit tests for article extraction, noise removal, and private/non-HTTP URL rejection.
+
+- Added local reading-state persistence with IndexedDB: restore the latest narration after reload, auto-save reading position, set a bookmark, resume, and clear saved progress.
