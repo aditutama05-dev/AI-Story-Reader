@@ -36,7 +36,7 @@ This roadmap separates the desired product from what is currently implemented. P
 ## Stage 3 — Story library and continuity
 
 - [x] Local browser library for Series / Arc / Volume / Chapter hierarchy, with chapter creation, editing, deletion, and JSON backup/restore. (Local to one browser; cloud sync remains planned.)
-- [ ] Explicit distinction between Arc, Volume, Chapter, Interlude, Ending, Epilogue, and other parts.
+- [x] Explicit story-part type field for Chapter, Interlude, Ending, Epilogue, Prologue, Side Story, and custom part labels.
 - [ ] One source URL maps to one story part unless the source explicitly proves otherwise.
 - [x] Store original source text separately from Indonesian narration in the local story library.
 - [x] Manual continuity notes stored per chapter and kept separate from source text/narration.
