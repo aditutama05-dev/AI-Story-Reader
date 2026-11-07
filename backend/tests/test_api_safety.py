@@ -50,5 +50,19 @@ class APISafetyTests(unittest.TestCase):
     def test_multi_page_import_rejects_mixed_domains(self):
         response = self.client.post("/api/import/urls", json={"urls": ["https://example.com/chapter/1", "https://other.example/chapter/2"]})
         self.assertEqual(response.status_code, 400)
+    def test_audio_endpoint_returns_one_complete_mp3_response(self):
+        import edge_tts
+        class FakeCommunicate:
+            def __init__(self, text, voice, rate):
+                self.text = text
+            async def stream(self):
+                yield {"type": "audio", "data": b"MP3-PART-1"}
+                yield {"type": "audio", "data": b"MP3-PART-2"}
+        with patch.object(edge_tts, "Communicate", FakeCommunicate):
+            response = self.client.post("/api/audio", json={"text": "Narasi lengkap"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("content-type"), "audio/mpeg")
+        self.assertEqual(response.content, b"MP3-PART-1MP3-PART-2")
+
 if __name__ == "__main__":
     unittest.main()
