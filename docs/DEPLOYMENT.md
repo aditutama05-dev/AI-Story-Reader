@@ -14,6 +14,8 @@
 4. Run the **Deploy website to GitHub Pages** workflow manually from Actions.
 5. After a successful deployment, GitHub displays the website URL. For this repository, the expected default URL is `https://aditutama05-dev.github.io/AI-Story-Reader/`.
 
+A root `index.html` redirect is also included so the current `main` branch / root publishing mode can route visitors into `frontend/` while Pages is being switched to Actions.
+
 The workflow is committed. GitHub Pages is not enabled yet: the deployment action was unable to create the Pages site because the connected GitHub integration does not have permission to change that repository setting. An owner must enable Pages and select GitHub Actions once in Settings. After that, run the workflow manually. The workflow is intentionally manual until Pages is enabled so it does not create failing deployments on every code push.
 
 ## API connection
