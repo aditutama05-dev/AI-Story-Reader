@@ -60,8 +60,8 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Persist the current narration and reading position in browser IndexedDB; restore it after reload.
 - [x] Accessible bookmark, resume, and clear-progress controls.
 - [x] Browser TTS highlights the active paragraph and exposes the active paragraph state to assistive technology. (Word-level synchronization remains planned.)
-- [ ] Stable audio player with progress, pause/resume, and ±15-second seek.
-- [ ] Server-generated MP3 export as one complete file per story part.
+- [x] HTML5 MP3 audio player with native playback controls and ±15-second seek.
+- [x] Server-generated MP3 export as one complete file per story part (Edge TTS; server network access required).
 - [ ] Verify audio completeness against the full narration text.
 
 ## Stage 6 — Comic understanding
