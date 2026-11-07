@@ -209,18 +209,48 @@ async def import_comic_pages(
 ):
     if not files:
         raise HTTPException(status_code=400, detail="Pilih minimal satu halaman komik.")
-    if len(files) > 30:
-        raise HTTPException(status_code=413, detail="Maksimal 30 halaman per proses.")
+    page_inputs: list[tuple[str, bytes, str]] = []
+    try:
+        if len(files) == 1 and (files[0].filename or "").lower().endswith((".cbz", ".zip")):
+            archive_bytes = await files[0].read(40 * 1024 * 1024 + 1)
+            if len(archive_bytes) > 40 * 1024 * 1024:
+                raise HTTPException(status_code=413, detail="Arsip komik melebihi batas 40 MB.")
+            with zipfile.ZipFile(BytesIO(archive_bytes)) as archive:
+                image_names = [name for name in archive.namelist() if name.lower().endswith((".jpg", ".jpeg", ".png", ".webp")) and not name.startswith("__MACOSX/")]
+                image_names.sort(key=lambda name: [(0, int(part)) if part.isdigit() else (1, part.casefold()) for part in re.split(r"(\d+)", name)])
+                if not image_names:
+                    raise HTTPException(status_code=422, detail="Arsip tidak berisi halaman JPG, PNG, atau WEBP.")
+                if len(image_names) > 30:
+                    raise HTTPException(status_code=413, detail="Maksimal 30 halaman per proses.")
+                total_uncompressed = 0
+                for name in image_names:
+                    raw = archive.read(name)
+                    total_uncompressed += len(raw)
+                    if len(raw) > 15 * 1024 * 1024 or total_uncompressed > 100 * 1024 * 1024:
+                        raise HTTPException(status_code=413, detail="Ukuran halaman atau total isi arsip terlalu besar.")
+                    suffix = Path(name).suffix.lower()
+                    media = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}[suffix]
+                    page_inputs.append((Path(name).name, raw, media))
+        else:
+            if len(files) > 30:
+                raise HTTPException(status_code=413, detail="Maksimal 30 halaman per proses.")
+            for upload in files:
+                raw = await upload.read(15 * 1024 * 1024 + 1)
+                if len(raw) > 15 * 1024 * 1024:
+                    raise HTTPException(status_code=413, detail="Setiap halaman dibatasi 15 MB.")
+                page_inputs.append((upload.filename or "page", raw, upload.content_type or ""))
+    except zipfile.BadZipFile as exc:
+        raise HTTPException(status_code=400, detail="Arsip CBZ/ZIP rusak atau tidak valid.") from exc
+
     selected, selected_model, api_key, base_url = provider_config(provider, model)
     if not api_key:
         raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
     pages = []
     try:
         async with httpx.AsyncClient(timeout=180) as client:
-            for index, upload in enumerate(files, start=1):
-                raw = await upload.read(15 * 1024 * 1024 + 1)
-                image_bytes = normalize_page_image(raw, upload.content_type or "")
-                prompt = build_ocr_prompt(index, len(files), direction)
+            for index, (filename, raw, media_type) in enumerate(page_inputs, start=1):
+                image_bytes = normalize_page_image(raw, media_type)
+                prompt = build_ocr_prompt(index, len(page_inputs), direction)
                 if selected == "gemini":
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{selected_model}:generateContent?key={api_key}"
                     response = await client.post(url, json={
@@ -240,7 +270,7 @@ async def import_comic_pages(
                     )
                     response.raise_for_status()
                     transcription = response.json()["choices"][0]["message"]["content"]
-                pages.append({"page": index, "filename": upload.filename or f"page-{index}", "text": transcription.strip()})
+                pages.append({"page": index, "filename": filename or f"page-{index}", "text": transcription.strip()})
         combined = "\n\n".join(f"[Halaman {page['page']}]\n{page['text']}" for page in pages)
         return {"title": "Hasil OCR komik", "pages": pages, "text": combined, "characters": len(combined),
                 "provider": selected, "model": selected_model, "reading_direction": direction}
