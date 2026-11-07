@@ -45,7 +45,7 @@ class FrontendAccessibilityTests(unittest.TestCase):
     def test_reading_progress_and_bookmarks_are_persisted(self):
         for control_id in ("saveBookmark", "resumeReading", "clearProgress"):
             self.assertIn(f'id="{control_id}"', HTML)
-        self.assertIn("indexedDB.open(readingDatabaseName,1)", HTML)
+        self.assertIn("indexedDB.open(readingDatabaseName,2)", HTML)
         self.assertIn("restoreSavedChapter();", HTML)
         self.assertIn("scrollToParagraph(index)", HTML)
         self.assertIn("renderNarration(data.narration)", HTML)
@@ -83,7 +83,7 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn('addEventListener("timeupdate"', HTML)
         self.assertIn('addEventListener("loadedmetadata"', HTML)
         self.assertIn('progress.audioPosition<$("chapterAudio").duration', HTML)
-        self.assertIn('audioPosition:0', HTML)
+        self.assertIn('audioPosition:previous?.audioPosition??0', HTML)
 
 
     def test_library_chapters_have_independent_reading_progress_and_audio_positions(self):
