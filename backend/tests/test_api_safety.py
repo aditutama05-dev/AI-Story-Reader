@@ -73,5 +73,12 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(allowed.status_code, 400)
         self.assertEqual(health.status_code, 200)
 
+    def test_master_form_prompt_prioritizes_complete_chronological_storytelling(self):
+        source = open(main_module.__file__, encoding="utf-8").read()
+        self.assertIn("hasilnya bukan ringkasan", source)
+        self.assertIn("dialog penting melalui parafrasa yang setia", source)
+        self.assertIn("Jangan mengarang dialog", source)
+        self.assertIn("jangan menghilangkan peristiwa baru", source)
+
 if __name__ == "__main__":
     unittest.main()
