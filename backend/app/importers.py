@@ -18,8 +18,8 @@ from pypdf import PdfReader
 MAX_UPLOAD_BYTES = 40 * 1024 * 1024
 MAX_URL_BYTES = 8 * 1024 * 1024
 NOISE_TOKEN = re.compile(
-    r"(^|[-_\\s])(advertisement|advert|ads|comment|comments|related|recommendations|"
-    r"recommended|sidebar|breadcrumb|pagination|social|share|navigation|navbar|menu)([-_\\s]|$)",
+    r"(^|[-_\s])(advertisement|advert|ads|comment|comments|related|recommendations|"
+    r"recommended|sidebar|breadcrumb|pagination|social|share|navigation|navbar|menu)([-_\s]|$)",
     re.IGNORECASE,
 )
 
@@ -55,7 +55,7 @@ def _parse_html(raw: bytes, encoding: str | None = None) -> tuple[str, str, int,
         candidates = [soup]
 
     def score(node) -> tuple[float, int]:
-        text = node.get_text("\\n", strip=True)
+        text = node.get_text("\n", strip=True)
         paragraphs = len(node.find_all("p"))
         linked = sum(len(link.get_text(" ", strip=True)) for link in node.find_all("a"))
         return (len(text) + paragraphs * 120 - linked * 1.5, len(text))
@@ -63,10 +63,10 @@ def _parse_html(raw: bytes, encoding: str | None = None) -> tuple[str, str, int,
     main = max(candidates, key=score)
     paragraphs = [p.get_text(" ", strip=True) for p in main.find_all("p")]
     if paragraphs:
-        text = "\\n\\n".join(value for value in paragraphs if value)
+        text = "\n\n".join(value for value in paragraphs if value)
     else:
-        lines = [line.strip() for line in main.get_text("\\n").splitlines()]
-        text = "\\n".join(line for line in lines if line)
+        lines = [line.strip() for line in main.get_text("\n").splitlines()]
+        text = "\n".join(line for line in lines if line)
     paragraph_count = len([p for p in paragraphs if p]) if paragraphs else len([line for line in text.splitlines() if line.strip()])
     return title, text.strip(), paragraph_count, getattr(main, "name", "document")
 
@@ -87,11 +87,11 @@ def extract_document(filename: str, content: bytes) -> tuple[str, str]:
             return _clean_html(content)
         if suffix == ".pdf":
             reader = PdfReader(BytesIO(content))
-            text = "\\n\\n".join((page.extract_text() or "") for page in reader.pages)
+            text = "\n\n".join((page.extract_text() or "") for page in reader.pages)
             return PurePosixPath(filename).stem, text.strip()
         if suffix == ".docx":
             document = Document(BytesIO(content))
-            text = "\\n".join(p.text for p in document.paragraphs if p.text.strip())
+            text = "\n".join(p.text for p in document.paragraphs if p.text.strip())
             return PurePosixPath(filename).stem, text.strip()
         if suffix == ".epub":
             pieces = []
@@ -104,7 +104,7 @@ def extract_document(filename: str, content: bytes) -> tuple[str, str]:
                     _, chapter_text = _clean_html(book.read(name))
                     if chapter_text:
                         pieces.append(chapter_text)
-            return PurePosixPath(filename).stem, "\\n\\n".join(pieces).strip()
+            return PurePosixPath(filename).stem, "\n\n".join(pieces).strip()
     except (zipfile.BadZipFile, KeyError, ValueError) as exc:
         raise HTTPException(status_code=400, detail="File tidak valid atau rusak.") from exc
     except Exception as exc:
