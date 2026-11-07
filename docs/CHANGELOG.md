@@ -20,3 +20,5 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 - Added local reading-state persistence with IndexedDB: restore the latest narration after reload, auto-save reading position, set a bookmark, resume, and clear saved progress.
 
 - The frontend now surfaces URL extraction warnings and review-required status instead of implying that a fetched page is a complete chapter.
+
+- Added a modular source-adapter protocol and registry with a generic HTML fallback, allowing future domain-specific adapters to be added independently.
