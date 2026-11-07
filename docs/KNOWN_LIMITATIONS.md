@@ -36,7 +36,7 @@ This document describes the current repository state. It must be updated when a 
 
 - Narration uses context-aware chunks and flags empty, unusually compressed, or exactly duplicated chunk outputs. These structural checks cannot detect paraphrased omissions, altered event order, or semantic inaccuracies; full source-to-narration coverage verification is not implemented.
 - A local IndexedDB Series/Arc/Volume/Chapter library exists with JSON backup/restore. It is not cloud-synced; story parts have explicit type metadata for Chapter, Interlude, Ending, Epilogue, Prologue, Side Story, and custom labels.
-- Manual continuity notes can be saved per chapter. Structured character/relationship/location/event tracking with source references remains unimplemented.
+- Manual notes and manually curated structured facts (character, relationship, location, term, event, conflict) can be stored per chapter with a supporting source excerpt. Facts are not automatically extracted or verified, excerpts are user-entered rather than independently checked against source text, and precise paragraph/page offsets are not stored.
 - AI output can still omit or distort source details; human review remains important.
 
 ## Audio
@@ -58,3 +58,6 @@ This document describes the current repository state. It must be updated when a 
 ## Continuity context
 
 Manual notes from preceding parts in the same series can be supplied to the narration model as secondary continuity context (up to 12,000 characters). Notes are not extracted or verified automatically, and they must never override the current chapter source. The system does not yet maintain structured character/relationship/location/event records or attach evidence citations to each continuity fact. Browser-local notes do not sync across devices.
+
+
+Structured continuity facts are assembled from preceding story parts in the same series and sent as secondary context. They remain user-curated hints, not authoritative canon: the active chapter source always takes priority. The UI limits each fact and excerpt to 500 characters and each chapter to 100 facts; the combined continuity context is capped at 12,000 characters.
