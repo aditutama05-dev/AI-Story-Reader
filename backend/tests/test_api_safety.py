@@ -92,5 +92,12 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertIn("AI belum dikonfigurasi", response.json()["detail"])
 
+    def test_narration_returns_review_required_chunk_sanity_report(self):
+        source = open(main_module.__file__, encoding="utf-8").read()
+        self.assertIn("chunk_length_sanity_check", source)
+        self.assertIn("source_characters", source)
+        self.assertIn("narration_characters", source)
+        self.assertIn("belum membuktikan kesetiaan semantik", source)
+
 if __name__ == "__main__":
     unittest.main()
