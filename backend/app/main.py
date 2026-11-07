@@ -258,6 +258,35 @@ async def import_scanned_pdf(
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Tidak dapat terhubung ke provider OCR.") from exc
 
+def build_narration_verification(chunks: list[str], outputs: list[str]) -> dict:
+    """Run conservative structural checks without claiming semantic completeness."""
+    metrics, seen, duplicates, compressed, empty = [], {}, [], [], []
+    for index, (source, narration) in enumerate(zip(chunks, outputs), start=1):
+        normalized = re.sub(r"\\s+", " ", narration).strip().casefold()
+        duplicate_of = seen.get(normalized) if normalized else None
+        if normalized and duplicate_of is None:
+            seen[normalized] = index
+        nonempty = bool(normalized)
+        if not nonempty:
+            empty.append(index)
+        if not nonempty or len(narration) < max(80, int(len(source) * 0.18)):
+            compressed.append(index)
+        if duplicate_of is not None:
+            duplicates.append({"chunk": index, "duplicate_of": duplicate_of})
+        metrics.append({"chunk": index, "source_characters": len(source), "narration_characters": len(narration), "nonempty": nonempty, "duplicate_of": duplicate_of})
+    warnings = [
+        "Pemeriksaan ini hanya mendeteksi keluaran kosong, pemadatan ekstrem, dan keluaran potongan yang identik; belum membuktikan kesetiaan semantik atau urutan setiap peristiwa sumber.",
+        "Bandingkan narasi dengan sumber asli, terutama transisi antarpotongan.",
+    ]
+    if empty:
+        warnings.insert(0, "Ada potongan tanpa narasi; hasil belum lengkap.")
+    if compressed:
+        warnings.insert(0, "Ada potongan yang kosong atau jauh lebih pendek dari sumber; periksa kemungkinan detail terlewat.")
+    if duplicates:
+        warnings.insert(0, "Ada potongan yang menghasilkan narasi identik dengan potongan sebelumnya; periksa kemungkinan pengulangan.")
+    return {"status":"review_required","method":"chunk_length_and_duplicate_output_checks","chunks":metrics,"empty_chunks":empty,"compressed_chunks":compressed,"duplicate_output_chunks":duplicates,"warnings":warnings}
+
+
 @app.post("/api/narrate", response_model=NarrateResponse)
 async def narrate(request: NarrateRequest):
     provider, model, api_key, base_url = provider_config(request.provider, request.model)
@@ -277,25 +306,20 @@ async def narrate(request: NarrateRequest):
         "Jangan menambah pembukaan, penutup, komentar AI, heading, daftar, nomor bagian, atau pemisah buatan. Mulai langsung dari peristiwa sumber dan akhiri pada batas sumber. "
         "Jika input terdiri dari potongan, sambungkan dengan mulus tanpa mengulang narasi sebelumnya dan jangan menghilangkan peristiwa baru pada potongan saat ini.")
     outputs, previous_context = [], ""
-    chunk_metrics = []
     try:
         async with httpx.AsyncClient(timeout=240) as client:
             for index, chunk in enumerate(chunks):
                 continuation = ("Mulai narasi dari awal chapter." if index == 0 else
                     "Lanjutkan langsung dari potongan sebelumnya. Jangan mengulang peristiwa yang sudah diceritakan. "
                     "Ceritakan seluruh peristiwa baru dalam potongan ini.")
-                user_prompt = (f"Judul: {request.title}\nGaya: {request.style}\nBahasa: {request.language}\n"
-                    f"Potongan {index + 1}/{len(chunks)}. {continuation}\n"
-                    f"KONTEKS NARASI SEBELUMNYA (jangan diulang):\n{previous_context or '[awal chapter]'}\n\n"
-                    f"TEKS SUMBER POTONGAN INI:\n{chunk}")
+                user_prompt = (f"Judul: {request.title}\\nGaya: {request.style}\\nBahasa: {request.language}\\n"
+                    f"Potongan {index + 1}/{len(chunks)}. {continuation}\\n"
+                    f"KONTEKS NARASI SEBELUMNYA (jangan diulang):\\n{previous_context or '[awal chapter]'}\\n\\n"
+                    f"TEKS SUMBER POTONGAN INI:\\n{chunk}")
                 output = (await generate_text(client, provider, model, api_key, base_url, system_prompt, user_prompt)).strip()
                 outputs.append(output)
-                chunk_metrics.append({"chunk": index + 1, "source_characters": len(chunk), "narration_characters": len(output), "nonempty": bool(output)})
                 previous_context = output[-2200:]
-        warnings = ["Pemeriksaan ini hanya mendeteksi keluaran kosong atau pemadatan teks yang ekstrem; belum membuktikan kesetiaan semantik terhadap setiap peristiwa sumber.", "Dengarkan atau baca ulang hasil narasi sambil membandingkannya dengan sumber asli."]
-        if any(not item["nonempty"] or item["narration_characters"] < max(80, int(item["source_characters"] * 0.18)) for item in chunk_metrics):
-            warnings.insert(0, "Ada potongan yang menghasilkan narasi kosong atau jauh lebih pendek dari sumber. Periksa kemungkinan detail terlewat.")
-        verification = {"status": "review_required", "method": "chunk_length_sanity_check", "chunks": chunk_metrics, "warnings": warnings}
+        verification = build_narration_verification(chunks, outputs)
         return NarrateResponse(narration="\n\n".join(outputs), provider=provider, model=model, chunks_processed=len(chunks), verification=verification)
     except HTTPException:
         raise
