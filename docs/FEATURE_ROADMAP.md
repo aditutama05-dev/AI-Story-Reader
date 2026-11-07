@@ -42,7 +42,8 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Manual continuity notes stored per chapter and kept separate from source text/narration.
 - [x] Automatically include notes from preceding parts in the same series as secondary context for narration, with source text taking priority.
 - [x] Manually curated structured continuity facts for characters, relationships, locations, terms, events, and conflicts, each paired with a source excerpt.
-- [ ] Automatic fact extraction, contradiction detection, and source-position/page-level evidence linking.
+- [x] AI-assisted fact extraction with verbatim source-excerpt matching, user review, and explicit approval before saving.
+- [ ] Automatic contradiction detection and precise source-position/page-level evidence linking.
 - [ ] Continuity notes never replace or override source evidence.
 
 ## Stage 4 — Narration and verification
