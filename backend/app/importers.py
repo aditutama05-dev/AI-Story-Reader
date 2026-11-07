@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ipaddress
-import re
 import socket
 import zipfile
 from io import BytesIO
@@ -9,72 +8,23 @@ from pathlib import PurePosixPath
 from urllib.parse import urlparse
 
 import httpx
-from bs4 import BeautifulSoup
 from docx import Document
 from fastapi import HTTPException
 from pypdf import PdfReader
 
+from .source_adapters import extract_generic_html, resolve_source_adapter
+
 
 MAX_UPLOAD_BYTES = 40 * 1024 * 1024
 MAX_URL_BYTES = 8 * 1024 * 1024
-NOISE_TOKEN = re.compile(
-    r"(^|[-_\s])(advertisement|advert|ads|comment|comments|related|recommendations|"
-    r"recommended|sidebar|breadcrumb|pagination|social|share|navigation|navbar|menu)([-_\s]|$)",
-    re.IGNORECASE,
-)
-
-
 def _parse_html(raw: bytes, encoding: str | None = None) -> tuple[str, str, int, str]:
-    soup = BeautifulSoup(raw, "html.parser", from_encoding=encoding)
-
-    for node in soup(["script", "style", "noscript", "svg", "nav", "footer", "header", "form", "iframe"]):
-        node.decompose()
-
-    for node in list(soup.find_all(True)):
-        marker = " ".join(
-            [str(node.get("id", "")), " ".join(str(item) for item in (node.get("class") or []))]
-        )
-        if NOISE_TOKEN.search(marker) or node.get("role") in {"navigation", "complementary"}:
-            node.decompose()
-
-    title = ""
-    h1 = soup.find("h1")
-    if h1:
-        title = h1.get_text(" ", strip=True)
-    if not title:
-        og_title = soup.find("meta", attrs={"property": "og:title"})
-        if og_title:
-            title = str(og_title.get("content", "")).strip()
-    if not title and soup.title:
-        title = soup.title.get_text(" ", strip=True)
-
-    candidates = []
-    for selector in ("article", '[itemprop="articleBody"]', "main", '[role="main"]', "body"):
-        candidates.extend(soup.select(selector))
-    if not candidates:
-        candidates = [soup]
-
-    def score(node) -> tuple[float, int]:
-        text = node.get_text("\n", strip=True)
-        paragraphs = len(node.find_all("p"))
-        linked = sum(len(link.get_text(" ", strip=True)) for link in node.find_all("a"))
-        semantic_priority = 10000 if node.name == "article" else 5000 if node.name == "main" else 0
-        return (len(text) + paragraphs * 120 - linked * 1.5 + semantic_priority, len(text))
-
-    main = max(candidates, key=score)
-    paragraphs = [p.get_text(" ", strip=True) for p in main.find_all("p")]
-    if paragraphs:
-        text = "\n\n".join(value for value in paragraphs if value)
-    else:
-        lines = [line.strip() for line in main.get_text("\n").splitlines()]
-        text = "\n".join(line for line in lines if line)
-    paragraph_count = len([p for p in paragraphs if p]) if paragraphs else len([line for line in text.splitlines() if line.strip()])
-    return title, text.strip(), paragraph_count, getattr(main, "name", "document")
+    result = extract_generic_html(raw, encoding)
+    return result.title, result.text, result.paragraph_count, result.container
 
 
 def _clean_html(raw: bytes, encoding: str | None = None) -> tuple[str, str]:
-    title, text, _, _ = _parse_html(raw, encoding)
-    return title, text
+    result = extract_generic_html(raw, encoding)
+    return result.title, result.text
 
 
 def extract_document(filename: str, content: bytes) -> tuple[str, str]:
@@ -167,7 +117,9 @@ async def extract_webpage_report(url: str) -> dict:
                 paragraph_count = len([part for part in text.splitlines() if part.strip()])
                 container = "plain-text"
             else:
-                title, text, paragraph_count, container = _parse_html(response.content, response.encoding)
+                adapter = resolve_source_adapter(safe_url)
+                extracted = adapter.extract(response.content, response.encoding)
+                title, text, paragraph_count, container = extracted.title, extracted.text, extracted.paragraph_count, extracted.container
             if not text:
                 raise HTTPException(status_code=422, detail="Teks utama tidak ditemukan di halaman tersebut.")
 
@@ -184,7 +136,7 @@ async def extract_webpage_report(url: str) -> dict:
                 "source_url": safe_url,
                 "source_domain": parsed.hostname,
                 "source_type": "html" if "html" in content_type else "text",
-                "adapter": {"id": "generic-html", "version": "1"},
+                "adapter": {"id": adapter.adapter_id if "html" in content_type else "plain-text", "version": adapter.version if "html" in content_type else "1"},
                 "segments": [{
                     "index": 1,
                     "url": safe_url,
