@@ -111,6 +111,18 @@ async function editContinuityFacts(sid,aid,vid,cid){
  const updated=all.map(s=>s.id!==sid?s:{...s,arcs:s.arcs.map(a=>a.id!==aid?a:{...a,volumes:a.volumes.map(v=>v.id!==vid?v:{...v,chapters:v.chapters.map(ch=>ch.id===cid?{...ch,continuityFacts:facts,continuityFactsUpdatedAt:new Date().toISOString()}:ch)})})});
  await persist(updated);status.textContent=facts.length+" fakta kontinuitas tersimpan dengan kutipan sumber.";
 }
+async function storeExtractedFacts(chapterId,facts){
+ const all=read();let found=false;
+ const updated=all.map(s=>({...s,arcs:(s.arcs||[]).map(a=>({...a,volumes:(a.volumes||[]).map(v=>({...v,chapters:(v.chapters||[]).map(ch=>{
+  if(ch.id!==chapterId)return ch;found=true;
+  const prior=ch.continuityFacts||[],keys=new Set(prior.map(f=>[f.category,f.fact.toLocaleLowerCase(),f.sourceExcerpt].join("|")));
+  const merged=[...prior,...facts.filter(f=>!keys.has([f.category,f.fact.toLocaleLowerCase(),f.sourceExcerpt].join("|")))];
+  return {...ch,continuityFacts:merged.slice(0,100),continuityFactsUpdatedAt:new Date().toISOString()};
+ })}))}))}));
+ if(!found)throw new Error("Chapter perpustakaan tidak ditemukan.");
+ await persist(updated);render();
+ return updated.flatMap(s=>(s.arcs||[]).flatMap(a=>(a.volumes||[]).flatMap(v=>v.chapters||[]))).find(ch=>ch.id===chapterId)?.continuityFacts||[];
+}
 async function deleteChapter(sid,aid,vid,cid){if(!confirm("Hapus chapter ini?"))return;const all=read().map(s=>s.id!==sid?s:{...s,arcs:s.arcs.map(a=>a.id!==aid?a:{...a,volumes:a.volumes.map(v=>v.id!==vid?v:{...v,chapters:v.chapters.filter(c=>c.id!==cid)})})});await persist(all)}
 function buildContinuityContext(chapterId){
  let selected=null,selectedSeries=null,ordered=[];
@@ -161,7 +173,7 @@ async function importLibrary(file){if(!file)return;try{const data=JSON.parse(awa
 $("addSeries").addEventListener("click",()=>safe(addSeries));
 $("exportLibrary").addEventListener("click",exportLibrary);
 $("importLibrary").addEventListener("change",event=>safe(()=>importLibrary(event.target.files[0])));
-window.storyLibrary={saveChapter,render,getContinuityContext:buildContinuityContext};
+window.storyLibrary={saveChapter,render,getContinuityContext:buildContinuityContext,storeExtractedFacts};
 status.textContent="Memuat perpustakaan cerita...";
 $("addSeries").disabled=true;$("exportLibrary").disabled=true;$("importLibrary").disabled=true;
 loadState().then(()=>{render();$("addSeries").disabled=false;$("exportLibrary").disabled=false;$("importLibrary").disabled=false;status.textContent="Perpustakaan siap. Data disimpan di IndexedDB perangkat ini."}).catch(error=>{status.textContent="Perpustakaan tidak dapat dibuka: "+error.message;render()});
