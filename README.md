@@ -26,17 +26,17 @@ The product is a browser website, not a native Android or desktop application.
 - Dark navy and bright-blue visual palette.
 - Accessibility baseline: semantic landmarks, labels, keyboard focus, skip navigation, high contrast, text sizing, reading spacing, reduced motion, and local preference persistence.
 - TalkBack and screen-reader-compatible story text.
-- Optional browser speech synthesis with voice and speed selection.
+- Optional browser speech synthesis with voice/speed selection and active-paragraph highlighting.\n- Complete-chapter MP3 generation, in-page audio playback, ±15-second seek, and MP3 download.
 - Local chapter restoration, automatic reading-position persistence, bookmark, and resume controls using browser IndexedDB.
-- URL, file, pasted-text, and multi-image input controls.
+- URL, explicitly ordered same-domain multi-page URL, file, pasted-text, and multi-image input controls.\n- CBZ/ZIP comic archive upload with natural page ordering.\n- Series → Arc → Volume → Chapter library with separate original-source and narration storage, using IndexedDB plus JSON backup/restore.
 - Configurable public API base URL in `frontend/config.js`. This file may contain a public API origin only; never put API keys or provider secrets in it.
 
 ### Python API backend
 
 - FastAPI application in `backend/app/main.py`.
-- URL import with basic HTML extraction.
+- URL import with generic HTML extraction, source warnings, and explicit multi-page chapter assembly.\n- In-memory per-client rate limits for import and AI/audio endpoints.
 - TXT, Markdown, HTML, text-based PDF, DOCX, and EPUB extraction.
-- Multi-image OCR for JPG, PNG, and WEBP using a vision-capable provider.
+- Multi-image and CBZ/ZIP OCR for JPG, PNG, and WEBP using a vision-capable provider.\n- Full-chapter MP3 generation using Edge TTS.
 - Context-aware chunked Indonesian narration.
 - Provider configuration for OpenAI, OpenRouter, Gemini, and compatible endpoints through server environment variables.
 
@@ -56,7 +56,7 @@ Copy `.env.example` to `.env`, then configure the provider key in the server env
 Run:
 
 ```bash
-uvicorn backend.app.main:app --reload
+uvicorn backend.app.main:app --reload --env-file .env
 ```
 
 Open the local address shown by Uvicorn (normally `http://127.0.0.1:8000`).
