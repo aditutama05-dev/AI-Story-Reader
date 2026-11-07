@@ -13,7 +13,7 @@ from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from .importers import extract_document, extract_webpage_report
+from .importers import _validate_public_url, extract_document, extract_webpage_report
 from .vision_ocr import build_document_page_prompt, build_ocr_prompt, make_gemini_vision_parts, make_openai_vision_content, normalize_page_image
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -157,11 +157,15 @@ async def import_url_pages(payload: URLBatchRequest):
     urls = [value.strip() for value in payload.urls]
     if any(not value for value in urls) or len(set(urls)) != len(urls):
         raise HTTPException(status_code=400, detail="URL halaman harus terisi dan tidak boleh duplikat.")
-    hosts = {urlparse(value).hostname for value in urls}
+    # Validate every URL before making the first outbound request. This prevents
+    # partially fetching a batch when a later page is malformed or targets a
+    # private/local address.
+    validated_urls = [_validate_public_url(value) for value in urls]
+    hosts = {urlparse(value).hostname.casefold().rstrip(".") for value in validated_urls}
     if len(hosts) != 1:
         raise HTTPException(status_code=400, detail="Semua halaman harus berasal dari domain yang sama.")
     results = []
-    for index, url in enumerate(urls, start=1):
+    for index, url in enumerate(validated_urls, start=1):
         result = await extract_webpage_report(url)
         results.append(result)
     combined = "\n\n".join(f"[Halaman {index}]\n{item['text']}" for index, item in enumerate(results, start=1))
