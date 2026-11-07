@@ -11,13 +11,15 @@ This document describes the current repository state. It must be updated when a 
 
 ## URL extraction
 
-- Current extraction is a basic single-page HTTP fetch with BeautifulSoup.
+- Current extraction is a single-page HTTP fetch with a generic BeautifulSoup adapter; it reports basic metadata and defaults to `review_required`.
 - JavaScript-rendered pages are not executed.
 - Authenticated pages and pages protected by access controls are not supported.
 - Redirects are rejected rather than followed through a validated redirect chain.
 - There is no domain-specific source adapter registry yet.
 - There is no reliable multi-page chapter continuation detection or completeness report.
-- Generic HTML cleanup may include unrelated body text or omit content in unusual layouts.
+- Generic HTML cleanup may still include unrelated text or omit content in unusual layouts.
+- Domain-specific adapters and verified continuation-page assembly are not implemented.
+- DNS validation resolves hostnames before fetching, but the current implementation does not pin the resolved address to the HTTP connection; additional hardening against DNS rebinding is still required before broad public deployment.
 
 ## File and comic import
 
