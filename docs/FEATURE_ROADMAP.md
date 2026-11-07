@@ -30,7 +30,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [ ] Detect same-chapter continuation pages without following unrelated links.
 - [ ] Multi-page chapter assembly and order verification.
 - [ ] Source completeness report with explicit uncertainty states.
-- [ ] CBZ/ZIP archive ingestion.
+- [x] CBZ/ZIP comic archive ingestion with natural page sorting and decompression limits.
 - [ ] OCR for scanned PDF pages.
 
 ## Stage 3 — Story library and continuity
