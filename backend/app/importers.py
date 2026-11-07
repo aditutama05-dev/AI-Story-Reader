@@ -114,26 +114,39 @@ async def extract_webpage_report(url: str) -> dict:
             trust_env=False,
             headers={"User-Agent": "AIStoryReader/0.2 (+chapter text extraction)"},
         ) as client:
-            response = await client.get(safe_url)
-            if response.is_redirect:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Halaman mengalihkan URL. Buka URL tujuan langsung, lalu coba lagi.",
-                )
-            response.raise_for_status()
-            if len(response.content) > MAX_URL_BYTES:
-                raise HTTPException(status_code=413, detail="Halaman terlalu besar untuk diimpor (batas 8 MB).")
-            content_type = response.headers.get("content-type", "").lower()
-            if "html" not in content_type and "text/plain" not in content_type:
-                raise HTTPException(status_code=415, detail="URL bukan halaman HTML atau teks biasa.")
-            if "text/plain" in content_type:
-                title, text = parsed.path.rsplit("/", 1)[-1] or parsed.hostname, response.text.strip()
-                paragraph_count = len([part for part in text.splitlines() if part.strip()])
-                container = "plain-text"
-            else:
-                adapter = resolve_source_adapter(safe_url)
-                extracted = adapter.extract(response.content, response.encoding)
-                title, text, paragraph_count, container = extracted.title, extracted.text, extracted.paragraph_count, extracted.container
+            async with client.stream("GET", safe_url) as response:
+                if response.is_redirect:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Halaman mengalihkan URL. Buka URL tujuan langsung, lalu coba lagi.",
+                    )
+                response.raise_for_status()
+                content_length = response.headers.get("content-length")
+                if content_length:
+                    try:
+                        if int(content_length) > MAX_URL_BYTES:
+                            raise HTTPException(status_code=413, detail="Halaman terlalu besar untuk diimpor (batas 8 MB).")
+                    except ValueError:
+                        pass
+                content_type = response.headers.get("content-type", "").lower()
+                if "html" not in content_type and "text/plain" not in content_type:
+                    raise HTTPException(status_code=415, detail="URL bukan halaman HTML atau teks biasa.")
+                body = bytearray()
+                async for chunk in response.aiter_bytes():
+                    body.extend(chunk)
+                    if len(body) > MAX_URL_BYTES:
+                        raise HTTPException(status_code=413, detail="Halaman terlalu besar untuk diimpor (batas 8 MB).")
+                raw_content = bytes(body)
+                if "text/plain" in content_type:
+                    encoding = response.encoding or "utf-8"
+                    page_text = raw_content.decode(encoding, errors="replace").strip()
+                    title, text = parsed.path.rsplit("/", 1)[-1] or parsed.hostname, page_text
+                    paragraph_count = len([part for part in text.splitlines() if part.strip()])
+                    container = "plain-text"
+                else:
+                    adapter = resolve_source_adapter(safe_url)
+                    extracted = adapter.extract(raw_content, response.encoding)
+                    title, text, paragraph_count, container = extracted.title, extracted.text, extracted.paragraph_count, extracted.container
             if not text:
                 raise HTTPException(status_code=422, detail="Teks utama tidak ditemukan di halaman tersebut.")
 
