@@ -1,5 +1,9 @@
 # AI Story Reader
 
+> **Buka aplikasi:** [AI Story Reader — Website](https://aditutama05-dev.github.io/AI-Story-Reader/)
+>
+> Jika tautan belum menampilkan aplikasi, GitHub Pages belum aktif untuk repository ini. Halaman README ini adalah dokumentasi proyek, bukan antarmuka aplikasi.
+
 AI Story Reader is a personal **website** for turning novels, light novels, web novels, digital books, manga, manhwa, manhua, and comics into detailed Indonesian narration that can be read and listened to in a browser.
 
 The product is a browser website, not a native Android or desktop application.
