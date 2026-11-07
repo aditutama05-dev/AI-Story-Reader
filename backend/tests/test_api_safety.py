@@ -62,6 +62,20 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.json()["verification"]["page_count"], 2)
 
 
+    def test_comic_ocr_page_offsets_match_combined_text(self):
+        pages = [{"page": 1, "filename": "1.png", "text": "Panel pertama."}, {"page": 2, "filename": "2.png", "text": "Panel kedua."}]
+        cursor = 0
+        for index, page in enumerate(pages):
+            if index:
+                cursor += 2
+            cursor += len(f"[Halaman {page['page']}]\\n")
+            page["source_start"] = cursor
+            cursor += len(page["text"])
+            page["source_end"] = cursor
+        combined = "\\n\\n".join(f"[Halaman {page['page']}]\\n{page['text']}" for page in pages)
+        for page in pages:
+            self.assertEqual(combined[page["source_start"]:page["source_end"]], page["text"])
+
     def test_multi_page_import_returns_exact_source_offsets_for_each_page(self):
         async def fake_extract(url):
             page = url.rsplit("/", 1)[-1]
