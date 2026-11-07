@@ -67,7 +67,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <label for="continuationUrls">URL halaman lanjutan chapter (opsional, satu URL per baris)</label><textarea id="continuationUrls" rows="3" placeholder="Masukkan hanya halaman lanjutan dari chapter yang sama, sesuai urutan baca. Jangan masukkan URL chapter berikutnya."></textarea>
 <p class="hint">Website yang memblokir akses otomatis atau memerlukan login mungkin tidak bisa diimpor. Gunakan salin-tempel sebagai alternatif.</p>
 <label for="file">Upload file</label><input id="file" type="file" accept=".epub,.pdf,.txt,.md,.html,.htm,.docx">
-<button id="importFile" class="secondary">Baca file</button>
+<button id="importFile" class="secondary">Baca file</button><button id="ocrPdf" class="secondary" type="button">OCR PDF hasil scan</button>
 <p class="hint">Format: EPUB, PDF berbasis teks, TXT, Markdown, HTML, DOCX. PDF hasil scan memerlukan OCR.</p>
 </section>
 
@@ -369,6 +369,16 @@ $("importUrl").addEventListener("click",async()=>{
  $("importUrl").disabled=true;$("status").textContent="Mengambil halaman...";
  try{const continuations=$("continuationUrls").value.split(/\n+/).map(value=>value.trim()).filter(Boolean);const urls=[url,...continuations];const endpoint=urls.length>1?"/api/import/urls":"/api/import/url";const payload=urls.length>1?{urls}:{url};await importResponse(await apiFetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}))}
  catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importUrl").disabled=false}
+});
+
+$("ocrPdf").addEventListener("click",async()=>{
+ const file=$("file").files[0];if(!file){$("status").textContent="Pilih file PDF hasil scan terlebih dahulu.";return}
+ if(!file.name.toLowerCase().endsWith(".pdf")){$("status").textContent="Tombol OCR ini hanya menerima file PDF.";return}
+ const form=new FormData();form.append("file",file);if($("provider").value)form.append("provider",$("provider").value);if($("model").value.trim())form.append("model",$("model").value.trim());
+ $("ocrPdf").disabled=true;$("status").textContent="Merender halaman PDF dan menjalankan OCR...";
+ try{await importResponse(await apiFetch("/api/import/pdf-ocr",{method:"POST",body:form}));$("status").textContent+=" Periksa hasil OCR terhadap PDF asli sebelum membuat narasi."}
+ catch(error){$("status").textContent="OCR PDF gagal: "+error.message}
+ finally{$("ocrPdf").disabled=false}
 });
 $("importFile").addEventListener("click",async()=>{
  const file=$("file").files[0];if(!file){$("status").textContent="Pilih file terlebih dahulu.";return}
