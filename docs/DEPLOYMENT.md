@@ -24,7 +24,8 @@ Before the deployed site can import URLs/files or generate narration:
 
 1. Deploy the API to a supported backend host.
 2. Configure provider keys as server-side secrets.
-3. Configure API CORS to allow the GitHub Pages origin.
+3. Set `APP_ACCESS_TOKEN` as a strong private secret on the API host. Enter the same token in the website's API access field for each browser session. Do not put it in `frontend/config.js`.
+4. Configure API CORS to allow the GitHub Pages origin.
 4. Set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the API origin (for example, `https://api.example.com`).
 5. Verify `GET /api/health`, URL import, file import, comic OCR, and narration against the deployed API.
 
