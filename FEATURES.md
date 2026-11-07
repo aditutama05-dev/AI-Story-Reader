@@ -174,7 +174,7 @@ Pilihan arsitektur final belum ditetapkan. Kelayakan teknis, batas runtime, peny
 
 - [Konteks proyek](docs/PROJECT_CONTEXT.md)
 - [Roadmap fitur](docs/FEATURE_ROADMAP.md)
-- [Batas akses layar dan aksesibilitas](docs/ACCESSIBILITY_AND_SCREEN_ACCESS.md)
+- [Batas akses layar dan aksesibilitas](docs/SCREEN_ACCESS_LIMITS.md)
 - [Sistem pengambilan sumber](docs/SOURCE_INGESTION.md)
 - [Model data cerita](docs/STORY_DATA_MODEL.md)
 - [Standar narasi MASTER FORM V2](docs/STORY_NARRATION_STANDARD.md)
