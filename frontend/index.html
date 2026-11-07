@@ -453,7 +453,7 @@ $("checkContinuity").addEventListener("click",async()=>{
  try{
   const priorFacts=await window.storyLibrary?.getPriorContinuityFacts?.(chapterId)||[];
   if(!priorFacts.length){$("status").textContent="Belum ada fakta terstruktur dari bagian sebelumnya dalam seri ini. Tambahkan atau ekstrak fakta pada bagian terdahulu terlebih dahulu.";return}
-  const response=await apiFetch("/api/continuity/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:source,title:$("title").value||"Chapter tanpa judul",prior_facts:priorFacts})});
+  const response=await apiFetch("/api/continuity/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:source,title:$("title").value||"Chapter tanpa judul",prior_facts:priorFacts,...($("provider").value?{provider:$("provider").value}:{}),...($("model").value.trim()?{model:$("model").value.trim()}:{})})});
   const data=await response.json();if(!response.ok)throw new Error(data.detail||"Pemeriksaan kontinuitas gagal.");
   if(!data.contradictions?.length){$("status").textContent="Tidak ditemukan dugaan kontradiksi yang lolos pemeriksaan kutipan. Ini bukan jaminan tidak ada inkonsistensi.";return}
   const preview=data.contradictions.map((item,index)=>(index+1)+". ["+item.severity+"] Fakta lama ("+item.prior_chapter+"): "+item.prior_fact+"\n   Teks baru: “"+item.current_excerpt+"”\n   Alasan: "+item.explanation).join("\n\n");
