@@ -124,6 +124,23 @@ async function storeExtractedFacts(chapterId,facts){
  return updated.flatMap(s=>(s.arcs||[]).flatMap(a=>(a.volumes||[]).flatMap(v=>v.chapters||[]))).find(ch=>ch.id===chapterId)?.continuityFacts||[];
 }
 async function deleteChapter(sid,aid,vid,cid){if(!confirm("Hapus chapter ini?"))return;const all=read().map(s=>s.id!==sid?s:{...s,arcs:s.arcs.map(a=>a.id!==aid?a:{...a,volumes:a.volumes.map(v=>v.id!==vid?v:{...v,chapters:v.chapters.filter(c=>c.id!==cid)})})});await persist(all)}
+function getPriorContinuityFacts(chapterId){
+ let ordered=[],found=false;
+ for(const series of read()){
+  const parts=[];
+  for(const arc of series.arcs||[])for(const volume of arc.volumes||[])for(const chapter of volume.chapters||[])parts.push(chapter);
+  const index=parts.findIndex(chapter=>chapter.id===chapterId);
+  if(index>=0){ordered=parts.slice(0,index);found=true;break}
+ }
+ if(!found)return [];
+ const facts=[];
+ for(const chapter of ordered.slice(-20)){
+  for(const fact of (chapter.continuityFacts||[]).slice(0,100)){
+   if(fact&&fact.fact)facts.push({category:fact.category||"term",fact:String(fact.fact).slice(0,500),sourceExcerpt:String(fact.sourceExcerpt||"").slice(0,500),chapterTitle:chapter.title||""});
+  }
+ }
+ return facts.slice(-240);
+}
 function buildContinuityContext(chapterId){
  let selected=null,selectedSeries=null,ordered=[];
  for(const series of read()){
@@ -173,7 +190,7 @@ async function importLibrary(file){if(!file)return;try{const data=JSON.parse(awa
 $("addSeries").addEventListener("click",()=>safe(addSeries));
 $("exportLibrary").addEventListener("click",exportLibrary);
 $("importLibrary").addEventListener("change",event=>safe(()=>importLibrary(event.target.files[0])));
-window.storyLibrary={saveChapter,render,getContinuityContext:buildContinuityContext,storeExtractedFacts};
+window.storyLibrary={saveChapter,render,getContinuityContext:buildContinuityContext,getPriorContinuityFacts,storeExtractedFacts};
 status.textContent="Memuat perpustakaan cerita...";
 $("addSeries").disabled=true;$("exportLibrary").disabled=true;$("importLibrary").disabled=true;
 loadState().then(()=>{render();$("addSeries").disabled=false;$("exportLibrary").disabled=false;$("importLibrary").disabled=false;status.textContent="Perpustakaan siap. Data disimpan di IndexedDB perangkat ini."}).catch(error=>{status.textContent="Perpustakaan tidak dapat dibuka: "+error.message;render()});
