@@ -19,6 +19,26 @@ from .source_adapters import extract_generic_html, resolve_source_adapter
 
 MAX_UPLOAD_BYTES = 40 * 1024 * 1024
 MAX_URL_BYTES = 8 * 1024 * 1024
+MAX_ARCHIVE_ENTRIES = 5000
+MAX_ARCHIVE_MEMBER_BYTES = 25 * 1024 * 1024
+MAX_ARCHIVE_UNCOMPRESSED_BYTES = 100 * 1024 * 1024
+
+
+def _validate_archive_limits(book: zipfile.ZipFile) -> None:
+    members = book.infolist()
+    if len(members) > MAX_ARCHIVE_ENTRIES:
+        raise HTTPException(status_code=413, detail="Arsip berisi terlalu banyak file.")
+    total_size = 0
+    for member in members:
+        name = member.filename.replace("\\\\", "/")
+        path = PurePosixPath(name)
+        if path.is_absolute() or ".." in path.parts:
+            raise HTTPException(status_code=400, detail="Arsip berisi jalur file yang tidak aman.")
+        if member.file_size > MAX_ARCHIVE_MEMBER_BYTES:
+            raise HTTPException(status_code=413, detail="Salah satu file di dalam arsip terlalu besar.")
+        total_size += member.file_size
+        if total_size > MAX_ARCHIVE_UNCOMPRESSED_BYTES:
+            raise HTTPException(status_code=413, detail="Ukuran hasil ekstraksi arsip melebihi batas 100 MB.")
 def _parse_html(raw: bytes, encoding: str | None = None) -> tuple[str, str, int, str]:
     result = extract_generic_html(raw, encoding)
     return result.title, result.text, result.paragraph_count, result.container
@@ -43,12 +63,15 @@ def extract_document(filename: str, content: bytes) -> tuple[str, str]:
             text = "\n\n".join((page.extract_text() or "") for page in reader.pages)
             return PurePosixPath(filename).stem, text.strip()
         if suffix == ".docx":
+            with zipfile.ZipFile(BytesIO(content)) as archive:
+                _validate_archive_limits(archive)
             document = Document(BytesIO(content))
             text = "\n".join(p.text for p in document.paragraphs if p.text.strip())
             return PurePosixPath(filename).stem, text.strip()
         if suffix == ".epub":
             pieces = []
             with zipfile.ZipFile(BytesIO(content)) as book:
+                _validate_archive_limits(book)
                 container = ET.fromstring(book.read("META-INF/container.xml"))
                 rootfile = next(node for node in container.iter() if node.tag.endswith("rootfile") and node.attrib.get("full-path"))
                 package_path = rootfile.attrib["full-path"]
