@@ -37,7 +37,7 @@ A domain adapter must not assume every link on a page belongs to the chapter. Pr
 
 The generic adapter should prefer semantic content containers such as `article`, `main`, and known reading-content containers. It should compare candidate content blocks and avoid blindly taking all text from the body.
 
-The current backend uses a basic BeautifulSoup extraction fallback. It does not yet execute JavaScript, render a browser DOM, or recognize multi-page chapter navigation. A page that requires JavaScript or an authenticated session may fail.
+The current backend uses a generic BeautifulSoup adapter that prefers semantic article/main containers, removes common navigation and advertisement elements, extracts title and paragraph text, and returns basic source metadata (domain, adapter ID/version, segment count, paragraph count, and warnings). It does not yet execute JavaScript, render a browser DOM, or recognize multi-page chapter navigation. A page that requires JavaScript or an authenticated session may fail. The current URL verification state is deliberately `review_required`; a single successful HTTP response is not proof that the full chapter was captured.
 
 ## Multi-page chapter rules
 
@@ -84,4 +84,4 @@ A future structured import result should include:
 - counts and verification state;
 - a clear indication when completeness cannot be established.
 
-Suggested verification states: `complete`, `review_required`, `incomplete`, and `failed`. The state `complete` must require explicit evidence, not just a non-empty text result.
+Suggested verification states: `complete`, `review_required`, `incomplete`, and `failed`. The current generic HTML URL importer returns `review_required` with warnings because it cannot establish chapter completeness. The state `complete` must require explicit evidence, not just a non-empty text result.
