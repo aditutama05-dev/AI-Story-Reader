@@ -31,6 +31,8 @@ Before the deployed site can import URLs/files or generate narration:
 
 Never place AI provider keys in `frontend/config.js`. The API base URL is public; provider credentials are not.
 
+The Render Blueprint defaults to the Free web-service plan to avoid a required monthly compute charge. Free services can spin down after 15 minutes without traffic and may take about a minute to wake up; their filesystem is ephemeral and the service can restart. The story library therefore stays in browser IndexedDB, not on the API container. Free compute is suitable for a low-traffic trial, not a latency-sensitive production service. See [Render's free-service limits](https://render.com/docs/free).
+
 ## Cloudflare Workers note
 
 Cloudflare Workers does not run the current Python FastAPI application unchanged. If Workers is selected, implement and test an equivalent Worker API before pointing the GitHub Pages frontend at it. The current FastAPI backend can remain the local/reference implementation until endpoint parity is achieved.
