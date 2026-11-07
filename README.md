@@ -9,7 +9,7 @@ The product is a browser website, not a native Android or desktop application.
 - [Feature specification](FEATURES.md)
 - [Project context](docs/PROJECT_CONTEXT.md)
 - [Feature roadmap](docs/FEATURE_ROADMAP.md)
-- [Accessibility and screen-access boundaries](docs/ACCESSIBILITY_AND_SCREEN_ACCESS.md)
+- [Accessibility and screen-access boundaries](docs/SCREEN_ACCESS_LIMITS.md)
 - [URL and file source ingestion](docs/SOURCE_INGESTION.md)
 - [Story data model](docs/STORY_DATA_MODEL.md)
 - [Technical architecture](docs/TECHNICAL_ARCHITECTURE.md)
