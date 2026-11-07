@@ -14,6 +14,32 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 app = FastAPI(title="AI Story Reader API", version="0.2.0")
 app.add_middleware(CORSMiddleware, allow_origins=os.getenv("CORS_ORIGINS", "*").split(","), allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
+# Lightweight per-process abuse guard. Configure limits through environment variables.
+_rate_buckets: dict[tuple[str, str], list[float]] = {}
+_RATE_WINDOW_SECONDS = 60
+
+@app.middleware("http")
+async def protect_expensive_endpoints(request, call_next):
+    path = request.url.path
+    if path.startswith("/api/") and path not in {"/api/health", "/api/config"}:
+        client_ip = request.client.host if request.client else "unknown"
+        bucket = "ai" if path in {"/api/narrate", "/api/import/comic"} else "import"
+        limit = int(os.getenv("AI_REQUESTS_PER_MINUTE" if bucket == "ai" else "IMPORT_REQUESTS_PER_MINUTE", "8" if bucket == "ai" else "20"))
+        now = time.monotonic()
+        key = (client_ip, bucket)
+        recent = [stamp for stamp in _rate_buckets.get(key, []) if now - stamp < _RATE_WINDOW_SECONDS]
+        if len(recent) >= max(1, limit):
+            from fastapi.responses import JSONResponse
+            return JSONResponse(status_code=429, content={"detail": "Batas permintaan sementara tercapai. Coba lagi dalam satu menit."}, headers={"Retry-After": "60"})
+        recent.append(now)
+        _rate_buckets[key] = recent
+        if len(_rate_buckets) > 10000:
+            for old_key, stamps in list(_rate_buckets.items()):
+                if not stamps or now - stamps[-1] >= _RATE_WINDOW_SECONDS:
+                    _rate_buckets.pop(old_key, None)
+    return await call_next(request)
+
+
 class NarrateRequest(BaseModel):
     text: str = Field(min_length=1, max_length=1_000_000)
     title: str = "Bab tanpa judul"
