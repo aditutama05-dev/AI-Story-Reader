@@ -1,5 +1,6 @@
 from io import BytesIO
 import unittest
+from unittest.mock import patch
 
 from fastapi import HTTPException
 from PIL import Image
@@ -18,6 +19,21 @@ class VisionOCRTests(unittest.TestCase):
         with Image.open(BytesIO(result)) as image:
             self.assertEqual(image.format, "JPEG")
             self.assertLessEqual(max(image.size), 1800)
+
+
+    def test_rejects_excessive_pixel_dimensions_before_image_conversion(self):
+        class OversizedImage:
+            width = 10000
+            height = 10000
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return False
+
+        with patch("app.vision_ocr.Image.open", return_value=OversizedImage()):
+            with self.assertRaises(HTTPException) as error:
+                normalize_page_image(b"image-bytes", "image/png")
+        self.assertEqual(error.exception.status_code, 413)
 
     def test_rejects_unsupported_media_type(self):
         with self.assertRaises(HTTPException) as error:
