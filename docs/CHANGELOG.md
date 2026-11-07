@@ -4,6 +4,8 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 
 ## 2026-11-07
 
+- Added manually curated structured continuity facts by category (character, relationship, location, term, event, conflict), paired with source excerpts and included in later narration as secondary context.
+
 - Added prior-chapter continuity context: manually maintained notes from earlier parts in the same series are sent with narration requests as secondary reference, capped at 12,000 characters. Current source text remains authoritative.
 
 - Narration verification now flags empty chunks, unusually compressed outputs, and exact duplicate narration between source chunks. The report remains review-required and does not claim semantic completeness.
