@@ -56,6 +56,14 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn('utterance.lang="id-ID"', HTML)
         self.assertIn('utterance.rate=Number($("speechRate").value)||1', HTML)
 
+    def test_library_builds_prior_chapter_continuity_context(self):
+        library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
+        self.assertIn("function buildContinuityContext(chapterId)", library)
+        self.assertIn("parts.slice(0,index)", library)
+        self.assertIn("getContinuityContext:buildContinuityContext", library)
+        self.assertIn("getContinuityContext?.(window.currentLibraryChapterId)", HTML)
+        self.assertIn("body.continuity_context=continuity", HTML)
+
     def test_story_library_uses_indexeddb_and_keeps_source_separate(self):
         library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
         for control_id in ("library-heading", "addSeries", "exportLibrary", "importLibrary", "libraryTree"):
