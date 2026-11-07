@@ -82,7 +82,8 @@ This roadmap separates the desired product from what is currently implemented. P
 - [ ] Deploy frontend to GitHub Pages.
 - [ ] Deploy API to the selected supported backend platform.
 - [ ] Configure runtime secrets outside the repository.
-- [x] Add per-client in-memory rate limits to expensive/import API routes.\n- [ ] Add distributed rate limiting, authentication, request quotas, and production abuse protection.
+- [x] Add per-client in-memory rate limits to expensive/import API routes.
+- [ ] Add distributed rate limiting, authentication, request quotas, and production abuse protection.
 - [ ] Add privacy/data-retention controls for imported source content and generated audio.
 - [ ] Run automated tests and manual TalkBack testing on real Android devices.
 - [ ] Document deployment, backup, and recovery procedures.
