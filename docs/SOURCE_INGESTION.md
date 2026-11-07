@@ -84,4 +84,4 @@ A future structured import result should include:
 - counts and verification state;
 - a clear indication when completeness cannot be established.
 
-Suggested verification states: `complete`, `review_required`, `incomplete`, and `failed`. The current generic HTML URL importer returns `review_required` with warnings because it cannot establish chapter completeness. The state `complete` must require explicit evidence, not just a non-empty text result.
+Suggested verification states: `complete`, `review_required`, `incomplete`, and `failed`. The current generic HTML URL importer returns `review_required` with warnings because it cannot establish chapter completeness. Explicit multi-page URL imports include zero-based character ranges for each ordered page segment in the combined source text. Scanned-PDF OCR likewise includes page-level character ranges for each transcription; these map to extracted text, not pixel coordinates on the original PDF page. The state `complete` must require explicit evidence, not just a non-empty text result.
