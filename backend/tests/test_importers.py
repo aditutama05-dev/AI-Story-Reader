@@ -1,8 +1,10 @@
 import unittest
+from io import BytesIO
+import zipfile
 
 from fastapi import HTTPException
 
-from app.importers import _parse_html, _validate_public_url
+from app.importers import _parse_html, _validate_public_url, extract_document
 
 
 class HTMLExtractionTests(unittest.TestCase):
