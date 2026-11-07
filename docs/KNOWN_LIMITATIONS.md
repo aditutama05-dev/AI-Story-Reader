@@ -17,7 +17,7 @@ This document describes the current repository state. It must be updated when a 
 - Authenticated pages and pages protected by access controls are not supported.
 - Redirects are rejected rather than followed through a validated redirect chain.
 - A source adapter registry exists with a generic fallback; domain-specific adapters remain to be added.
-- Explicit same-domain multi-page imports can be assembled in user-supplied order and are flagged for review. Automatic continuation detection is not implemented.
+- Explicit same-domain multi-page imports can be assembled in user-supplied order and are flagged for review; combined extracted text is capped at 20 million characters. Automatic continuation detection is not implemented.
 - Generic HTML cleanup may still include unrelated text or omit content in unusual layouts.
 - Domain-specific adapters and automatic verified continuation-page assembly are not implemented.
 - DNS validation resolves hostnames before fetching, but the current implementation does not pin the resolved address to the HTTP connection; additional hardening against DNS rebinding is still required before broad public deployment.
