@@ -70,7 +70,7 @@ function render(){
     for(const chapter of v.chapters||[]){
      const row=document.createElement("div");row.className="library-chapter";
      const open=document.createElement("button");open.className="secondary";open.textContent="Buka sumber: "+chapter.title;open.onclick=()=>openChapter(chapter);
-     const narration=document.createElement("button");narration.className="secondary";narration.textContent="Buka narasi";narration.disabled=!chapter.narration;narration.onclick=()=>openNarration(chapter);
+     const narration=document.createElement("button");narration.className="secondary";narration.textContent="Buka narasi";narration.disabled=!chapter.narration;narration.onclick=()=>safe(()=>openNarration(chapter));
      const del=document.createElement("button");del.className="secondary";del.textContent="Hapus";del.onclick=()=>safe(()=>deleteChapter(s.id,a.id,v.id,chapter.id));
      row.append(open,narration,del);vol.append(row);
     }
@@ -92,7 +92,7 @@ async function renameNode(sid,nid,type){let found=false;const all=read().map(s=>
 async function removeSeries(sid){if(!confirm("Hapus seri beserta semua arc, volume, dan chapter di dalamnya?"))return;await persist(read().filter(s=>s.id!==sid))}
 async function deleteChapter(sid,aid,vid,cid){if(!confirm("Hapus chapter ini?"))return;const all=read().map(s=>s.id!==sid?s:{...s,arcs:s.arcs.map(a=>a.id!==aid?a:{...a,volumes:a.volumes.map(v=>v.id!==vid?v:{...v,chapters:v.chapters.filter(c=>c.id!==cid)})})});await persist(all)}
 function openChapter(chapter){$("title").value=chapter.title;$("source").value=chapter.originalSource||chapter.text||"";window.currentLibraryChapterId=chapter.id;status.textContent="Teks sumber asli dimuat ke editor. Narasi tersimpan terpisah.";$("editor-heading").scrollIntoView({behavior:"smooth"});$("source").focus()}
-function openNarration(chapter){if(!chapter.narration)return;$("title").value=chapter.title;const output=$("output");output.replaceChildren();String(chapter.narration).split(/\n{2,}/).filter(Boolean).forEach((part,index)=>{const paragraph=document.createElement("p");paragraph.id="narration-paragraph-"+index;paragraph.dataset.paragraphIndex=String(index);paragraph.textContent=part;output.append(paragraph)});window.currentLibraryChapterId=chapter.id;status.textContent="Narasi tersimpan dibuka. Sumber asli tidak diubah.";$("result-heading").scrollIntoView({behavior:"smooth"})}
+async function openNarration(chapter){if(!chapter.narration)return;$("title").value=chapter.title;await window.restoreStoryNarration?.(chapter.title,chapter.narration);window.currentLibraryChapterId=chapter.id;status.textContent="Narasi tersimpan dibuka. Sumber asli tidak diubah.";$("result-heading").scrollIntoView({behavior:"smooth"})}
 async function saveChapter(title,narration,originalSource){
  let found=false;
  let next=read().map(s=>({...s,arcs:(s.arcs||[]).map(a=>({...a,volumes:(a.volumes||[]).map(v=>({...v,chapters:(v.chapters||[]).map(ch=>{
