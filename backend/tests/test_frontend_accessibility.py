@@ -72,8 +72,8 @@ class FrontendAccessibilityTests(unittest.TestCase):
     def test_full_chapter_mp3_and_multi_page_import_controls_exist(self):
         for control_id in ("generateMp3", "chapterAudio", "downloadMp3", "seekBack", "seekForward", "audioVoice", "continuationUrls"):
             self.assertIn('id="' + control_id + '"', HTML)
-        self.assertIn('fetch(apiUrl("/api/audio")', HTML)
-        self.assertIn('fetch(apiUrl(endpoint)', HTML)
+        self.assertIn('apiFetch("/api/audio"', HTML)
+        self.assertIn('apiFetch(endpoint', HTML)
         self.assertIn(".cbz,.zip", HTML)
 
 if __name__ == "__main__":
