@@ -4,6 +4,8 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 
 ## 2026-11-07
 
+- Added AI-assisted continuity contradiction checks against structured facts from preceding parts. Candidate findings require a valid prior-fact index and a verbatim current-source excerpt; results are review-only and never modify saved facts.
+
 - Added AI-assisted extraction of structured continuity facts from a selected chapter, with source-excerpt matching, duplicate-aware merge, and mandatory user review before saving.
 
 - Added manually curated structured continuity facts by category (character, relationship, location, term, event, conflict), paired with source excerpts and included in later narration as secondary context.
