@@ -71,3 +71,7 @@ Each chapter may store up to 100 user-curated facts with category (`character`, 
 ### AI-proposed continuity facts
 
 AI suggestions use the same per-chapter `continuityFacts` structure as manually entered facts. The extraction endpoint returns only suggestions with a verbatim source excerpt match (whitespace-normalized); rejected suggestions are counted. The browser displays all accepted suggestions and asks for user approval before merging them into the chapter. Existing facts are preserved and exact category/fact/excerpt duplicates are not re-added. The AI output is still a proposal, not verified canon.
+
+### Source evidence offsets
+
+AI-proposed continuity facts now retain zero-based `sourceStart` and exclusive `sourceEnd` character offsets into the exact source text submitted for extraction, alongside the excerpt. The backend locates a whitespace-tolerant, case-insensitive token sequence and returns offsets in the original unmodified text. Contradiction candidates carry the same offsets for their current-chapter excerpt. The browser can select and highlight the exact excerpt in the source editor. Offsets are tied to that specific source-text version; editing or replacing the source can make previously stored offsets stale and requires re-extraction/review.
