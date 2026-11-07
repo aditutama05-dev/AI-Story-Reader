@@ -381,6 +381,7 @@ if("speechSynthesis" in window){
 async function importResponse(response){
  const data=await response.json();if(!response.ok)throw new Error(data.detail||"Impor gagal");
  $("title").value=data.title||$("title").value;$("source").value=data.text||"";
+ $("continuityResults").replaceChildren();
  importedSourceSegments=Array.isArray(data.segments)?data.segments:[];
  renderImportedSourceSegments();
  const count=(data.characters||data.text?.length||0).toLocaleString("id-ID");
