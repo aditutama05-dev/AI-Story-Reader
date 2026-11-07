@@ -31,6 +31,13 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn("localStorage.getItem(preferenceKey", HTML)
         self.assertIn("prefers-reduced-motion:reduce", HTML)
 
+    def test_navy_blue_theme_and_no_purple_palette(self):
+        self.assertIn("#081522", HTML)
+        self.assertIn("#2f8cff", HTML)
+        self.assertNotIn("#a987ef", HTML)
+        self.assertNotIn("#c6a7ff", HTML)
+        self.assertIn("AI_STORY_READER_API_BASE", HTML)
+
     def test_tts_controls_are_labelled_and_configurable(self):
         for control_id in ("play", "pause", "resume", "stop", "speechRate", "voiceSelect"):
             self.assertIn(f'id="{control_id}"', HTML)
