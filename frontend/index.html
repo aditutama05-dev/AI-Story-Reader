@@ -91,6 +91,11 @@ small{color:#9db4ca}.hint{font-size:.85rem;color:#a9bfd5;line-height:1.5}
 <label for="voiceSelect">Suara TTS perangkat</label><select id="voiceSelect"><option value="">Otomatis (Bahasa Indonesia jika tersedia)</option></select>
 </div>
 <p class="hint">TalkBack dapat membaca teks narasi di bawah ini seperti teks web biasa. Tombol TTS adalah pilihan tambahan; suara yang tersedia bergantung pada Android/browser dan paket suara yang terpasang.</p>
+<div class="accessibility-tools" role="group" aria-label="Bookmark dan progres membaca">
+<button id="saveBookmark" type="button" class="secondary">Tandai posisi</button>
+<button id="resumeReading" type="button" class="secondary" disabled>Lanjutkan membaca</button>
+<button id="clearProgress" type="button" class="secondary" disabled>Hapus progres tersimpan</button>
+</div>
 <article class="output" id="output" tabindex="0" role="region" aria-label="Teks lengkap hasil narasi"></article>
 </section>
 <p><small>API key tetap berada di environment backend, tidak dikirim ke browser dan tidak disimpan di repository.</small></p>
@@ -100,6 +105,149 @@ small{color:#9db4ca}.hint{font-size:.85rem;color:#a9bfd5;line-height:1.5}
 const API_BASE=(window.AI_STORY_READER_API_BASE||"").replace(/\/+$/,"");
 const apiUrl=path=>`${API_BASE}${path}`;
 const $=id=>document.getElementById(id);
+const readingDatabaseName="ai-story-reader-reading-v1";
+let readingDatabasePromise=null;
+let currentReadingRecord=null;
+let progressSaveTimer=null;
+function openReadingDatabase(){
+ if(!("indexedDB" in window))return Promise.reject(new Error("Penyimpanan progres tidak didukung browser ini."));
+ if(readingDatabasePromise)return readingDatabasePromise;
+ readingDatabasePromise=new Promise((resolve,reject)=>{
+  const request=indexedDB.open(readingDatabaseName,1);
+  request.onupgradeneeded=()=>{
+   const db=request.result;
+   if(!db.objectStoreNames.contains("chapters"))db.createObjectStore("chapters",{keyPath:"id"});
+   if(!db.objectStoreNames.contains("progress"))db.createObjectStore("progress",{keyPath:"id"});
+  };
+  request.onsuccess=()=>resolve(request.result);
+  request.onerror=()=>reject(request.error||new Error("Database progres tidak dapat dibuka."));
+ });
+ return readingDatabasePromise;
+}
+async function writeReadingStore(storeName,value){
+ const db=await openReadingDatabase();
+ return new Promise((resolve,reject)=>{
+  const transaction=db.transaction(storeName,"readwrite");
+  transaction.objectStore(storeName).put(value);
+  transaction.oncomplete=()=>resolve();
+  transaction.onerror=()=>reject(transaction.error||new Error("Gagal menyimpan progres."));
+  transaction.onabort=()=>reject(transaction.error||new Error("Penyimpanan progres dibatalkan."));
+ });
+}
+async function readReadingStore(storeName){
+ const db=await openReadingDatabase();
+ return new Promise((resolve,reject)=>{
+  const request=db.transaction(storeName,"readonly").objectStore(storeName).get("current");
+  request.onsuccess=()=>resolve(request.result||null);
+  request.onerror=()=>reject(request.error||new Error("Gagal membaca progres."));
+ });
+}
+async function deleteReadingState(){
+ const db=await openReadingDatabase();
+ return new Promise((resolve,reject)=>{
+  const transaction=db.transaction(["chapters","progress"],"readwrite");
+  transaction.objectStore("chapters").delete("current");
+  transaction.objectStore("progress").delete("current");
+  transaction.oncomplete=()=>resolve();
+  transaction.onerror=()=>reject(transaction.error||new Error("Gagal menghapus progres."));
+ });
+}
+function renderNarration(text){
+ const output=$("output");
+ output.replaceChildren();
+ const paragraphs=String(text||"").split(/\\n{2,}/).map(value=>value.trim()).filter(Boolean);
+ if(!paragraphs.length&&text)paragraphs.push(String(text));
+ paragraphs.forEach((value,index)=>{
+  const paragraph=document.createElement("p");
+  paragraph.id="narration-paragraph-"+index;
+  paragraph.dataset.paragraphIndex=String(index);
+  paragraph.textContent=value;
+  output.appendChild(paragraph);
+ });
+}
+function getNarrationText(){
+ return Array.from($("output").querySelectorAll("[data-paragraph-index]"))
+  .map(paragraph=>paragraph.textContent).join("\\n\\n");
+}
+function getVisibleParagraphIndex(){
+ const paragraphs=Array.from($("output").querySelectorAll("[data-paragraph-index]"));
+ if(!paragraphs.length)return 0;
+ const threshold=window.innerHeight*0.35;
+ let current=0;
+ for(const paragraph of paragraphs){
+  if(paragraph.getBoundingClientRect().top<=threshold)current=Number(paragraph.dataset.paragraphIndex);
+  else break;
+ }
+ return current;
+}
+function paragraphCount(){return $("output").querySelectorAll("[data-paragraph-index]").length;}
+function scrollToParagraph(index){
+ const target=$("narration-paragraph-"+Math.max(0,Number(index)||0));
+ if(target){target.scrollIntoView({behavior:root.classList.contains("reduce-motion")?"auto":"smooth",block:"start"});target.setAttribute("tabindex","-1");target.focus({preventScroll:true});}
+}
+async function saveProgressPosition(){
+ if(!currentReadingRecord||!paragraphCount())return;
+ const previous=await readReadingStore("progress").catch(()=>null);
+ const progress={id:"current",paragraphIndex:getVisibleParagraphIndex(),bookmarkIndex:previous?.bookmarkIndex??currentReadingRecord.bookmarkIndex??null,updatedAt:Date.now()};
+ await writeReadingStore("progress",progress);
+ currentReadingRecord={...currentReadingRecord,...progress};
+ $("resumeReading").disabled=false;$("clearProgress").disabled=false;
+}
+function scheduleProgressSave(){
+ if(!currentReadingRecord)return;
+ clearTimeout(progressSaveTimer);
+ progressSaveTimer=setTimeout(()=>saveProgressPosition().catch(()=>{}),800);
+}
+async function persistNewChapter(title,text){
+ currentReadingRecord={id:"current",title:title||"Chapter tanpa judul",text,updatedAt:Date.now()};
+ await writeReadingStore("chapters",currentReadingRecord);
+ const progress={id:"current",paragraphIndex:0,bookmarkIndex:null,updatedAt:Date.now()};
+ await writeReadingStore("progress",progress);
+ currentReadingRecord={...currentReadingRecord,...progress};
+ $("resumeReading").disabled=false;$("clearProgress").disabled=false;
+}
+async function restoreSavedChapter(){
+ try{
+  const [chapter,progress]=await Promise.all([readReadingStore("chapters"),readReadingStore("progress")]);
+  if(!chapter?.text)return;
+  currentReadingRecord={...chapter,...(progress||{})};
+  $("title").value=chapter.title||"";
+  renderNarration(chapter.text);
+  $("resumeReading").disabled=false;$("clearProgress").disabled=false;
+  const targetIndex=progress?.paragraphIndex??0;
+  requestAnimationFrame(()=>setTimeout(()=>scrollToParagraph(targetIndex),100));
+  $("status").textContent="Narasi terakhir dipulihkan. Posisi membaca sebelumnya juga sudah dikembalikan.";
+ }catch(error){$("status").textContent="Progres membaca lokal tidak dapat dipulihkan: "+error.message;}
+}
+$("saveBookmark").addEventListener("click",async()=>{
+ if(!paragraphCount()){ $("status").textContent="Belum ada narasi untuk diberi bookmark.";return;}
+ try{
+  const progress=await readReadingStore("progress")||{id:"current",paragraphIndex:0};
+  progress.bookmarkIndex=getVisibleParagraphIndex();progress.updatedAt=Date.now();
+  await writeReadingStore("progress",progress);
+  currentReadingRecord={...currentReadingRecord,...progress};
+  $("resumeReading").disabled=false;$("clearProgress").disabled=false;
+  $("status").textContent="Bookmark tersimpan pada paragraf "+(progress.bookmarkIndex+1)+".";
+ }catch(error){$("status").textContent="Bookmark tidak dapat disimpan: "+error.message;}
+});
+$("resumeReading").addEventListener("click",async()=>{
+ try{
+  const progress=await readReadingStore("progress");
+  const index=progress?.bookmarkIndex??progress?.paragraphIndex??0;
+  scrollToParagraph(index);
+  $("status").textContent=progress?.bookmarkIndex!=null?"Kembali ke bookmark tersimpan.":"Melanjutkan dari posisi terakhir.";
+ }catch(error){$("status").textContent="Posisi membaca tidak dapat dipulihkan: "+error.message;}
+});
+$("clearProgress").addEventListener("click",async()=>{
+ try{
+  await deleteReadingState();currentReadingRecord=null;
+  $("resumeReading").disabled=true;$("clearProgress").disabled=true;
+  $("status").textContent="Progres dan bookmark tersimpan telah dihapus dari browser ini.";
+ }catch(error){$("status").textContent="Progres tidak dapat dihapus: "+error.message;}
+});
+window.addEventListener("scroll",scheduleProgressSave,{passive:true});
+window.addEventListener("pagehide",()=>{if(currentReadingRecord)saveProgressPosition().catch(()=>{});});
+
 const root=document.body;
 const preferenceKey="ai-story-reader-accessibility-v1";
 function savePreferences(){
@@ -180,6 +328,7 @@ function loadVoices(){
  savePreferences();
 }
 restorePreferences();
+restoreSavedChapter();
 if("speechSynthesis" in window){
  loadVoices();
  speechSynthesis.addEventListener?.("voiceschanged",loadVoices);
@@ -209,7 +358,8 @@ $("go").addEventListener("click",async()=>{
   if($("provider").value)body.provider=$("provider").value;if($("model").value.trim())body.model=$("model").value.trim();
   const r=await fetch(apiUrl("/api/narrate"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await r.json();if(!r.ok)throw new Error(data.detail||"Permintaan gagal");
-  $("output").textContent=data.narration;
+  renderNarration(data.narration);
+  await persistNewChapter($("title").value||"Chapter tanpa judul",data.narration);
   $("status").textContent="Selesai · "+data.provider+" / "+data.model+" · "+data.chunks_processed+" potongan";
  }catch(e){$("status").textContent="Belum berhasil: "+e.message}finally{$("go").disabled=false}
 });
@@ -237,7 +387,7 @@ $("speechRate").addEventListener("change",savePreferences);$("voiceSelect").addE
 let speechChunks=[],speechIndex=0;
 function speakText(){
  if(!("speechSynthesis" in window)){ $("status").textContent="Browser ini tidak mendukung TTS. Coba aktifkan TalkBack untuk membaca teks narasi.";return}
- const text=$("output").textContent.trim();if(!text){$("status").textContent="Belum ada narasi untuk diputar.";return}
+ const text=getNarrationText().trim();if(!text){$("status").textContent="Belum ada narasi untuk diputar.";return}
  speechSynthesis.cancel();speechChunks=text.match(/[\s\S]{1,1800}(?:\s|$)/g)||[text];speechIndex=0;
  const selectedVoice=$("voiceSelect").value;
  const speakNext=()=>{if(speechIndex>=speechChunks.length){$("status").textContent="Pembacaan suara selesai.";return}
