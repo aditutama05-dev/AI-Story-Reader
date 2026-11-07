@@ -7,6 +7,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 MAX_IMAGE_BYTES = 15 * 1024 * 1024
 MAX_IMAGE_EDGE = 1800
+MAX_IMAGE_PIXELS = 40_000_000
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
@@ -19,6 +20,8 @@ def normalize_page_image(content: bytes, content_type: str) -> bytes:
         raise HTTPException(status_code=415, detail="Gunakan gambar JPG, PNG, atau WEBP.")
     try:
         with Image.open(BytesIO(content)) as source:
+            if source.width * source.height > MAX_IMAGE_PIXELS:
+                raise HTTPException(status_code=413, detail="Resolusi gambar terlalu besar. Batas 40 megapiksel per halaman.")
             image = ImageOps.exif_transpose(source).convert("RGB")
             image.thumbnail((MAX_IMAGE_EDGE, MAX_IMAGE_EDGE), Image.Resampling.LANCZOS)
             output = BytesIO()
