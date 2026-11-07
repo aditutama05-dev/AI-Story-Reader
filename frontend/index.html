@@ -135,6 +135,7 @@ const readingMetaId="active-reading-record";
 let progressSaveTimer=null;
 let lastAudioProgressSave=0;
 let resettingAudio=false;
+let importedSourceSegments=[];
 function openReadingDatabase(){
  if(!("indexedDB" in window))return Promise.reject(new Error("Penyimpanan progres tidak didukung browser ini."));
  if(readingDatabasePromise)return readingDatabasePromise;
@@ -380,6 +381,8 @@ if("speechSynthesis" in window){
 async function importResponse(response){
  const data=await response.json();if(!response.ok)throw new Error(data.detail||"Impor gagal");
  $("title").value=data.title||$("title").value;$("source").value=data.text||"";
+ importedSourceSegments=Array.isArray(data.segments)?data.segments:[];
+ renderImportedSourceSegments();
  const count=(data.characters||data.text?.length||0).toLocaleString("id-ID");
  if(data.verification){
   const warnings=(data.verification.warnings||[]).join(" ");
@@ -426,8 +429,27 @@ $("go").addEventListener("click",async()=>{
  }catch(e){$("status").textContent="Belum berhasil: "+e.message}finally{$("go").disabled=false}
 });
 
+function renderImportedSourceSegments(){
+ const container=$("continuityResults");
+ if(!importedSourceSegments.length)return;
+ const heading=document.createElement("strong");heading.textContent="Peta halaman sumber · pilih halaman untuk menyorot teks hasil impor";
+ container.append(heading);
+ importedSourceSegments.forEach(segment=>{
+  const row=document.createElement("div");row.className="library-actions";
+  const button=document.createElement("button");button.type="button";button.className="secondary";
+  button.textContent=(segment.url?"Halaman ":"Halaman PDF ")+segment.index+(segment.url?" · "+segment.url:"")+" · karakter "+segment.source_start+"–"+segment.source_end;
+  button.addEventListener("click",()=>{
+   const source=$("source");source.focus();source.setSelectionRange(segment.source_start,segment.source_end);
+   source.scrollIntoView({behavior:"auto",block:"center"});
+   $("status").textContent="Halaman sumber "+segment.index+" dipilih pada karakter "+segment.source_start+" sampai "+segment.source_end+".";
+  });
+  row.append(button);container.append(row);
+ });
+}
+
 function renderContinuityEvidence(items){
  const container=$("continuityResults");container.replaceChildren();
+ renderImportedSourceSegments();
  if(!items?.length)return;
  const heading=document.createElement("strong");heading.textContent="Bukti sumber · pilih temuan untuk menyorot kutipan asli";container.append(heading);
  items.forEach((item,index)=>{
