@@ -413,6 +413,7 @@ $("go").addEventListener("click",async()=>{
  try{
   const body={text,title:$("title").value||"Bab tanpa judul"};
   if($("provider").value)body.provider=$("provider").value;if($("model").value.trim())body.model=$("model").value.trim();
+  const continuity=await window.storyLibrary?.getContinuityContext?.(window.currentLibraryChapterId);if(continuity)body.continuity_context=continuity;
   const r=await apiFetch("/api/narrate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await r.json();if(!r.ok)throw new Error(data.detail||"Permintaan gagal");
   renderNarration(data.narration);
