@@ -4,7 +4,7 @@ import zipfile
 
 from fastapi import HTTPException
 
-from app.importers import _parse_html, _validate_public_url, extract_document
+from app.importers import _parse_html, _validate_public_url, _validate_archive_limits, extract_document
 
 
 class HTMLExtractionTests(unittest.TestCase):
@@ -96,3 +96,25 @@ class URLStreamingImportTests(unittest.IsolatedAsyncioTestCase):
             result = await extract_webpage_report("https://example.com/chapter.txt")
         self.assertIn("Cerita berlanjut.", result["text"])
         self.assertEqual(result["verification"]["page_count"], 1)
+
+
+class ArchiveSafetyTests(unittest.TestCase):
+    def test_rejects_archive_path_traversal(self):
+        archive_bytes = BytesIO()
+        with zipfile.ZipFile(archive_bytes, "w") as archive:
+            archive.writestr("../outside.txt", "not safe")
+        with zipfile.ZipFile(BytesIO(archive_bytes.getvalue())) as archive:
+            with self.assertRaises(HTTPException) as error:
+                _validate_archive_limits(archive)
+        self.assertEqual(error.exception.status_code, 400)
+
+    def test_rejects_oversized_uncompressed_archive_member(self):
+        archive_bytes = BytesIO()
+        info = zipfile.ZipInfo("large.txt")
+        info.file_size = 25 * 1024 * 1024 + 1
+        with zipfile.ZipFile(archive_bytes, "w") as archive:
+            archive.writestr(info, b"x")
+        with zipfile.ZipFile(BytesIO(archive_bytes.getvalue())) as archive:
+            with self.assertRaises(HTTPException) as error:
+                _validate_archive_limits(archive)
+        self.assertEqual(error.exception.status_code, 413)
