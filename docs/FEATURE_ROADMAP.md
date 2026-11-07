@@ -39,7 +39,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [ ] Explicit distinction between Arc, Volume, Chapter, Interlude, Ending, Epilogue, and other parts.
 - [ ] One source URL maps to one story part unless the source explicitly proves otherwise.
 - [x] Store original source text separately from Indonesian narration in the local story library.
-- [ ] Continuity notes for characters, relationships, locations, events, terms, and active conflicts.
+- [x] Manual continuity notes stored per chapter and kept separate from source text/narration.\n- [ ] Structured character, relationship, location, event, term, and active-conflict tracking with source references.
 - [ ] Continuity notes never replace or override source evidence.
 
 ## Stage 4 — Narration and verification
