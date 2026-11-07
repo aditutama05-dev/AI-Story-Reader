@@ -38,3 +38,5 @@ jobs:
       - name: Compile backend
         working-directory: backend
         run: python -m compileall -q app
+      - name: Build Docker image
+        run: docker build -t ai-story-reader:test .
