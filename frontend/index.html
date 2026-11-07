@@ -446,9 +446,9 @@ function renderContinuityEvidence(items){
 
 $("extractFacts").addEventListener("click",async()=>{
  const chapterId=window.currentLibraryChapterId;
- const source=$("source").value.trim();
+ const source=$("source").value;
  if(!chapterId){$("status").textContent="Buka chapter dari perpustakaan terlebih dahulu agar fakta dapat disimpan ke chapter yang benar.";return}
- if(!source){$("status").textContent="Teks sumber chapter masih kosong.";return}
+ if(!source.trim()){$("status").textContent="Teks sumber chapter masih kosong.";return}
  $("extractFacts").disabled=true;$("status").textContent="AI sedang mengidentifikasi fakta dan mencari kutipan sumber...";
  try{
   const response=await apiFetch("/api/continuity/extract",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:source,title:$("title").value||"Chapter tanpa judul"})});
@@ -466,9 +466,9 @@ $("extractFacts").addEventListener("click",async()=>{
 
 $("checkContinuity").addEventListener("click",async()=>{
  const chapterId=window.currentLibraryChapterId;
- const source=$("source").value.trim();
+ const source=$("source").value;
  if(!chapterId){$("status").textContent="Buka chapter dari perpustakaan terlebih dahulu agar fakta bagian sebelumnya bisa diperiksa.";return}
- if(!source){$("status").textContent="Teks sumber chapter saat ini masih kosong.";return}
+ if(!source.trim()){$("status").textContent="Teks sumber chapter saat ini masih kosong.";return}
  $("checkContinuity").disabled=true;$("status").textContent="AI sedang membandingkan fakta bagian sebelumnya dengan teks chapter ini...";
  try{
   const priorFacts=await window.storyLibrary?.getPriorContinuityFacts?.(chapterId)||[];
