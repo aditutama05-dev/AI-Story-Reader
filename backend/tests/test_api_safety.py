@@ -152,6 +152,23 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.status_code, 413)
         self.assertIn("Resolusi atau total area", response.json()["detail"])
 
+    def test_continuity_extraction_rejects_quotes_not_present_in_source(self):
+        source = "Mira memasuki aula dan memperkenalkan dirinya sebagai kapten penjaga."
+        async def fake_generate(*args, **kwargs):
+            return '{"facts":['
+                '{"category":"character","fact":"Mira adalah kapten penjaga","sourceExcerpt":"memperkenalkan dirinya sebagai kapten penjaga"},'
+                '{"category":"location","fact":"Aula berada di ibu kota","sourceExcerpt":"aula megah di ibu kota"}]}'
+        with patch.object(main_module, "provider_config", return_value=("openrouter", "test-model", "test-key", "https://example.com/v1")), patch.object(
+            main_module, "generate_text", side_effect=fake_generate
+        ):
+            response = self.client.post("/api/continuity/extract", json={"text": source, "title": "Chapter 1"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["accepted"], 1)
+        self.assertEqual(data["rejected"], 1)
+        self.assertEqual(data["facts"][0]["category"], "character")
+        self.assertEqual(data["verification"]["method"], "verbatim_source_excerpt_match")
+
     def test_narration_accepts_continuity_context_as_secondary_reference(self):
         prompts = []
         async def fake_generate(client, provider, model, api_key, base_url, system_prompt, user_prompt):
