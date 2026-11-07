@@ -38,7 +38,7 @@ The repository is the durable project reference. Update the relevant documents w
 
 - Product requirements: `../FEATURES.md`
 - Feature sequence: `FEATURE_ROADMAP.md`
-- Browser accessibility and screen-access boundaries: `ACCESSIBILITY_AND_SCREEN_ACCESS.md`
+- Browser accessibility and screen-access boundaries: `SCREEN_ACCESS_LIMITS.md`
 - URL and file extraction: `SOURCE_INGESTION.md`
 - Story hierarchy: `STORY_DATA_MODEL.md`
 - Architecture: `TECHNICAL_ARCHITECTURE.md`
