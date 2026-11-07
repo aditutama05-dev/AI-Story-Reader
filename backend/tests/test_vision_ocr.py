@@ -4,7 +4,7 @@ import unittest
 from fastapi import HTTPException
 from PIL import Image
 
-from app.vision_ocr import build_ocr_prompt, normalize_page_image
+from app.vision_ocr import build_document_page_prompt, build_ocr_prompt, normalize_page_image
 
 
 class VisionOCRTests(unittest.TestCase):
@@ -39,6 +39,13 @@ class VisionOCRTests(unittest.TestCase):
         prompt = build_ocr_prompt(2, 4, "vertical")
         self.assertIn("atas ke bawah", prompt)
         self.assertIn("Halaman 2 dari 4", prompt)
+
+    def test_document_ocr_prompt_preserves_layout_and_marks_unclear_text(self):
+        prompt = build_document_page_prompt(2, 5)
+        self.assertIn("Halaman 2 dari 5", prompt)
+        self.assertIn("Pertahankan pemisahan paragraf", prompt)
+        self.assertIn("[tidak terbaca]", prompt)
+        self.assertIn("Jangan meringkas", prompt)
 
 
 if __name__ == "__main__":
