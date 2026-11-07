@@ -44,7 +44,7 @@ This document describes the current repository state. It must be updated when a 
 - Browser Web Speech API highlights the active word when the browser emits word-boundary events, with paragraph-level fallback.
 - Full-chapter MP3 generation uses Edge TTS and requires outbound server connectivity to the TTS service.
 - The HTML5 audio player supports native playback controls and ±15-second seek.
-- Word-level synchronization for generated MP3 files remains unimplemented. Playback position is stored locally for the last active chapter and restored when its MP3 is generated again; independent progress records for every library chapter are not yet implemented.
+- Word-level synchronization for generated MP3 files remains unimplemented. Playback position, reading position, and bookmarks are stored independently per library chapter in the same browser. Non-library imports use a separate temporary current-reading record. Progress does not sync between devices or browsers.
 - Reading progress and bookmarks are stored locally in IndexedDB; they do not sync between devices or browsers.
 
 ## Accessibility
