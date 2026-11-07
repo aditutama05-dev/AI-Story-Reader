@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#081a2e"><meta name="description" content="Baca dan dengarkan narasi cerita dalam bahasa Indonesia.">
 <title>AI Story Reader</title>
 <style>
 :focus-visible{outline:3px solid #ffd166;outline-offset:3px}
@@ -22,18 +22,18 @@ body.reduce-motion *,body.reduce-motion *::before,body.reduce-motion *::after{an
 .accessibility-tools label{margin:4px 0}
 :target{scroll-margin-top:1rem}
 @media(prefers-reduced-motion:reduce){html:focus-within{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-:root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#101116;color:#f4f2f8}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0%,#30264a 0,transparent 34%),#101116;min-height:100vh}
-main{max-width:960px;margin:auto;padding:40px 20px}.brand{color:#c6a7ff;font-weight:700;letter-spacing:.12em;font-size:.8rem}
-h1{font-size:clamp(2rem,6vw,3.4rem);margin:.5rem 0}.sub{color:#aaa5b7;line-height:1.6;max-width:720px}
-.card{margin-top:24px;background:#1a1b24;border:1px solid #343342;border-radius:18px;padding:22px;box-shadow:0 20px 60px #0005}
-label{display:block;font-size:.9rem;color:#d9d3e6;margin:14px 0 8px}
-input,textarea,select{width:100%;background:#11121a;border:1px solid #454255;border-radius:10px;color:#fff;padding:12px;font:inherit}
+ :root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#081522;color:#eef5ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0%,#12365b 0,transparent 36%),#081522;min-height:100vh}
+main{max-width:960px;margin:auto;padding:40px 20px}.brand{color:#66b2ff;font-weight:700;letter-spacing:.12em;font-size:.8rem}
+h1{font-size:clamp(2rem,6vw,3.4rem);margin:.5rem 0}.sub{color:#a9bfd5;line-height:1.6;max-width:720px}
+.card{margin-top:24px;background:#10243a;border:1px solid #24415e;border-radius:18px;padding:22px;box-shadow:0 20px 60px #0005}
+label{display:block;font-size:.9rem;color:#d7e7f7;margin:14px 0 8px}
+input,textarea,select{width:100%;background:#091a2c;border:1px solid #31516f;border-radius:10px;color:#fff;padding:12px;font:inherit}
 textarea{min-height:240px;resize:vertical;line-height:1.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-button{background:#a987ef;color:#171020;border:0;border-radius:10px;padding:12px 17px;font-weight:700;font-size:.95rem;cursor:pointer;margin:8px 7px 0 0}
-button.secondary{background:#353143;color:#eee}button:disabled{opacity:.55;cursor:wait}
-.status{color:#c6a7ff;min-height:24px;margin-top:14px}.output{white-space:pre-wrap;line-height:1.85;color:#eee;margin-top:18px}
-small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
+button{background:#2f8cff;color:#06172a;border:0;border-radius:10px;padding:12px 17px;font-weight:700;font-size:.95rem;cursor:pointer;margin:8px 7px 0 0}
+button.secondary{background:#1d3b5b;color:#eef6ff}button:disabled{opacity:.55;cursor:wait}
+.status{color:#79bdff;min-height:24px;margin-top:14px}.output{white-space:pre-wrap;line-height:1.85;color:#eee;margin-top:18px}
+small{color:#9db4ca}.hint{font-size:.85rem;color:#a9bfd5;line-height:1.5}
 @media(max-width:620px){.row{grid-template-columns:1fr}main{padding:26px 14px}.card{padding:17px}}
 </style></head>
 <body><a class="skip-link" href="#main-content">Lewati ke konten utama</a><main id="main-content" tabindex="-1">
@@ -43,7 +43,7 @@ small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
 
 <nav class="card" aria-label="Navigasi cepat"><h2>Navigasi</h2><ul><li><a href="#accessibility-heading">Aksesibilitas</a></li><li><a href="#import-heading">Impor cerita</a></li><li><a href="#comic-heading">Manga dan manhwa</a></li><li><a href="#editor-heading">Editor chapter</a></li><li><a href="#result-heading">Hasil narasi</a></li></ul></nav>\n<section class="card" aria-labelledby="accessibility-heading">
 <h2 id="accessibility-heading">Aksesibilitas &amp; kenyamanan membaca</h2>
-<p class="hint">Kontrol ini membantu pengguna low vision dan pengguna keyboard. Seluruh teks narasi tetap tersedia sebagai teks yang bisa dibaca TalkBack atau pembaca layar lain.</p>
+<p class="hint">Kontrol ini membantu pengguna low vision dan pengguna keyboard. Seluruh teks narasi tetap tersedia sebagai teks yang bisa dibaca TalkBack atau pembaca layar lain. Website ini tidak dapat membaca layar aplikasi lain atau mengambil screenshot perangkat secara diam-diam.</p>
 <div class="accessibility-tools" role="group" aria-label="Pengaturan tampilan dan aksesibilitas">
 <label for="textSize">Ukuran teks</label>
 <select id="textSize" aria-label="Ukuran teks"><option value="normal">Normal</option><option value="large">Besar</option><option value="extra">Sangat besar</option></select>
@@ -95,7 +95,10 @@ small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
 </section>
 <p><small>API key tetap berada di environment backend, tidak dikirim ke browser dan tidak disimpan di repository.</small></p>
 </main>
+<script src="./config.js"></script>
 <script>
+const API_BASE=(window.AI_STORY_READER_API_BASE||"").replace(/\/+$/,"");
+const apiUrl=path=>`${API_BASE}${path}`;
 const $=id=>document.getElementById(id);
 const root=document.body;
 const preferenceKey="ai-story-reader-accessibility-v1";
@@ -189,13 +192,13 @@ async function importResponse(response){
 $("importUrl").addEventListener("click",async()=>{
  const url=$("url").value.trim();if(!url){$("status").textContent="Masukkan URL chapter.";return}
  $("importUrl").disabled=true;$("status").textContent="Mengambil halaman...";
- try{await importResponse(await fetch("/api/import/url",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})}))}
+ try{await importResponse(await fetch(apiUrl("/api/import/url"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})}))}
  catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importUrl").disabled=false}
 });
 $("importFile").addEventListener("click",async()=>{
  const file=$("file").files[0];if(!file){$("status").textContent="Pilih file terlebih dahulu.";return}
  const form=new FormData();form.append("file",file);$("importFile").disabled=true;$("status").textContent="Membaca file...";
- try{await importResponse(await fetch("/api/import/file",{method:"POST",body:form}))}
+ try{await importResponse(await fetch(apiUrl("/api/import/file"),{method:"POST",body:form}))}
  catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importFile").disabled=false}
 });
 $("go").addEventListener("click",async()=>{
@@ -204,7 +207,7 @@ $("go").addEventListener("click",async()=>{
  try{
   const body={text,title:$("title").value||"Bab tanpa judul"};
   if($("provider").value)body.provider=$("provider").value;if($("model").value.trim())body.model=$("model").value.trim();
-  const r=await fetch("/api/narrate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const r=await fetch(apiUrl("/api/narrate"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await r.json();if(!r.ok)throw new Error(data.detail||"Permintaan gagal");
   $("output").textContent=data.narration;
   $("status").textContent="Selesai · "+data.provider+" / "+data.model+" · "+data.chunks_processed+" potongan";
@@ -222,7 +225,7 @@ $("readComic").addEventListener("click",async()=>{
  if($("comicModel").value.trim())form.append("model",$("comicModel").value.trim());
  $("readComic").disabled=true;$("status").textContent="Membaca gambar dan mengenali teks per halaman...";
  try{
-  const response=await fetch("/api/import/comic",{method:"POST",body:form});
+  const response=await fetch(apiUrl("/api/import/comic"),{method:"POST",body:form});
   const data=await response.json();if(!response.ok)throw new Error(data.detail||"OCR gagal");
   $("title").value=data.title;$("source").value=data.text;
   $("status").textContent="OCR selesai · "+data.pages.length+" halaman · "+data.characters.toLocaleString("id-ID")+" karakter. Periksa hasilnya sebelum membuat narasi.";
