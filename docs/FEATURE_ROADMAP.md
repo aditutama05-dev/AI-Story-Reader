@@ -60,10 +60,10 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] High contrast, text sizing, spacing, and reduced-motion preferences.
 - [x] Persist the current narration and reading position in browser IndexedDB; restore it after reload.
 - [x] Accessible bookmark, resume, and clear-progress controls.
-- [x] Browser TTS highlights the active paragraph and exposes the active paragraph state to assistive technology. (Word-level synchronization remains planned.)
+- [x] Browser TTS highlights the active word when speech-boundary events are supported, with paragraph-level fallback and assistive-technology state.
 - [x] HTML5 MP3 audio player with native playback controls and ±15-second seek.
 - [x] Server-generated MP3 export as one complete file per story part (Edge TTS; server network access required).
-- [ ] Verify audio completeness against the full narration text.
+- [ ] Word-level synchronization for generated MP3 audio.\n- [ ] Verify audio completeness against the full narration text.
 
 ## Stage 6 — Comic understanding
 
