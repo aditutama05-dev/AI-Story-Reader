@@ -57,8 +57,8 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Basic browser speech synthesis controls.
 - [x] Adjustable browser speech rate and selectable device voice where available.
 - [x] High contrast, text sizing, spacing, and reduced-motion preferences.
-- [ ] Persist chapter reading position and resume across sessions.
-- [ ] Accessible bookmark controls.
+- [x] Persist the current narration and reading position in browser IndexedDB; restore it after reload.
+- [x] Accessible bookmark, resume, and clear-progress controls.
 - [ ] Synchronized word highlighting for generated audio.
 - [ ] Stable audio player with progress, pause/resume, and ±15-second seek.
 - [ ] Server-generated MP3 export as one complete file per story part.
