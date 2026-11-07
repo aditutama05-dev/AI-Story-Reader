@@ -24,8 +24,8 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Basic single-page HTML URL extraction in the current FastAPI backend.
 - [x] TXT, Markdown, HTML, PDF text layer, DOCX, and EPUB import in the current FastAPI backend.
 - [x] Multi-image OCR request for JPG, PNG, and WEBP pages.
-- [ ] Source URL validation and structured source metadata.
-- [ ] Generic HTML article extraction with extraction diagnostics.
+- [x] Source URL validation and structured source metadata (basic generic adapter report).
+- [x] Generic HTML article extraction with extraction diagnostics.
 - [ ] Modular domain-specific source adapter interface.
 - [ ] Detect same-chapter continuation pages without following unrelated links.
 - [ ] Multi-page chapter assembly and order verification.
