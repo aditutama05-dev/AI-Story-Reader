@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import hmac
 import re
 import time
 import zipfile
@@ -29,6 +30,13 @@ _RATE_WINDOW_SECONDS = 60
 async def protect_expensive_endpoints(request, call_next):
     path = request.url.path
     if path.startswith("/api/") and path not in {"/api/health", "/api/config"}:
+        access_token = os.getenv("APP_ACCESS_TOKEN", "")
+        if access_token:
+            supplied = request.headers.get("authorization", "")
+            supplied_token = supplied[7:].strip() if supplied.lower().startswith("bearer ") else ""
+            if not hmac.compare_digest(supplied_token, access_token):
+                from fastapi.responses import JSONResponse
+                return JSONResponse(status_code=401, content={"detail": "Token akses aplikasi tidak valid atau belum diisi."}, headers={"WWW-Authenticate": "Bearer"})
         client_ip = request.client.host if request.client else "unknown"
         bucket = "ai" if path in {"/api/narrate", "/api/import/comic", "/api/audio"} else "import"
         limit = int(os.getenv("AI_REQUESTS_PER_MINUTE" if bucket == "ai" else "IMPORT_REQUESTS_PER_MINUTE", "8" if bucket == "ai" else "20"))
