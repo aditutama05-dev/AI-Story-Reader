@@ -58,7 +58,8 @@ def _parse_html(raw: bytes, encoding: str | None = None) -> tuple[str, str, int,
         text = node.get_text("\n", strip=True)
         paragraphs = len(node.find_all("p"))
         linked = sum(len(link.get_text(" ", strip=True)) for link in node.find_all("a"))
-        return (len(text) + paragraphs * 120 - linked * 1.5, len(text))
+        semantic_priority = 500 if node.name == "article" else 400 if node.name == "main" else 0
+        return (len(text) + paragraphs * 120 - linked * 1.5 + semantic_priority, len(text))
 
     main = max(candidates, key=score)
     paragraphs = [p.get_text(" ", strip=True) for p in main.find_all("p")]
