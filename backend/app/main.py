@@ -3,11 +3,12 @@ import os
 from pathlib import Path
 from typing import Literal
 import httpx
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from .importers import extract_document, extract_webpage
+from .vision_ocr import build_ocr_prompt, make_gemini_vision_parts, make_openai_vision_content, normalize_page_image
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 app = FastAPI(title="AI Story Reader API", version="0.2.0")
@@ -143,5 +144,62 @@ async def narrate(request: NarrateRequest):
         raise HTTPException(status_code=502, detail="Respons provider AI tidak sesuai format.") from exc
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Tidak dapat terhubung ke provider AI.") from exc
+
+
+@app.post("/api/import/comic")
+async def import_comic_pages(
+    files: list[UploadFile] = File(...),
+    direction: Literal["rtl", "ltr", "vertical"] = Form("vertical"),
+    provider: Literal["openai", "openrouter", "gemini", "custom"] | None = Form(None),
+    model: str | None = Form(None),
+):
+    if not files:
+        raise HTTPException(status_code=400, detail="Pilih minimal satu halaman komik.")
+    if len(files) > 30:
+        raise HTTPException(status_code=413, detail="Maksimal 30 halaman per proses.")
+    selected, selected_model, api_key, base_url = provider_config(provider, model)
+    if not api_key:
+        raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
+    pages = []
+    try:
+        async with httpx.AsyncClient(timeout=180) as client:
+            for index, upload in enumerate(files, start=1):
+                raw = await upload.read(15 * 1024 * 1024 + 1)
+                image_bytes = normalize_page_image(raw, upload.content_type or "")
+                prompt = build_ocr_prompt(index, len(files), direction)
+                if selected == "gemini":
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{selected_model}:generateContent?key={api_key}"
+                    response = await client.post(url, json={
+                        "contents": [{"role": "user", "parts": make_gemini_vision_parts(prompt, image_bytes)}],
+                        "generationConfig": {"temperature": 0.1},
+                    })
+                    response.raise_for_status()
+                    transcription = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+                else:
+                    if not base_url:
+                        raise HTTPException(status_code=503, detail="AI_BASE_URL belum diatur.")
+                    response = await client.post(
+                        f"{base_url}/chat/completions",
+                        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                        json={"model": selected_model, "temperature": 0.1,
+                              "messages": [{"role": "user", "content": make_openai_vision_content(prompt, image_bytes)}]},
+                    )
+                    response.raise_for_status()
+                    transcription = response.json()["choices"][0]["message"]["content"]
+                pages.append({"page": index, "filename": upload.filename or f"page-{index}", "text": transcription.strip()})
+        combined = "
+
+".join(f"[Halaman {page['page']}]
+{page['text']}" for page in pages)
+        return {"title": "Hasil OCR komik", "pages": pages, "text": combined, "characters": len(combined),
+                "provider": selected, "model": selected_model, "reading_direction": direction}
+    except HTTPException:
+        raise
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=502, detail=f"Provider AI gagal memproses gambar (HTTP {exc.response.status_code}). Pastikan model mendukung input gambar.") from exc
+    except (KeyError, IndexError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail="Respons OCR dari provider tidak sesuai format.") from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Tidak dapat terhubung ke provider OCR/vision.") from exc
 
 app.mount("/", StaticFiles(directory=PROJECT_DIR / "frontend", html=True), name="frontend")
