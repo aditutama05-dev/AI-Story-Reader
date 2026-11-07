@@ -36,6 +36,12 @@ class HTMLExtractionTests(unittest.TestCase):
             _validate_public_url("http://127.0.0.1/chapter")
         self.assertEqual(error.exception.status_code, 400)
 
+
+    def test_url_validator_rejects_malformed_port(self):
+        with self.assertRaises(HTTPException) as error:
+            _validate_public_url("https://example.com:not-a-port/chapter")
+        self.assertEqual(error.exception.status_code, 400)
+
     def test_url_validator_rejects_non_http_scheme(self):
         with self.assertRaises(HTTPException) as error:
             _validate_public_url("file:///etc/passwd")
