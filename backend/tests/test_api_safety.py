@@ -152,9 +152,22 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.status_code, 413)
         self.assertIn("Resolusi atau total area", response.json()["detail"])
 
+    def test_narration_verification_flags_empty_compressed_and_duplicate_chunks(self):
+        from app.main import build_narration_verification
+
+        chunks = ["A" * 500, "B" * 500, "C" * 500, "D" * 500]
+        repeated = "Narasi yang sama dan cukup panjang untuk diuji. " * 8
+        outputs = [repeated, repeated, "", "pendek"]
+        report = build_narration_verification(chunks, outputs)
+        self.assertEqual(report["method"], "chunk_length_and_duplicate_output_checks")
+        self.assertEqual(report["empty_chunks"], [3])
+        self.assertEqual(report["duplicate_output_chunks"], [{"chunk": 2, "duplicate_of": 1}])
+        self.assertEqual(report["compressed_chunks"], [1, 2, 3, 4])
+        self.assertEqual(report["status"], "review_required")
+
     def test_narration_returns_review_required_chunk_sanity_report(self):
         source = open(main_module.__file__, encoding="utf-8").read()
-        self.assertIn("chunk_length_sanity_check", source)
+        self.assertIn("chunk_length_and_duplicate_output_checks", source)
         self.assertIn("source_characters", source)
         self.assertIn("narration_characters", source)
         self.assertIn("belum membuktikan kesetiaan semantik", source)
