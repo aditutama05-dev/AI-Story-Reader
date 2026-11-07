@@ -381,7 +381,7 @@ $("go").addEventListener("click",async()=>{
   const data=await r.json();if(!r.ok)throw new Error(data.detail||"Permintaan gagal");
   renderNarration(data.narration);
   await persistNewChapter($("title").value||"Chapter tanpa judul",data.narration);
-  window.storyLibrary?.saveChapter($("title").value||"Chapter tanpa judul",data.narration,body.text);
+  await window.storyLibrary?.saveChapter($("title").value||"Chapter tanpa judul",data.narration,body.text);
   $("status").textContent="Selesai · "+data.provider+" / "+data.model+" · "+data.chunks_processed+" potongan";
  }catch(e){$("status").textContent="Belum berhasil: "+e.message}finally{$("go").disabled=false}
 });
