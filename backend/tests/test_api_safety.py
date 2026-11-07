@@ -38,6 +38,19 @@ class APISafetyTests(unittest.TestCase):
         self.assertIn("AI belum dikonfigurasi", response.json()["detail"])
 
 
+
+    def test_comic_archive_rejects_unsafe_paths_before_ocr(self):
+        archive = BytesIO()
+        with zipfile.ZipFile(archive, "w") as book:
+            book.writestr("../outside.png", b"not-an-image")
+        response = self.client.post(
+            "/api/import/comic",
+            files={"files": ("chapter.cbz", archive.getvalue(), "application/zip")},
+            data={"direction": "vertical"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("jalur file yang tidak aman", response.json()["detail"])
+
     def test_multi_page_import_combines_explicit_urls_in_order(self):
         async def fake_extract(url):
             return {"title": "Chapter", "text": url.rsplit("/", 1)[-1], "characters": 2, "source_url": url, "source_domain": "example.com"}
