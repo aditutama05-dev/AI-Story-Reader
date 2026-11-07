@@ -8,6 +8,7 @@ This document describes the current repository state. It must be updated when a 
 - GitHub Pages deployment has not yet been configured or verified.
 - Automated checks cover the navy/bright-blue palette; manual mobile/desktop visual testing is still outstanding.
 - The website has not yet undergone manual cross-device testing.
+- The API supports a single shared `APP_ACCESS_TOKEN` and per-process in-memory rate limits. Production deployment must set a strong token; distributed quotas, per-user accounts, and persistent abuse monitoring are not implemented.
 
 ## URL extraction
 
