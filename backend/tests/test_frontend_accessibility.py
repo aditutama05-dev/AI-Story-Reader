@@ -71,7 +71,7 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn("sourceExcerpt", library)
         self.assertIn('textContent="Fakta terstruktur"', library)
         self.assertIn("FAKTA KONTINUITAS TERIKAT KE SUMBER", library)
-        self.assertIn("kutipan: "+'" + fact.sourceExcerpt', library)
+        self.assertIn('"; kutipan: "+fact.sourceExcerpt+")"', library)
 
     def test_story_library_uses_indexeddb_and_keeps_source_separate(self):
         library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
