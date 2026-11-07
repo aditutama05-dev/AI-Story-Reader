@@ -4,6 +4,8 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 
 ## 2026-11-07
 
+- Separated reading position, bookmarks, and generated MP3 playback position by library chapter so opening another chapter no longer overwrites the previous chapter's progress.
+
 - Added `FEATURES.md` with the product feature specification gathered from prior brainstorming.
 - Added project context, roadmap, accessibility/screen-access boundaries, source ingestion, story data model, architecture, known limitations, and changelog documentation.
 - Refined product boundary: AI Story Reader is a website; Android-native screen capture/accessibility services are not part of the deliverable.
