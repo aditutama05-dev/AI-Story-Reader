@@ -81,6 +81,15 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn("FAKTA KONTINUITAS TERIKAT KE SUMBER", library)
         self.assertIn('"; kutipan: "+fact.sourceExcerpt+")"', library)
 
+    def test_continuity_contradiction_check_is_review_only_and_uses_prior_facts(self):
+        self.assertIn('id="checkContinuity"', HTML)
+        self.assertIn('/api/continuity/check', HTML)
+        self.assertIn('getPriorContinuityFacts?.(chapterId)', HTML)
+        self.assertIn("Tidak ada fakta yang diubah", HTML)
+        library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
+        self.assertIn("function getPriorContinuityFacts(chapterId)", library)
+        self.assertIn("getPriorContinuityFacts,", library)
+
     def test_story_library_uses_indexeddb_and_keeps_source_separate(self):
         library = (FRONTEND.parent / "library.js").read_text(encoding="utf-8")
         for control_id in ("library-heading", "addSeries", "exportLibrary", "importLibrary", "libraryTree"):
