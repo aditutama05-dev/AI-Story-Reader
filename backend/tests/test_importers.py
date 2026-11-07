@@ -22,6 +22,13 @@ class HTMLExtractionTests(unittest.TestCase):
         self.assertEqual(paragraphs, 2)
         self.assertEqual(container, "article")
 
+    def test_generic_adapter_is_selected_as_fallback(self):
+        from app.source_adapters import resolve_source_adapter
+
+        adapter = resolve_source_adapter("https://unregistered.example/chapter")
+        self.assertEqual(adapter.adapter_id, "generic-html")
+        self.assertTrue(adapter.supports("https://unregistered.example/chapter"))
+
     def test_url_validator_rejects_private_ip(self):
         with self.assertRaises(HTTPException) as error:
             _validate_public_url("http://127.0.0.1/chapter")
