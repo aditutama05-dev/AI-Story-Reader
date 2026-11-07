@@ -38,7 +38,7 @@ function render(){
      const row=document.createElement("div");row.className="library-chapter";
      const open=document.createElement("button");open.className="secondary";open.textContent="Buka: "+c.title;open.onclick=()=>openChapter(c);
      const del=document.createElement("button");del.className="secondary";del.textContent="Hapus";del.onclick=()=>deleteChapter(s.id,a.id,v.id,c.id);
-     row.append(open,del);vol.append(row);
+     row.append(open,narration,del);vol.append(row);
     }
     arc.append(vol);
    }
@@ -56,12 +56,12 @@ function renameSeries(sid){const all=read(),s=all.find(x=>x.id===sid),title=ask(
 function renameNode(sid,nid,type){const all=read();let node=null;for(const s of all){if(s.id!==sid)continue;for(const a of s.arcs||[]){if(type==="arc"&&a.id===nid)node=a;for(const v of a.volumes||[])if(type==="volume"&&v.id===nid)node=v}}if(!node)return;const title=ask("Nama:",node.title);if(!title)return;node.title=title;write(all);render()}
 function removeSeries(sid){if(!confirm("Hapus seri beserta semua arc, volume, dan chapter di dalamnya?"))return;write(read().filter(x=>x.id!==sid));render()}
 function deleteChapter(sid,aid,vid,cid){if(!confirm("Hapus chapter ini?"))return;const all=read(),v=all.find(x=>x.id===sid)?.arcs.find(x=>x.id===aid)?.volumes.find(x=>x.id===vid);v.chapters=v.chapters.filter(x=>x.id!==cid);write(all);render()}
-function openChapter(c){$("title").value=c.title;$("source").value=c.text||"";$("libraryStatus").textContent="Chapter dimuat ke editor sumber. Tekan Buat narasi untuk memprosesnya.";$("editor-heading").scrollIntoView({behavior:"smooth"});$("source").focus()}
-function saveChapter(title,text){
+function openChapter(c){$("title").value=c.title;$("source").value=c.originalSource||c.text||"";$("libraryStatus").textContent="Teks sumber asli dimuat ke editor. Narasi yang pernah dibuat tetap tersimpan terpisah.";$("editor-heading").scrollIntoView({behavior:"smooth"});$("source").focus()}\nfunction openNarration(c){if(!c.narration)return;$("title").value=c.title;const output=$("output");output.replaceChildren();String(c.narration).split(/\\n{2,}/).filter(Boolean).forEach((part,index)=>{const p=document.createElement("p");p.id="narration-paragraph-"+index;p.dataset.paragraphIndex=String(index);p.textContent=part;output.append(p)});$("libraryStatus").textContent="Narasi tersimpan dibuka. Sumber asli tidak diubah.";$("result-heading").scrollIntoView({behavior:"smooth"})}
+function saveChapter(title,narration,originalSource){
  const all=read();let target=null;
  for(const s of all)for(const a of s.arcs||[])for(const v of a.volumes||[])for(const c of v.chapters||[])if(c.title===title)target=c;
  if(!target){const s=all[0]||{id:id(),title:"Cerita saya",arcs:[]};if(!all.length)all.push(s);let a=s.arcs[0];if(!a){a={id:id(),title:"Arc 1",volumes:[]};s.arcs.push(a)}let v=a.volumes[0];if(!v){v={id:id(),title:"Volume 1",chapters:[]};a.volumes.push(v)}target={id:id(),title,createdAt:new Date().toISOString()};v.chapters.push(target)}
- target.text=text;target.updatedAt=new Date().toISOString();write(all);render();status.textContent="Narasi disimpan ke perpustakaan lokal.";
+ target.narration=narration;target.originalSource=originalSource||target.originalSource||"";target.text=target.originalSource;target.updatedAt=new Date().toISOString();write(all);render();status.textContent="Narasi disimpan ke perpustakaan lokal.";
 }
 function exportLibrary(){const blob=new Blob([JSON.stringify({format:"ai-story-reader-library",version:1,exportedAt:new Date().toISOString(),series:read()},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="ai-story-reader-library.json";a.click();URL.revokeObjectURL(url);status.textContent="Cadangan perpustakaan diunduh."}
 async function importLibrary(file){if(!file)return;try{const data=JSON.parse(await file.text()),items=Array.isArray(data)?data:data.series;if(!Array.isArray(items))throw new Error("Format cadangan tidak dikenali.");const current=read();const merged=[...current,...items.filter(item=>!current.some(old=>old.id===item.id))];write(merged);render();status.textContent="Cadangan berhasil digabung ke perpustakaan."}catch(e){status.textContent="Impor cadangan gagal: "+e.message}}
