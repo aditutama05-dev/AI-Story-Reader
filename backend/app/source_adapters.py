@@ -9,8 +9,8 @@ from bs4 import BeautifulSoup
 
 
 NOISE_TOKEN = re.compile(
-    r"(^|[-_\\s])(advertisement|advert|ads|comment|comments|related|recommendations|"
-    r"recommended|sidebar|breadcrumb|pagination|social|share|navigation|navbar|menu)([-_\\s]|$)",
+    r"(^|[-_\s])(advertisement|advert|ads|comment|comments|related|recommendations|"
+    r"recommended|sidebar|breadcrumb|pagination|social|share|navigation|navbar|menu)([-_\s]|$)",
     re.IGNORECASE,
 )
 
@@ -69,7 +69,7 @@ class GenericHTMLAdapter:
             candidates = [soup]
 
         def score(node) -> tuple[float, int]:
-            text = node.get_text("\\n", strip=True)
+            text = node.get_text("\n", strip=True)
             paragraphs = len(node.find_all("p"))
             linked = sum(len(link.get_text(" ", strip=True)) for link in node.find_all("a"))
             semantic_priority = 10000 if node.name == "article" else 5000 if node.name == "main" else 0
@@ -78,10 +78,10 @@ class GenericHTMLAdapter:
         main = max(candidates, key=score)
         paragraphs = [p.get_text(" ", strip=True) for p in main.find_all("p")]
         if paragraphs:
-            text = "\\n\\n".join(value for value in paragraphs if value)
+            text = "\n\n".join(value for value in paragraphs if value)
         else:
-            lines = [line.strip() for line in main.get_text("\\n").splitlines()]
-            text = "\\n".join(line for line in lines if line)
+            lines = [line.strip() for line in main.get_text("\n").splitlines()]
+            text = "\n".join(line for line in lines if line)
         paragraph_count = (
             len([p for p in paragraphs if p])
             if paragraphs
