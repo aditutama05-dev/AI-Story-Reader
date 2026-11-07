@@ -98,13 +98,89 @@ small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
 <script>
 const $=id=>document.getElementById(id);
 const root=document.body;
-$("textSize").addEventListener("change",()=>{root.classList.remove("large-text","extra-large-text");if($("textSize").value==="large")root.classList.add("large-text");if($("textSize").value==="extra")root.classList.add("extra-large-text");savePreferences()});
-$("contrastToggle").addEventListener("click",()=>{const on=root.classList.toggle("high-contrast");$("contrastToggle").setAttribute("aria-pressed",String(on));$("contrastToggle").textContent="Kontras tinggi: "+(on?"aktif":"mati");savePreferences()});
-$("spacingToggle").addEventListener("click",()=>{const on=root.classList.toggle("comfortable-reading");$("spacingToggle").setAttribute("aria-pressed",String(on));$("spacingToggle").textContent="Jarak baca: "+(on?"longgar":"normal");savePreferences()});
-$("motionToggle").addEventListener("click",()=>{const on=root.classList.toggle("reduce-motion");$("motionToggle").setAttribute("aria-pressed",String(on));$("motionToggle").textContent="Kurangi animasi: "+(on?"aktif":"mati");savePreferences()});
+const preferenceKey="ai-story-reader-accessibility-v1";
+function savePreferences(){
+ try{
+  localStorage.setItem(preferenceKey,JSON.stringify({
+   textSize:$("textSize").value,
+   contrast:root.classList.contains("high-contrast"),
+   spacing:root.classList.contains("comfortable-reading"),
+   motion:root.classList.contains("reduce-motion"),
+   speechRate:$("speechRate").value,
+   voiceURI:$("voiceSelect").value
+  }));
+ }catch(error){}
+}
+function restorePreferences(){
+ try{
+  const p=JSON.parse(localStorage.getItem(preferenceKey)||"{}");
+  $("textSize").value=p.textSize||"normal";
+  if(p.textSize==="large")root.classList.add("large-text");
+  if(p.textSize==="extra")root.classList.add("extra-large-text");
+  const settings=[
+   ["contrast","high-contrast","contrastToggle","Kontras tinggi","mati","aktif"],
+   ["spacing","comfortable-reading","spacingToggle","Jarak baca","normal","longgar"],
+   ["motion","reduce-motion","motionToggle","Kurangi animasi","mati","aktif"]
+  ];
+  settings.forEach(([key,css,id,label,off,on])=>{
+   const enabled=Boolean(p[key]);
+   root.classList.toggle(css,enabled);
+   $(id).setAttribute("aria-pressed",String(enabled));
+   $(id).textContent=label+": "+(enabled?on:off);
+  });
+  if(p.speechRate)$("speechRate").value=p.speechRate;
+  window.pendingVoiceURI=p.voiceURI||"";
+ }catch(error){}
+}
+$("textSize").addEventListener("change",()=>{
+ root.classList.remove("large-text","extra-large-text");
+ if($("textSize").value==="large")root.classList.add("large-text");
+ if($("textSize").value==="extra")root.classList.add("extra-large-text");
+ savePreferences();
+});
+$("contrastToggle").addEventListener("click",()=>{
+ const on=root.classList.toggle("high-contrast");
+ $("contrastToggle").setAttribute("aria-pressed",String(on));
+ $("contrastToggle").textContent="Kontras tinggi: "+(on?"aktif":"mati");
+ savePreferences();
+});
+$("spacingToggle").addEventListener("click",()=>{
+ const on=root.classList.toggle("comfortable-reading");
+ $("spacingToggle").setAttribute("aria-pressed",String(on));
+ $("spacingToggle").textContent="Jarak baca: "+(on?"longgar":"normal");
+ savePreferences();
+});
+$("motionToggle").addEventListener("click",()=>{
+ const on=root.classList.toggle("reduce-motion");
+ $("motionToggle").setAttribute("aria-pressed",String(on));
+ $("motionToggle").textContent="Kurangi animasi: "+(on?"aktif":"mati");
+ savePreferences();
+});
+$("speechRate").addEventListener("change",savePreferences);
+$("voiceSelect").addEventListener("change",savePreferences);
 let availableVoices=[];
-function loadVoices(){if(!("speechSynthesis" in window))return;availableVoices=speechSynthesis.getVoices();const select=$("voiceSelect");const selected=select.value||window.pendingVoiceURI||"";select.innerHTML='<option value="">Otomatis (Bahasa Indonesia jika tersedia)</option>';availableVoices.forEach((voice,index)=>{const option=document.createElement("option");option.value=voice.voiceURI||String(index);option.textContent=voice.name+" ("+voice.lang+")";select.appendChild(option)});select.value=selected;if(select.value!==selected&&selected)select.value="";savePreferences()}
-if("speechSynthesis" in window){loadVoices();speechSynthesis.addEventListener?.("voiceschanged",loadVoices);}\nrestorePreferences();
+function loadVoices(){
+ if(!("speechSynthesis" in window))return;
+ availableVoices=speechSynthesis.getVoices();
+ const select=$("voiceSelect");
+ const selected=select.value||window.pendingVoiceURI||"";
+ select.innerHTML='<option value="">Otomatis (Bahasa Indonesia jika tersedia)</option>';
+ availableVoices.forEach((voice,index)=>{
+  const option=document.createElement("option");
+  option.value=voice.voiceURI||String(index);
+  option.textContent=voice.name+" ("+voice.lang+")";
+  select.appendChild(option);
+ });
+ select.value=selected;
+ if(select.value!==selected&&selected)select.value="";
+ window.pendingVoiceURI=select.value;
+ savePreferences();
+}
+restorePreferences();
+if("speechSynthesis" in window){
+ loadVoices();
+ speechSynthesis.addEventListener?.("voiceschanged",loadVoices);
+}
 async function importResponse(response){
  const data=await response.json();if(!response.ok)throw new Error(data.detail||"Impor gagal");
  $("title").value=data.title||$("title").value;$("source").value=data.text||"";
