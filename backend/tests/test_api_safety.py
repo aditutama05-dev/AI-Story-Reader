@@ -80,5 +80,17 @@ class APISafetyTests(unittest.TestCase):
         self.assertIn("Jangan mengarang dialog", source)
         self.assertIn("jangan menghilangkan peristiwa baru", source)
 
+    def test_scanned_pdf_is_rendered_before_provider_configuration_check(self):
+        import fitz
+        pdf = fitz.open()
+        page = pdf.new_page()
+        page.insert_text((72, 72), "Sample scanned text")
+        payload = pdf.tobytes()
+        pdf.close()
+        with patch.dict(os.environ, {"AI_API_KEY": ""}):
+            response = self.client.post("/api/import/pdf-ocr", files={"file": ("scan.pdf", payload, "application/pdf")})
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("AI belum dikonfigurasi", response.json()["detail"])
+
 if __name__ == "__main__":
     unittest.main()
