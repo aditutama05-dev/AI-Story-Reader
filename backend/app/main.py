@@ -209,7 +209,14 @@ async def import_scanned_pdf(
         raise HTTPException(status_code=422, detail="PDF tidak memiliki halaman.")
     page_images = []
     try:
+        total_rendered_pixels = 0
         for index, page in enumerate(document, start=1):
+            width = max(1, int(page.rect.width * 1.5))
+            height = max(1, int(page.rect.height * 1.5))
+            page_pixels = width * height
+            total_rendered_pixels += page_pixels
+            if max(width, height) > 6000 or page_pixels > 20_000_000 or total_rendered_pixels > 100_000_000:
+                raise HTTPException(status_code=413, detail="Resolusi atau total area halaman PDF terlalu besar untuk OCR.")
             pixmap = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False)
             image_data = pixmap.tobytes("png")
             page_images.append((index, normalize_page_image(image_data, "image/png")))
