@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Story Reader</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#101116;color:#f4f2f8}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0%,#30264a 0,transparent 34%),#101116;min-height:100vh}
+main{max-width:920px;margin:auto;padding:44px 20px}.brand{color:#c6a7ff;font-weight:700;letter-spacing:.12em;font-size:.8rem}
+h1{font-size:clamp(2rem,6vw,3.5rem);margin:.5rem 0}.sub{color:#aaa5b7;line-height:1.6;max-width:680px}
+.card{margin-top:28px;background:#1a1b24;border:1px solid #343342;border-radius:18px;padding:22px;box-shadow:0 20px 60px #0005}
+label{display:block;font-size:.9rem;color:#d9d3e6;margin:14px 0 8px}
+input,textarea,select{width:100%;background:#11121a;border:1px solid #454255;border-radius:10px;color:#fff;padding:12px;font:inherit}
+textarea{min-height:260px;resize:vertical;line-height:1.6}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+button{margin-top:18px;background:#a987ef;color:#171020;border:0;border-radius:10px;padding:13px 20px;font-weight:700;font-size:1rem;cursor:pointer}
+button:disabled{opacity:.55;cursor:wait}.status{color:#c6a7ff;min-height:24px;margin-top:14px}
+.output{white-space:pre-wrap;line-height:1.8;color:#eee;margin-top:18px}
+small{color:#9893a5}@media(max-width:600px){.row{grid-template-columns:1fr}main{padding:28px 15px}}
+</style></head>
+<body><main>
+<div class="brand">AI STORY READER</div>
+<h1>Baca cerita dengan cara baru.</h1>
+<p class="sub">Ubah teks novel atau chapter menjadi narasi bahasa Indonesia yang mengalir, kronologis, dan menjaga detail cerita. Ini adalah fondasi awal; fitur impor file, URL, audio, dan riwayat akan ditambahkan bertahap.</p>
+<section class="card">
+<label for="title">Judul chapter</label><input id="title" placeholder="Contoh: Chapter 1 — Awal Perjalanan">
+<label for="source">Teks sumber</label><textarea id="source" placeholder="Tempel teks chapter di sini..."></textarea>
+<div class="row"><div><label for="provider">Provider AI</label><select id="provider"><option value="">Gunakan pengaturan server</option><option value="openrouter">OpenRouter</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option><option value="custom">Custom OpenAI-compatible</option></select></div>
+<div><label for="model">Model (opsional)</label><input id="model" placeholder="Kosongkan untuk model default"></div></div>
+<button id="go">Buat narasi</button><div class="status" id="status"></div><article class="output" id="output"></article>
+</section><p><small>API key disimpan di environment backend, bukan di browser atau repository.</small></p>
+</main><script>
+const $=id=>document.getElementById(id);
+$("go").addEventListener("click",async()=>{
+ const text=$("source").value.trim(); if(!text){$("status").textContent="Masukkan teks chapter terlebih dahulu.";return}
+ $("go").disabled=true;$("status").textContent="Sedang menyusun narasi...";$("output").textContent="";
+ try{
+  const body={text,title:$("title").value||"Bab tanpa judul"};
+  if($("provider").value)body.provider=$("provider").value;
+  if($("model").value.trim())body.model=$("model").value.trim();
+  const r=await fetch("/api/narrate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await r.json();if(!r.ok)throw new Error(data.detail||"Permintaan gagal");
+  $("output").textContent=data.narration;$("status").textContent="Narasi selesai · "+data.provider+" / "+data.model;
+ }catch(e){$("status").textContent="Belum berhasil: "+e.message}
+ finally{$("go").disabled=false}
+});
+</script></body></html>
