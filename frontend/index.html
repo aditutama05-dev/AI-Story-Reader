@@ -127,6 +127,8 @@ const $=id=>document.getElementById(id);
 const readingDatabaseName="ai-story-reader-reading-v1";
 let readingDatabasePromise=null;
 let currentReadingRecord=null;
+let activeReadingId="current";
+const readingMetaId="active-reading-record";
 let progressSaveTimer=null;
 let lastAudioProgressSave=0;
 let resettingAudio=false;
@@ -134,11 +136,12 @@ function openReadingDatabase(){
  if(!("indexedDB" in window))return Promise.reject(new Error("Penyimpanan progres tidak didukung browser ini."));
  if(readingDatabasePromise)return readingDatabasePromise;
  readingDatabasePromise=new Promise((resolve,reject)=>{
-  const request=indexedDB.open(readingDatabaseName,1);
+  const request=indexedDB.open(readingDatabaseName,2);
   request.onupgradeneeded=()=>{
    const db=request.result;
    if(!db.objectStoreNames.contains("chapters"))db.createObjectStore("chapters",{keyPath:"id"});
    if(!db.objectStoreNames.contains("progress"))db.createObjectStore("progress",{keyPath:"id"});
+   if(!db.objectStoreNames.contains("meta"))db.createObjectStore("meta",{keyPath:"id"});
   };
   request.onsuccess=()=>resolve(request.result);
   request.onerror=()=>reject(request.error||new Error("Database progres tidak dapat dibuka."));
@@ -155,10 +158,10 @@ async function writeReadingStore(storeName,value){
   transaction.onabort=()=>reject(transaction.error||new Error("Penyimpanan progres dibatalkan."));
  });
 }
-async function readReadingStore(storeName){
+async function readReadingStore(storeName,recordId=activeReadingId){
  const db=await openReadingDatabase();
  return new Promise((resolve,reject)=>{
-  const request=db.transaction(storeName,"readonly").objectStore(storeName).get("current");
+  const request=db.transaction(storeName,"readonly").objectStore(storeName).get(recordId);
   request.onsuccess=()=>resolve(request.result||null);
   request.onerror=()=>reject(request.error||new Error("Gagal membaca progres."));
  });
@@ -167,8 +170,8 @@ async function deleteReadingState(){
  const db=await openReadingDatabase();
  return new Promise((resolve,reject)=>{
   const transaction=db.transaction(["chapters","progress"],"readwrite");
-  transaction.objectStore("chapters").delete("current");
-  transaction.objectStore("progress").delete("current");
+  transaction.objectStore("chapters").delete(activeReadingId);
+  transaction.objectStore("progress").delete(activeReadingId);
   transaction.oncomplete=()=>resolve();
   transaction.onerror=()=>reject(transaction.error||new Error("Gagal menghapus progres."));
  });
@@ -210,7 +213,7 @@ function scrollToParagraph(index){
 async function saveProgressPosition(){
  if(!currentReadingRecord||!paragraphCount())return;
  const previous=await readReadingStore("progress").catch(()=>null);
- const progress={id:"current",paragraphIndex:getVisibleParagraphIndex(),bookmarkIndex:previous?.bookmarkIndex??currentReadingRecord.bookmarkIndex??null,updatedAt:Date.now()};
+ const progress={id:activeReadingId,paragraphIndex:getVisibleParagraphIndex(),bookmarkIndex:previous?.bookmarkIndex??currentReadingRecord.bookmarkIndex??null,updatedAt:Date.now()};
  await writeReadingStore("progress",progress);
  currentReadingRecord={...currentReadingRecord,...progress};
  $("resumeReading").disabled=false;$("clearProgress").disabled=false;
@@ -220,22 +223,29 @@ function scheduleProgressSave(){
  clearTimeout(progressSaveTimer);
  progressSaveTimer=setTimeout(()=>saveProgressPosition().catch(()=>{}),800);
 }
-async function persistNewChapter(title,text){
+async function persistNewChapter(title,text,libraryChapterId=null){
  const audio=$("chapterAudio");
+ activeReadingId=libraryChapterId?"chapter:"+libraryChapterId:"current";
  resettingAudio=true;audio.pause();audio.removeAttribute("src");audio.load();
  if(generatedAudioUrl){URL.revokeObjectURL(generatedAudioUrl);generatedAudioUrl=null;}
  $("downloadMp3").hidden=true;$("downloadMp3").removeAttribute("href");
  $("seekBack").disabled=true;$("seekForward").disabled=true;resettingAudio=false;
- currentReadingRecord={id:"current",title:title||"Chapter tanpa judul",text,updatedAt:Date.now()};
+ const previous=await readReadingStore("progress",activeReadingId).catch(()=>null);
+ currentReadingRecord={id:activeReadingId,title:title||"Chapter tanpa judul",text,updatedAt:Date.now()};
  await writeReadingStore("chapters",currentReadingRecord);
- const progress={id:"current",paragraphIndex:0,bookmarkIndex:null,audioPosition:0,updatedAt:Date.now()};
+ const progress={id:activeReadingId,paragraphIndex:previous?.paragraphIndex??0,bookmarkIndex:previous?.bookmarkIndex??null,audioPosition:previous?.audioPosition??0,updatedAt:Date.now()};
  await writeReadingStore("progress",progress);
  currentReadingRecord={...currentReadingRecord,...progress};
+ const db=await openReadingDatabase();
+ await new Promise((resolve,reject)=>{const tx=db.transaction("meta","readwrite");tx.objectStore("meta").put({id:readingMetaId,activeReadingId});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});
  $("resumeReading").disabled=false;$("clearProgress").disabled=false;
 }
 async function restoreSavedChapter(){
  try{
-  const [chapter,progress]=await Promise.all([readReadingStore("chapters"),readReadingStore("progress")]);
+  const db=await openReadingDatabase();
+  const active=await new Promise((resolve,reject)=>{const req=db.transaction("meta","readonly").objectStore("meta").get(readingMetaId);req.onsuccess=()=>resolve(req.result?.activeReadingId||"current");req.onerror=()=>reject(req.error)});
+  activeReadingId=active;
+  const [chapter,progress]=await Promise.all([readReadingStore("chapters",activeReadingId),readReadingStore("progress",activeReadingId)]);
   if(!chapter?.text)return;
   currentReadingRecord={...chapter,...(progress||{})};
   $("title").value=chapter.title||"";
@@ -249,7 +259,7 @@ async function restoreSavedChapter(){
 $("saveBookmark").addEventListener("click",async()=>{
  if(!paragraphCount()){ $("status").textContent="Belum ada narasi untuk diberi bookmark.";return;}
  try{
-  const progress=await readReadingStore("progress")||{id:"current",paragraphIndex:0};
+  const progress=await readReadingStore("progress")||{id:activeReadingId,paragraphIndex:0};
   progress.bookmarkIndex=getVisibleParagraphIndex();progress.updatedAt=Date.now();
   await writeReadingStore("progress",progress);
   currentReadingRecord={...currentReadingRecord,...progress};
@@ -354,7 +364,7 @@ function loadVoices(){
  window.pendingVoiceURI=select.value;
  savePreferences();
 }
-window.restoreStoryNarration=async(title,text)=>{renderNarration(text);await persistNewChapter(title,text)};
+window.restoreStoryNarration=async(title,text,libraryChapterId=null)=>{renderNarration(text);await persistNewChapter(title,text,libraryChapterId)};
 $("saveApiToken").addEventListener("click",()=>{const token=$("apiAccessToken").value.trim();if(token)sessionStorage.setItem("ai-story-reader-access-token",token);else sessionStorage.removeItem("ai-story-reader-access-token");$("status").textContent=token?"Token akses disimpan untuk sesi browser ini.":"Token kosong; proteksi token server mungkin menolak permintaan."});
 $("clearApiToken").addEventListener("click",()=>{sessionStorage.removeItem("ai-story-reader-access-token");$("apiAccessToken").value="";$("status").textContent="Token akses sesi dihapus."});
 restorePreferences();
@@ -469,8 +479,8 @@ async function saveAudioPosition(force=false){
  const now=Date.now();
  if(!force&&now-lastAudioProgressSave<5000)return;
  lastAudioProgressSave=now;
- const progress=await readReadingStore("progress")||{id:"current",paragraphIndex:0,bookmarkIndex:null};
- progress.audioPosition=audio.currentTime;progress.updatedAt=now;
+ const progress=await readReadingStore("progress")||{id:activeReadingId,paragraphIndex:0,bookmarkIndex:null};
+ progress.id=activeReadingId;progress.audioPosition=audio.currentTime;progress.updatedAt=now;
  await writeReadingStore("progress",progress);
  currentReadingRecord={...currentReadingRecord,...progress};
 }
