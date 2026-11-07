@@ -152,6 +152,24 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.status_code, 413)
         self.assertIn("Resolusi atau total area", response.json()["detail"])
 
+    def test_narration_accepts_continuity_context_as_secondary_reference(self):
+        prompts = []
+        async def fake_generate(client, provider, model, api_key, base_url, system_prompt, user_prompt):
+            prompts.append((system_prompt, user_prompt))
+            return "Narasi lengkap berdasarkan teks sumber saat ini. " * 8
+        with patch.object(main_module, "provider_config", return_value=("openrouter", "test-model", "test-key", "https://example.com/v1")), patch.object(
+            main_module, "generate_text", side_effect=fake_generate
+        ):
+            response = self.client.post("/api/narrate", json={
+                "text": "Tokoh utama memasuki ruangan dan menyapa penjaga.",
+                "title": "Chapter 5",
+                "continuity_context": "Seri: Contoh\\n- Chapter 4: Penjaga mengenal tokoh utama.",
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Penjaga mengenal tokoh utama", prompts[0][1])
+        self.assertIn("referensi sekunder", prompts[0][0])
+        self.assertIn("utamakan teks sumber", prompts[0][0])
+
     def test_narration_verification_flags_empty_compressed_and_duplicate_chunks(self):
         from app.main import build_narration_verification
 
