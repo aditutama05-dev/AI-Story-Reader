@@ -39,7 +39,7 @@ async def protect_expensive_endpoints(request, call_next):
                 from fastapi.responses import JSONResponse
                 return JSONResponse(status_code=401, content={"detail": "Token akses aplikasi tidak valid atau belum diisi."}, headers={"WWW-Authenticate": "Bearer"})
         client_ip = request.client.host if request.client else "unknown"
-        bucket = "ai" if path in {"/api/narrate", "/api/import/comic", "/api/import/pdf-ocr", "/api/audio"} else "import"
+        bucket = "ai" if path in {"/api/narrate", "/api/continuity/extract", "/api/continuity/check", "/api/import/comic", "/api/import/pdf-ocr", "/api/audio"} else "import"
         limit = int(os.getenv("AI_REQUESTS_PER_MINUTE" if bucket == "ai" else "IMPORT_REQUESTS_PER_MINUTE", "8" if bucket == "ai" else "20"))
         now = time.monotonic()
         key = (client_ip, bucket)
@@ -69,6 +69,14 @@ class ContinuityExtractRequest(BaseModel):
     text: str = Field(min_length=1, max_length=120000)
     title: str = Field(default="Chapter tanpa judul", max_length=200)
     existing_facts: list[dict] = Field(default_factory=list, max_length=100)
+    provider: Literal["openai", "openrouter", "gemini", "custom"] | None = None
+    model: str | None = None
+
+
+class ContinuityCheckRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=120000)
+    title: str = Field(default="Chapter tanpa judul", max_length=200)
+    prior_facts: list[dict] = Field(min_length=1, max_length=240)
     provider: Literal["openai", "openrouter", "gemini", "custom"] | None = None
     model: str | None = None
 
@@ -344,6 +352,83 @@ async def extract_continuity_facts(request: ContinuityExtractRequest):
     return {"facts": accepted, "accepted": len(accepted), "rejected": rejected,
             "verification": {"status": "review_required", "method": "verbatim_source_excerpt_match",
             "warnings": ["Fakta diusulkan AI dan wajib ditinjau sebelum disimpan.", "Kutipan diperiksa sebagai teks verbatim setelah normalisasi spasi; makna fakta tidak diverifikasi otomatis."]}}
+
+
+@app.post("/api/continuity/check")
+async def check_continuity_contradictions(request: ContinuityCheckRequest):
+    provider, model, api_key, base_url = provider_config(request.provider, request.model)
+    if not api_key:
+        raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
+    facts = request.prior_facts[:240]
+    system = (
+        "Periksa apakah teks chapter SAAT INI secara eksplisit bertentangan dengan fakta kontinuitas dari bagian SEBELUMNYA. "
+        "Kembalikan HANYA JSON valid: "
+        '{"contradictions":[{"fact_index":0,"current_excerpt":"kutipan persis dari teks saat ini","explanation":"alasan pertentangan langsung","severity":"low|medium|high"}]}. '
+        "fact_index adalah indeks nol-based dari daftar fakta yang diberikan. "
+        "Laporkan hanya pertentangan langsung yang dinyatakan eksplisit oleh teks baru terhadap fakta lama. "
+        "JANGAN menganggap fakta lama salah hanya karena tidak disebut lagi, tidak muncul, atau karena perubahan situasi/waktu yang masih masuk akal. "
+        "Jangan menganggap perkembangan cerita, penyamaran, kebohongan tokoh, sudut pandang terbatas, atau informasi ambigu sebagai kontradiksi pasti. "
+        "Jika ragu, abaikan. Kutipan current_excerpt wajib disalin verbatim dari teks chapter saat ini. "
+        "Jangan mengubah, menghapus, atau memperbaiki fakta lama. Maksimal 40 temuan."
+    )
+    user = f"CHAPTER SAAT INI: {request.title}\nFAKTA DARI BAGIAN SEBELUMNYA (indeks dimulai dari 0):\n{facts}\n\nTEKS SUMBER CHAPTER SAAT INI:\n{request.text}"
+    try:
+        async with httpx.AsyncClient(timeout=180) as client:
+            raw = await generate_text(client, provider, model, api_key, base_url, system, user)
+        match = re.search(r"\{[\s\S]*\}", raw)
+        if not match:
+            raise ValueError("JSON tidak ditemukan")
+        payload = __import__("json").loads(match.group(0))
+        candidates = payload.get("contradictions", [])
+        if not isinstance(candidates, list):
+            raise ValueError("contradictions bukan array")
+    except HTTPException:
+        raise
+    except (httpx.HTTPError, KeyError, IndexError) as exc:
+        raise HTTPException(status_code=502, detail="Gagal memeriksa kontinuitas melalui provider AI.") from exc
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=502, detail="AI mengembalikan format pemeriksaan kontinuitas yang tidak valid.") from exc
+
+    normalized_source = re.sub(r"\s+", " ", request.text).casefold()
+    accepted, rejected = [], 0
+    for item in candidates[:40]:
+        if not isinstance(item, dict):
+            rejected += 1
+            continue
+        fact_index = item.get("fact_index")
+        excerpt = str(item.get("current_excerpt", "")).strip()[:700]
+        explanation = str(item.get("explanation", "")).strip()[:700]
+        severity = str(item.get("severity", "medium")).strip().lower()
+        normalized_excerpt = re.sub(r"\s+", " ", excerpt).casefold()
+        if (not isinstance(fact_index, int) or isinstance(fact_index, bool)
+                or fact_index < 0 or fact_index >= len(facts)
+                or not excerpt or normalized_excerpt not in normalized_source
+                or not explanation or severity not in {"low", "medium", "high"}):
+            rejected += 1
+            continue
+        fact = facts[fact_index]
+        accepted.append({
+            "fact_index": fact_index,
+            "prior_fact": str(fact.get("fact", ""))[:500],
+            "prior_category": str(fact.get("category", ""))[:40],
+            "prior_chapter": str(fact.get("chapterTitle", ""))[:200],
+            "current_excerpt": excerpt,
+            "explanation": explanation,
+            "severity": severity,
+        })
+    return {
+        "contradictions": accepted, "accepted": len(accepted), "rejected": rejected,
+        "verification": {
+            "status": "review_required",
+            "method": "prior_fact_index_and_verbatim_current_excerpt_match",
+            "warnings": [
+                "Temuan adalah dugaan AI, bukan keputusan kanon. Tinjau konteks cerita sebelum mengubah fakta apa pun.",
+                "Kutipan baru dicocokkan dengan teks chapter saat ini; pemeriksaan ini tidak membuktikan bahwa interpretasi kontradiksi benar.",
+                "Tidak ada fakta lama yang diubah atau dihapus otomatis.",
+            ],
+        },
+    }
+
 
 
 @app.post("/api/narrate", response_model=NarrateResponse)
