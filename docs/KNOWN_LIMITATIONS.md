@@ -29,7 +29,8 @@ This document describes the current repository state. It must be updated when a 
 - Text-based PDF extraction reads the text layer; scanned PDF OCR is available through the separate vision-model action, limited to 30 pages per request.
 - CBZ/ZIP comic archives are supported for image pages, up to 30 pages per request.
 - Comic OCR is vision-model transcription, not geometric panel segmentation or dedicated character tracking.
-- Image upload currently accepts up to 30 pages per request, each limited to 15 MB.
+- Image upload currently accepts up to 30 pages per request, each limited to 15 MB, with a 100 MB aggregate limit and a 40-megapixel per-image decode limit.
+- Scanned PDF OCR rejects excessive page dimensions and caps total rendered pixel workload before rasterization.
 
 ## Narration and continuity
 
