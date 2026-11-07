@@ -50,6 +50,17 @@ class APISafetyTests(unittest.TestCase):
     def test_multi_page_import_rejects_mixed_domains(self):
         response = self.client.post("/api/import/urls", json={"urls": ["https://example.com/chapter/1", "https://other.example/chapter/2"]})
         self.assertEqual(response.status_code, 400)
+
+    def test_multi_page_import_validates_entire_batch_before_fetching(self):
+        def validate(url):
+            if "127.0.0.1" in url:
+                from fastapi import HTTPException
+                raise HTTPException(status_code=400, detail="URL menuju alamat jaringan privat tidak diizinkan.")
+            return url
+        with patch.object(main_module, "_validate_public_url", side_effect=validate), patch.object(main_module, "extract_webpage_report") as fetch:
+            response = self.client.post("/api/import/urls", json={"urls": ["https://example.com/chapter/1", "http://127.0.0.1/private"]})
+        self.assertEqual(response.status_code, 400)
+        fetch.assert_not_called()
     def test_audio_endpoint_returns_one_complete_mp3_response(self):
         import edge_tts
         class FakeCommunicate:
