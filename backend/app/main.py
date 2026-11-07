@@ -624,8 +624,19 @@ async def import_comic_pages(
                     response.raise_for_status()
                     transcription = response.json()["choices"][0]["message"]["content"]
                 pages.append({"page": index, "filename": filename or f"page-{index}", "text": transcription.strip()})
+        cursor = 0
+        segments = []
+        for index, page in enumerate(pages):
+            if index:
+                cursor += 2
+            prefix = f"[Halaman {page['page']}]\n"
+            cursor += len(prefix)
+            page["source_start"] = cursor
+            cursor += len(page["text"])
+            page["source_end"] = cursor
+            segments.append({"index": page["page"], "filename": page["filename"], "characters": len(page["text"]), "source_start": page["source_start"], "source_end": page["source_end"]})
         combined = "\n\n".join(f"[Halaman {page['page']}]\n{page['text']}" for page in pages)
-        return {"title": "Hasil OCR komik", "pages": pages, "text": combined, "characters": len(combined),
+        return {"title": "Hasil OCR komik", "pages": pages, "segments": segments, "text": combined, "characters": len(combined),
                 "provider": selected, "model": selected_model, "reading_direction": direction}
     except HTTPException:
         raise
