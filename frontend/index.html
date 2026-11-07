@@ -21,6 +21,7 @@ body.reduce-motion *,body.reduce-motion *::before,body.reduce-motion *::after{an
 .accessibility-tools button,.accessibility-tools select{margin:4px 0}
 .accessibility-tools label{margin:4px 0}
 :target{scroll-margin-top:1rem}
+@media(prefers-reduced-motion:reduce){html:focus-within{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 :root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#101116;color:#f4f2f8}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0%,#30264a 0,transparent 34%),#101116;min-height:100vh}
 main{max-width:960px;margin:auto;padding:40px 20px}.brand{color:#c6a7ff;font-weight:700;letter-spacing:.12em;font-size:.8rem}
@@ -40,7 +41,7 @@ small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
 <h1>Baca cerita dengan cara baru.</h1>
 <p class="sub">Impor chapter dari URL atau file, lalu ubah menjadi narasi bahasa Indonesia yang kronologis dan menjaga detail cerita. Pemrosesan chapter panjang dilakukan bertahap dengan konteks kesinambungan.</p>
 
-<section class="card" aria-labelledby="accessibility-heading">
+<nav class="card" aria-label="Navigasi cepat"><h2>Navigasi</h2><ul><li><a href="#accessibility-heading">Aksesibilitas</a></li><li><a href="#import-heading">Impor cerita</a></li><li><a href="#comic-heading">Manga dan manhwa</a></li><li><a href="#editor-heading">Editor chapter</a></li><li><a href="#result-heading">Hasil narasi</a></li></ul></nav>\n<section class="card" aria-labelledby="accessibility-heading">
 <h2 id="accessibility-heading">Aksesibilitas &amp; kenyamanan membaca</h2>
 <p class="hint">Kontrol ini membantu pengguna low vision dan pengguna keyboard. Seluruh teks narasi tetap tersedia sebagai teks yang bisa dibaca TalkBack atau pembaca layar lain.</p>
 <div class="accessibility-tools" role="group" aria-label="Pengaturan tampilan dan aksesibilitas">
@@ -90,20 +91,20 @@ small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
 <label for="voiceSelect">Suara TTS perangkat</label><select id="voiceSelect"><option value="">Otomatis (Bahasa Indonesia jika tersedia)</option></select>
 </div>
 <p class="hint">TalkBack dapat membaca teks narasi di bawah ini seperti teks web biasa. Tombol TTS adalah pilihan tambahan; suara yang tersedia bergantung pada Android/browser dan paket suara yang terpasang.</p>
-<article class="output" id="output" tabindex="0" role="region" aria-label="Teks lengkap hasil narasi" aria-live="polite"></article>
+<article class="output" id="output" tabindex="0" role="region" aria-label="Teks lengkap hasil narasi"></article>
 </section>
 <p><small>API key tetap berada di environment backend, tidak dikirim ke browser dan tidak disimpan di repository.</small></p>
 </main>
 <script>
 const $=id=>document.getElementById(id);
 const root=document.body;
-$("textSize").addEventListener("change",()=>{root.classList.remove("large-text","extra-large-text");if($("textSize").value==="large")root.classList.add("large-text");if($("textSize").value==="extra")root.classList.add("extra-large-text")});
-$("contrastToggle").addEventListener("click",()=>{const on=root.classList.toggle("high-contrast");$("contrastToggle").setAttribute("aria-pressed",String(on));$("contrastToggle").textContent="Kontras tinggi: "+(on?"aktif":"mati")});
-$("spacingToggle").addEventListener("click",()=>{const on=root.classList.toggle("comfortable-reading");$("spacingToggle").setAttribute("aria-pressed",String(on));$("spacingToggle").textContent="Jarak baca: "+(on?"longgar":"normal")});
-$("motionToggle").addEventListener("click",()=>{const on=root.classList.toggle("reduce-motion");$("motionToggle").setAttribute("aria-pressed",String(on));$("motionToggle").textContent="Kurangi animasi: "+(on?"aktif":"mati")});
+$("textSize").addEventListener("change",()=>{root.classList.remove("large-text","extra-large-text");if($("textSize").value==="large")root.classList.add("large-text");if($("textSize").value==="extra")root.classList.add("extra-large-text");savePreferences()});
+$("contrastToggle").addEventListener("click",()=>{const on=root.classList.toggle("high-contrast");$("contrastToggle").setAttribute("aria-pressed",String(on));$("contrastToggle").textContent="Kontras tinggi: "+(on?"aktif":"mati");savePreferences()});
+$("spacingToggle").addEventListener("click",()=>{const on=root.classList.toggle("comfortable-reading");$("spacingToggle").setAttribute("aria-pressed",String(on));$("spacingToggle").textContent="Jarak baca: "+(on?"longgar":"normal");savePreferences()});
+$("motionToggle").addEventListener("click",()=>{const on=root.classList.toggle("reduce-motion");$("motionToggle").setAttribute("aria-pressed",String(on));$("motionToggle").textContent="Kurangi animasi: "+(on?"aktif":"mati");savePreferences()});
 let availableVoices=[];
-function loadVoices(){if(!("speechSynthesis" in window))return;availableVoices=speechSynthesis.getVoices();const select=$("voiceSelect");const selected=select.value;select.innerHTML='<option value="">Otomatis (Bahasa Indonesia jika tersedia)</option>';availableVoices.forEach((voice,index)=>{const option=document.createElement("option");option.value=String(index);option.textContent=voice.name+" ("+voice.lang+")";select.appendChild(option)});select.value=selected}
-if("speechSynthesis" in window){loadVoices();speechSynthesis.addEventListener?.("voiceschanged",loadVoices);}
+function loadVoices(){if(!("speechSynthesis" in window))return;availableVoices=speechSynthesis.getVoices();const select=$("voiceSelect");const selected=select.value||window.pendingVoiceURI||"";select.innerHTML='<option value="">Otomatis (Bahasa Indonesia jika tersedia)</option>';availableVoices.forEach((voice,index)=>{const option=document.createElement("option");option.value=voice.voiceURI||String(index);option.textContent=voice.name+" ("+voice.lang+")";select.appendChild(option)});select.value=selected;if(select.value!==selected&&selected)select.value="";savePreferences()}
+if("speechSynthesis" in window){loadVoices();speechSynthesis.addEventListener?.("voiceschanged",loadVoices);}\nrestorePreferences();
 async function importResponse(response){
  const data=await response.json();if(!response.ok)throw new Error(data.detail||"Impor gagal");
  $("title").value=data.title||$("title").value;$("source").value=data.text||"";
@@ -153,7 +154,7 @@ $("readComic").addEventListener("click",async()=>{
  finally{$("readComic").disabled=false}
 });
 
-let speechChunks=[],speechIndex=0;
+$("speechRate").addEventListener("change",savePreferences);$("voiceSelect").addEventListener("change",savePreferences);\nlet speechChunks=[],speechIndex=0;
 function speakText(){
  if(!("speechSynthesis" in window)){ $("status").textContent="Browser ini tidak mendukung TTS. Coba aktifkan TalkBack untuk membaca teks narasi.";return}
  const text=$("output").textContent.trim();if(!text){$("status").textContent="Belum ada narasi untuk diputar.";return}
@@ -161,7 +162,7 @@ function speakText(){
  const selectedVoice=$("voiceSelect").value;
  const speakNext=()=>{if(speechIndex>=speechChunks.length){$("status").textContent="Pembacaan suara selesai.";return}
  const utterance=new SpeechSynthesisUtterance(speechChunks[speechIndex++]);utterance.lang="id-ID";utterance.rate=Number($("speechRate").value)||1;
- if(selectedVoice!==""&&availableVoices[Number(selectedVoice)])utterance.voice=availableVoices[Number(selectedVoice)];
+ if(selectedVoice!==""){const voice=availableVoices.find(v=>v.voiceURI===selectedVoice)||availableVoices[Number(selectedVoice)];if(voice)utterance.voice=voice;}
  else {const idVoice=availableVoices.find(v=>/^id(-|_)/i.test(v.lang));if(idVoice)utterance.voice=idVoice}
  utterance.onend=speakNext;utterance.onerror=event=>{$("status").textContent="TTS terhenti: "+event.error};speechSynthesis.speak(utterance)};
  speakNext();
@@ -169,5 +170,5 @@ function speakText(){
 $("play").addEventListener("click",speakText);
 $("pause").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.pause()});
 $("resume").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.resume()});
-$("stop").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.cancel();speechIndex=speechChunks.length});
+$("stop").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.cancel();speechIndex=speechChunks.length;$("status").textContent="Pembacaan suara dihentikan.";});
 </script></body></html>
