@@ -336,7 +336,13 @@ if("speechSynthesis" in window){
 async function importResponse(response){
  const data=await response.json();if(!response.ok)throw new Error(data.detail||"Impor gagal");
  $("title").value=data.title||$("title").value;$("source").value=data.text||"";
- $("status").textContent="Berhasil mengimpor "+(data.characters||data.text?.length||0).toLocaleString("id-ID")+" karakter.";
+ const count=(data.characters||data.text?.length||0).toLocaleString("id-ID");
+ if(data.verification){
+  const warnings=(data.verification.warnings||[]).join(" ");
+  $("status").textContent="Sumber diambil dari "+(data.source_domain||"URL")+" · "+count+" karakter · status: perlu diperiksa. "+warnings;
+ }else{
+  $("status").textContent="Berhasil mengimpor "+count+" karakter.";
+ }
 }
 $("importUrl").addEventListener("click",async()=>{
  const url=$("url").value.trim();if(!url){$("status").textContent="Masukkan URL chapter.";return}
