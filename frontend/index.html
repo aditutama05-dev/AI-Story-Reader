@@ -41,7 +41,14 @@ small{color:#9db4ca}.hint{font-size:.85rem;color:#a9bfd5;line-height:1.5}
 <h1>Baca cerita dengan cara baru.</h1>
 <p class="sub">Impor chapter dari URL atau file, lalu ubah menjadi narasi bahasa Indonesia yang kronologis dan menjaga detail cerita. Pemrosesan chapter panjang dilakukan bertahap dengan konteks kesinambungan.</p>
 
-<nav class="card" aria-label="Navigasi cepat"><h2>Navigasi</h2><ul><li><a href="#accessibility-heading">Aksesibilitas</a></li><li><a href="#import-heading">Impor cerita</a></li><li><a href="#comic-heading">Manga dan manhwa</a></li><li><a href="#editor-heading">Editor chapter</a></li><li><a href="#result-heading">Hasil narasi</a></li></ul></nav>\n<section class="card" aria-labelledby="accessibility-heading">
+<nav class="card" aria-label="Navigasi cepat"><h2>Navigasi</h2><ul><li><a href="#library-heading">Perpustakaan cerita</a></li><li><a href="#accessibility-heading">Aksesibilitas</a></li><li><a href="#import-heading">Impor cerita</a></li><li><a href="#comic-heading">Manga dan manhwa</a></li><li><a href="#editor-heading">Editor chapter</a></li><li><a href="#result-heading">Hasil narasi</a></li></ul></nav>\n<section class="card" aria-labelledby="library-heading" id="library-section">
+<h2 id="library-heading">Perpustakaan cerita</h2>
+<p class="hint">Kelompokkan karya secara terpisah: Seri → Arc → Volume → Chapter atau bagian seperti Interlude, Ending, dan Epilogue. Data disimpan di browser perangkat ini. Gunakan ekspor cadangan untuk memindahkannya ke perangkat lain.</p>
+<div class="library-actions"><button id="addSeries" type="button">Buat seri</button><button id="exportLibrary" type="button" class="secondary">Ekspor cadangan</button><label class="secondary library-import" for="importLibrary">Impor cadangan JSON</label><input id="importLibrary" type="file" accept="application/json" hidden></div>
+<div id="libraryTree" class="library-tree" aria-live="polite"></div>
+<p id="libraryStatus" class="status" role="status" aria-live="polite"></p>
+</section>
+\n<section class="card" aria-labelledby="accessibility-heading">
 <h2 id="accessibility-heading">Aksesibilitas &amp; kenyamanan membaca</h2>
 <p class="hint">Kontrol ini membantu pengguna low vision dan pengguna keyboard. Seluruh teks narasi tetap tersedia sebagai teks yang bisa dibaca TalkBack atau pembaca layar lain. Website ini tidak dapat membaca layar aplikasi lain atau mengambil screenshot perangkat secara diam-diam.</p>
 <div class="accessibility-tools" role="group" aria-label="Pengaturan tampilan dan aksesibilitas">
@@ -365,7 +372,7 @@ $("go").addEventListener("click",async()=>{
   const r=await fetch(apiUrl("/api/narrate"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await r.json();if(!r.ok)throw new Error(data.detail||"Permintaan gagal");
   renderNarration(data.narration);
-  await persistNewChapter($("title").value||"Chapter tanpa judul",data.narration);
+  await persistNewChapter($("title").value||"Chapter tanpa judul",data.narration);\n  window.storyLibrary?.saveChapter($("title").value||"Chapter tanpa judul",data.narration);
   $("status").textContent="Selesai · "+data.provider+" / "+data.model+" · "+data.chunks_processed+" potongan";
  }catch(e){$("status").textContent="Belum berhasil: "+e.message}finally{$("go").disabled=false}
 });
@@ -407,4 +414,4 @@ $("play").addEventListener("click",speakText);
 $("pause").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.pause()});
 $("resume").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.resume()});
 $("stop").addEventListener("click",()=>{if("speechSynthesis" in window)speechSynthesis.cancel();speechIndex=speechChunks.length;$("status").textContent="Pembacaan suara dihentikan.";});
-</script></body></html>
+</script><script src="./library.js"></script></body></html>
