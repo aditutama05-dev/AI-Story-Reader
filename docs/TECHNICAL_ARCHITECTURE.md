@@ -8,7 +8,8 @@ The deliverable is a browser website. The repository currently contains a static
 
 - `frontend/index.html`: browser UI, import controls, image OCR form, narration request, accessibility preferences, and browser speech synthesis.
 - `backend/app/main.py`: FastAPI endpoints for health, configuration, URL import, file import, comic OCR, and narration.
-- `backend/app/importers.py`: document extraction and basic HTML URL fetching.
+- `backend/app/importers.py`: document extraction, safe URL fetching, and structured extraction reports.
+- `backend/app/source_adapters.py`: adapter protocol, registry, and generic HTML fallback; domain-specific adapters can be registered independently.
 - `backend/app/vision_ocr.py`: image normalization and vision prompts.
 - `backend/tests/`: OCR and frontend accessibility tests.
 - `.github/workflows/backend-tests.yml`: automated Python tests, JavaScript syntax check, and Python compile check.
