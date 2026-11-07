@@ -42,7 +42,7 @@ This document describes the current repository state. It must be updated when a 
 - There is no server-generated MP3 download.
 - There is no synchronized word highlighting.
 - There is no ±15-second audio seek because current browser TTS is not exposed as a stable seekable audio file.
-- Reading/audio bookmark and resume persistence are not complete.
+- Reading progress and a single bookmark are stored locally in the current browser using IndexedDB. They do not sync between devices or browsers. Audio playback position is not yet persisted because generated audio is not implemented.
 
 ## Accessibility
 
