@@ -63,3 +63,7 @@ Store unknown fields as unknown/null rather than inventing values. Distinguish u
 ## Continuity context implementation
 
 The browser can assemble manually entered notes from up to the 12 most recent preceding story parts in the same series, plus notes on the active part. The combined context is capped at 12,000 characters and sent as secondary reference. It is not an automatically extracted fact database and does not replace source content.
+
+## Structured continuity facts
+
+Each chapter may store up to 100 user-curated facts with category (`character`, `relationship`, `location`, `term`, `event`, `conflict`), a concise fact statement, and a supporting source excerpt. Each statement and excerpt is limited to 500 characters. Facts from preceding parts in the same series are assembled with part titles and sent as secondary narration context, capped at 12,000 characters. This is not automatic extraction or evidence verification; the active chapter source remains authoritative.
