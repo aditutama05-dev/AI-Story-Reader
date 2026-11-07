@@ -49,6 +49,21 @@ Ketentuan wajib:
 """
 
 
+def build_document_page_prompt(page_number: int, total_pages: int) -> str:
+    return f"""Transkripsikan seluruh teks yang benar-benar terlihat pada halaman buku/dokumen hasil scan ini.
+
+Halaman {page_number} dari {total_pages}.
+
+Ketentuan:
+- Pertahankan bahasa, aksara, ejaan, nama, angka, tanda baca, dan istilah seperti pada sumber.
+- Baca urutan teks sesuai tata letak halaman: kolom dari kiri ke kanan dan atas ke bawah, kecuali tata letak bahasa menunjukkan arah lain.
+- Pertahankan pemisahan paragraf, judul, subjudul, daftar, dialog, catatan kaki, dan nomor halaman jika terbaca.
+- Jangan meringkas, menerjemahkan, memperbaiki gaya, atau menambahkan penjelasan.
+- Jangan mengarang kata yang tidak terlihat. Tandai bagian yang tidak terbaca dengan [tidak terbaca].
+- Keluarkan hanya teks hasil transkripsi dengan struktur paragraf yang masuk akal.
+"""
+
+
 def make_openai_vision_content(prompt: str, jpeg_bytes: bytes) -> list[dict]:
     import base64
 
