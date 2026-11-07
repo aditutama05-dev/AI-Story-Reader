@@ -38,11 +38,11 @@ This document describes the current repository state. It must be updated when a 
 
 ## Audio
 
-- Current playback uses browser Web Speech API.
-- There is no server-generated MP3 download.
-- There is no synchronized word highlighting.
-- There is no ±15-second audio seek because current browser TTS is not exposed as a stable seekable audio file.
-- Reading progress and a single bookmark are stored locally in the current browser using IndexedDB. They do not sync between devices or browsers. Audio playback position is not yet persisted because generated audio is not implemented.
+- Browser Web Speech API remains available with active-paragraph highlighting.
+- Full-chapter MP3 generation uses Edge TTS and requires outbound server connectivity to the TTS service.
+- The HTML5 audio player supports native playback controls and ±15-second seek.
+- Word-level synchronized highlighting and audio playback-position persistence remain unimplemented.
+- Reading progress and bookmarks are stored locally in IndexedDB; they do not sync between devices or browsers.
 
 ## Accessibility
 
