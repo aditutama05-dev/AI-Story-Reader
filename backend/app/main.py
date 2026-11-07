@@ -76,6 +76,7 @@ class NarrateResponse(BaseModel):
     provider: str
     model: str
     chunks_processed: int
+    verification: dict = Field(default_factory=dict)
 
 def provider_config(provider: str | None, model: str | None):
     selected = provider or os.getenv("AI_PROVIDER", "openrouter")
@@ -260,6 +261,7 @@ async def narrate(request: NarrateRequest):
         "Jangan menambah pembukaan, penutup, komentar AI, heading, daftar, nomor bagian, atau pemisah buatan. Mulai langsung dari peristiwa sumber dan akhiri pada batas sumber. "
         "Jika input terdiri dari potongan, sambungkan dengan mulus tanpa mengulang narasi sebelumnya dan jangan menghilangkan peristiwa baru pada potongan saat ini.")
     outputs, previous_context = [], ""
+    chunk_metrics = []
     try:
         async with httpx.AsyncClient(timeout=240) as client:
             for index, chunk in enumerate(chunks):
@@ -272,8 +274,13 @@ async def narrate(request: NarrateRequest):
                     f"TEKS SUMBER POTONGAN INI:\n{chunk}")
                 output = (await generate_text(client, provider, model, api_key, base_url, system_prompt, user_prompt)).strip()
                 outputs.append(output)
+                chunk_metrics.append({"chunk": index + 1, "source_characters": len(chunk), "narration_characters": len(output), "nonempty": bool(output)})
                 previous_context = output[-2200:]
-        return NarrateResponse(narration="\n\n".join(outputs), provider=provider, model=model, chunks_processed=len(chunks))
+        warnings = ["Pemeriksaan ini hanya mendeteksi keluaran kosong atau pemadatan teks yang ekstrem; belum membuktikan kesetiaan semantik terhadap setiap peristiwa sumber.", "Dengarkan atau baca ulang hasil narasi sambil membandingkannya dengan sumber asli."]
+        if any(not item["nonempty"] or item["narration_characters"] < max(80, int(item["source_characters"] * 0.18)) for item in chunk_metrics):
+            warnings.insert(0, "Ada potongan yang menghasilkan narasi kosong atau jauh lebih pendek dari sumber. Periksa kemungkinan detail terlewat.")
+        verification = {"status": "review_required", "method": "chunk_length_sanity_check", "chunks": chunk_metrics, "warnings": warnings}
+        return NarrateResponse(narration="\n\n".join(outputs), provider=provider, model=model, chunks_processed=len(chunks), verification=verification)
     except HTTPException:
         raise
     except httpx.HTTPStatusError as exc:
