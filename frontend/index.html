@@ -179,7 +179,7 @@ function renderNarration(text){
   paragraph.id="narration-paragraph-"+index;
   paragraph.dataset.paragraphIndex=String(index);
   let offset=0;
-  for(const token of value.match(/\\S+|\\s+/gu)||[]){if(/^\\s+$/u.test(token)){paragraph.appendChild(document.createTextNode(token))}else{const word=document.createElement("span");word.className="speech-word";word.dataset.wordStart=String(offset);word.dataset.wordEnd=String(offset+token.length);word.textContent=token;paragraph.appendChild(word)}offset+=token.length}
+  for(const token of value.match(/\S+|\s+/gu)||[]){if(/^\s+$/u.test(token)){paragraph.appendChild(document.createTextNode(token))}else{const word=document.createElement("span");word.className="speech-word";word.dataset.wordStart=String(offset);word.dataset.wordEnd=String(offset+token.length);word.textContent=token;paragraph.appendChild(word)}offset+=token.length}
   output.appendChild(paragraph);
  });
 }
