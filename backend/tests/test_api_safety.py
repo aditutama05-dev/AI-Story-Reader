@@ -117,6 +117,20 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertIn("AI belum dikonfigurasi", response.json()["detail"])
 
+
+    def test_scanned_pdf_rejects_excessive_page_dimensions_before_render(self):
+        import fitz
+        pdf = fitz.open()
+        pdf.new_page(width=10000, height=10000)
+        payload = pdf.tobytes()
+        pdf.close()
+        response = self.client.post(
+            "/api/import/pdf-ocr",
+            files={"file": ("oversized.pdf", payload, "application/pdf")},
+        )
+        self.assertEqual(response.status_code, 413)
+        self.assertIn("Resolusi atau total area", response.json()["detail"])
+
     def test_narration_returns_review_required_chunk_sanity_report(self):
         source = open(main_module.__file__, encoding="utf-8").read()
         self.assertIn("chunk_length_sanity_check", source)
