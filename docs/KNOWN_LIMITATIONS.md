@@ -4,9 +4,9 @@ This document describes the current repository state. It must be updated when a 
 
 ## Frontend and deployment
 
-- The frontend currently uses relative `/api/...` requests and is primarily suited to being served by the FastAPI app. A configurable absolute API base URL is needed for GitHub Pages hosting.
+- The frontend supports a configurable absolute API base URL for separate static hosting. The API service still needs to be deployed and connected before AI features work from GitHub Pages.
 - GitHub Pages deployment has not yet been configured or verified.
-- The current visual theme is being aligned to the required navy/bright-blue palette.
+- Automated checks cover the navy/bright-blue palette; manual mobile/desktop visual testing is still outstanding.
 - The website has not yet undergone manual cross-device testing.
 
 ## URL extraction
@@ -15,25 +15,25 @@ This document describes the current repository state. It must be updated when a 
 - JavaScript-rendered pages are not executed.
 - Authenticated pages and pages protected by access controls are not supported.
 - Redirects are rejected rather than followed through a validated redirect chain.
-- There is no domain-specific source adapter registry yet.
-- There is no reliable multi-page chapter continuation detection or completeness report.
+- A source adapter registry exists with a generic fallback; domain-specific adapters remain to be added.
+- Explicit same-domain multi-page imports can be assembled in user-supplied order and are flagged for review. Automatic continuation detection is not implemented.
 - Generic HTML cleanup may still include unrelated text or omit content in unusual layouts.
-- Domain-specific adapters and verified continuation-page assembly are not implemented.
+- Domain-specific adapters and automatic verified continuation-page assembly are not implemented.
 - DNS validation resolves hostnames before fetching, but the current implementation does not pin the resolved address to the HTTP connection; additional hardening against DNS rebinding is still required before broad public deployment.
 
 ## File and comic import
 
-- EPUB extraction currently sorts HTML-like archive paths rather than following the EPUB package spine; reading order may be incorrect for some books.
+- EPUB extraction follows the package spine order. Complex fixed-layout EPUBs and unusual navigation structures may still need review.
 - PDF extraction reads the text layer only; scanned PDFs require OCR, which is not implemented.
-- ZIP/CBZ import is not implemented.
+- CBZ/ZIP comic archives are supported for image pages, up to 30 pages per request.
 - Comic OCR is vision-model transcription, not geometric panel segmentation or dedicated character tracking.
 - Image upload currently accepts up to 30 pages per request, each limited to 15 MB.
 
 ## Narration and continuity
 
 - Narration uses context-aware chunks but does not yet run automated source-to-narration coverage verification.
-- There is no persistent Series/Arc/Volume/Story Part library.
-- Story Continuity Memory is specified but not yet stored as a structured persistent model.
+- A local IndexedDB Series/Arc/Volume/Chapter library exists with JSON backup/restore. It is not cloud-synced, and part types are represented by user-entered chapter titles.
+- Manual continuity notes can be saved per chapter. Structured character/relationship/location/event tracking with source references remains unimplemented.
 - AI output can still omit or distort source details; human review remains important.
 
 ## Audio
