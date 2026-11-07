@@ -157,7 +157,7 @@ let speechChunks=[],speechIndex=0;
 function speakText(){
  if(!("speechSynthesis" in window)){ $("status").textContent="Browser ini tidak mendukung TTS. Coba aktifkan TalkBack untuk membaca teks narasi.";return}
  const text=$("output").textContent.trim();if(!text){$("status").textContent="Belum ada narasi untuk diputar.";return}
- speechSynthesis.cancel();speechChunks=text.match(/[\\s\\S]{1,1800}(?:\\s|$)/g)||[text];speechIndex=0;
+ speechSynthesis.cancel();speechChunks=text.match(/[\s\S]{1,1800}(?:\s|$)/g)||[text];speechIndex=0;
  const selectedVoice=$("voiceSelect").value;
  const speakNext=()=>{if(speechIndex>=speechChunks.length){$("status").textContent="Pembacaan suara selesai.";return}
  const utterance=new SpeechSynthesisUtterance(speechChunks[speechIndex++]);utterance.lang="id-ID";utterance.rate=Number($("speechRate").value)||1;
