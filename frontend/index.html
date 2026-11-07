@@ -94,6 +94,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <div><label for="model">Model (opsional)</label><input id="model" placeholder="Kosongkan untuk model default"></div></div>
 <button id="extractFacts" type="button" class="secondary">Ekstrak fakta kontinuitas otomatis</button>
 <button id="checkContinuity" type="button" class="secondary">Periksa kontradiksi kontinuitas</button>
+<div id="continuityResults" class="hint" aria-live="polite" aria-label="Bukti kontinuitas"></div>
 <button id="go">Buat narasi</button><div class="status" id="status" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></div>
 </section>
 
@@ -425,6 +426,24 @@ $("go").addEventListener("click",async()=>{
  }catch(e){$("status").textContent="Belum berhasil: "+e.message}finally{$("go").disabled=false}
 });
 
+function renderContinuityEvidence(items){
+ const container=$("continuityResults");container.replaceChildren();
+ if(!items?.length)return;
+ const heading=document.createElement("strong");heading.textContent="Bukti sumber · pilih temuan untuk menyorot kutipan asli";container.append(heading);
+ items.forEach((item,index)=>{
+  const row=document.createElement("div");row.className="library-actions";
+  const button=document.createElement("button");button.type="button";button.className="secondary";
+  button.textContent=(index+1)+". "+item.label+" — karakter "+item.start+"–"+item.end;
+  button.addEventListener("click",()=>{
+   const source=$("source");source.focus();source.setSelectionRange(item.start,item.end);
+   source.scrollIntoView({behavior:"auto",block:"center"});
+   $("status").textContent="Kutipan sumber dipilih. Posisi karakter "+item.start+" sampai "+item.end+".";
+  });
+  row.append(button);container.append(row);
+  const quote=document.createElement("p");quote.textContent="“"+item.excerpt+"”";container.append(quote);
+ });
+}
+
 $("extractFacts").addEventListener("click",async()=>{
  const chapterId=window.currentLibraryChapterId;
  const source=$("source").value.trim();
@@ -435,10 +454,11 @@ $("extractFacts").addEventListener("click",async()=>{
   const response=await apiFetch("/api/continuity/extract",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:source,title:$("title").value||"Chapter tanpa judul"})});
   const data=await response.json();if(!response.ok)throw new Error(data.detail||"Ekstraksi fakta gagal.");
   if(!data.facts?.length){$("status").textContent="Tidak ada fakta dengan kutipan sumber yang dapat diverifikasi. Tidak ada data yang disimpan.";return}
-  const preview=data.facts.map((fact,index)=>(index+1)+". ["+fact.category+"] "+fact.fact+"\n   Kutipan: “"+fact.sourceExcerpt+"”").join("\n\n");
+  const preview=data.facts.map((fact,index)=>(index+1)+". ["+fact.category+"] "+fact.fact+"\n   Kutipan: “"+fact.sourceExcerpt+"” · karakter "+fact.sourceStart+"–"+fact.sourceEnd).join("\n\n");
   if(!confirm("Periksa usulan fakta berikut. Hanya fakta yang disetujui akan disimpan.\n\n"+preview+"\n\nSimpan semua usulan ini?")){$("status").textContent="Usulan fakta dibatalkan; tidak ada perubahan.";return}
   const saved=await window.storyLibrary.storeExtractedFacts(chapterId,data.facts);
   $("status").textContent=data.accepted+" fakta diusulkan; "+data.rejected+" ditolak karena kutipan tidak cocok. "+saved.length+" fakta kini tersimpan. Tetap tinjau maknanya.";
+  renderContinuityEvidence(data.facts.map(fact=>({label:"Fakta "+fact.category+": "+fact.fact,excerpt:fact.sourceExcerpt,start:fact.sourceStart,end:fact.sourceEnd})));
  }catch(error){$("status").textContent="Ekstraksi fakta gagal: "+error.message}
  finally{$("extractFacts").disabled=false}
 });
@@ -457,7 +477,7 @@ $("checkContinuity").addEventListener("click",async()=>{
   const data=await response.json();if(!response.ok)throw new Error(data.detail||"Pemeriksaan kontinuitas gagal.");
   if(!data.contradictions?.length){$("status").textContent="Tidak ditemukan dugaan kontradiksi yang lolos pemeriksaan kutipan. Ini bukan jaminan tidak ada inkonsistensi.";return}
   const preview=data.contradictions.map((item,index)=>(index+1)+". ["+item.severity+"] Fakta lama ("+item.prior_chapter+"): "+item.prior_fact+"\n   Teks baru: “"+item.current_excerpt+"”\n   Alasan: "+item.explanation).join("\n\n");
-  alert("Dugaan kontradiksi untuk ditinjau (tidak ada fakta yang diubah):\n\n"+preview+"\n\nTemuan valid: "+data.accepted+" · Ditolak: "+data.rejected);
+  renderContinuityEvidence(data.contradictions.map(item=>({label:"Dugaan kontradiksi ["+item.severity+"]: "+item.prior_fact+" · "+item.explanation,excerpt:item.current_excerpt,start:item.current_start,end:item.current_end})));
   $("status").textContent=data.accepted+" dugaan kontradiksi ditemukan; "+data.rejected+" keluaran AI ditolak karena indeks/kutipan tidak valid. Tidak ada fakta yang diubah.";
  }catch(error){$("status").textContent="Pemeriksaan kontinuitas gagal: "+error.message}
  finally{$("checkContinuity").disabled=false}
