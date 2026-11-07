@@ -424,7 +424,7 @@ $("readComic").addEventListener("click",async()=>{
 $("speechRate").addEventListener("change",savePreferences);$("voiceSelect").addEventListener("change",savePreferences);
 let speechChunks=[],speechIndex=0,speechParagraphs=[];
 function clearSpeechHighlight(){
- document.querySelectorAll(".speech-current").forEach(node=>{node.classList.remove("speech-current");node.removeAttribute("aria-current")});
+ document.querySelectorAll(".speech-current,.speech-current-word").forEach(node=>{node.classList.remove("speech-current","speech-current-word");node.removeAttribute("aria-current")});
 }
 function speakText(){
  if(!("speechSynthesis" in window)){$("status").textContent="Browser ini tidak mendukung TTS. Coba aktifkan TalkBack.";return}
