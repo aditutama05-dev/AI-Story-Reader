@@ -26,7 +26,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Multi-image OCR request for JPG, PNG, and WEBP pages.
 - [x] Source URL validation and structured source metadata (basic generic adapter report).
 - [x] Generic HTML article extraction with extraction diagnostics.
-- [ ] Modular domain-specific source adapter interface.
+- [x] Modular source adapter interface and registry (generic fallback is active; domain-specific adapters remain planned).
 - [ ] Detect same-chapter continuation pages without following unrelated links.
 - [ ] Multi-page chapter assembly and order verification.
 - [ ] Source completeness report with explicit uncertainty states.
