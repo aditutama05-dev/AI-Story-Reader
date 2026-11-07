@@ -16,6 +16,8 @@ from .importers import extract_document, extract_webpage_report
 from .vision_ocr import build_ocr_prompt, make_gemini_vision_parts, make_openai_vision_content, normalize_page_image
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
+if not (PROJECT_DIR / "frontend").is_dir():
+    PROJECT_DIR = PROJECT_DIR.parent
 app = FastAPI(title="AI Story Reader API", version="0.2.0")
 app.add_middleware(CORSMiddleware, allow_origins=os.getenv("CORS_ORIGINS", "*").split(","), allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
