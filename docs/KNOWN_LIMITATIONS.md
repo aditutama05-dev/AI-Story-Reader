@@ -66,3 +66,7 @@ Structured continuity facts are assembled from preceding story parts in the same
 ### AI-assisted continuity fact extraction
 
 The user can request up to 30 AI-proposed facts from the active chapter. The backend rejects suggestions whose quoted excerpt cannot be matched against the source text (after whitespace normalization), and the UI requires explicit user confirmation before saving. This verifies the excerpt text only, not whether the model's fact interpretation is correct or whether it omitted relevant facts. The feature requires a configured AI provider and the active chapter must be opened from the local library.
+
+### AI-assisted continuity contradiction checks
+
+The user can compare the active chapter against up to 240 structured facts from preceding parts in the same series. The API accepts a candidate only when its prior-fact index is valid and its quoted current-chapter excerpt matches the source after whitespace normalization. Results are suggestions only: the model can misinterpret context, and the feature does not prove semantic contradiction, detect every inconsistency, or modify saved facts. It requires an active library chapter and a configured AI provider.
