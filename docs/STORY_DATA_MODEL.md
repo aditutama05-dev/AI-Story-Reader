@@ -59,3 +59,7 @@ Internal structured context about characters, relationships, locations, prior ev
 ## Metadata uncertainty
 
 Store unknown fields as unknown/null rather than inventing values. Distinguish user-confirmed metadata from automatically detected metadata and retain the source evidence used for detection.
+
+## Continuity context implementation
+
+The browser can assemble manually entered notes from up to the 12 most recent preceding story parts in the same series, plus notes on the active part. The combined context is capped at 12,000 characters and sent as secondary reference. It is not an automatically extracted fact database and does not replace source content.
