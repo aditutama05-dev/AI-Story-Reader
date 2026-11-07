@@ -32,8 +32,21 @@ small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
 <p class="hint">Format: EPUB, PDF berbasis teks, TXT, Markdown, HTML, DOCX. PDF hasil scan dan gambar manga memerlukan OCR yang belum tersedia.</p>
 </section>
 
+
 <section class="card">
-<h2>2. Siapkan chapter</h2>
+<h2>2. Baca manga / manhwa dari gambar</h2>
+<label for="comicFiles">Pilih halaman gambar (urutkan sebelum upload)</label>
+<input id="comicFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+<div class="row">
+<div><label for="readingDirection">Arah baca</label><select id="readingDirection"><option value="vertical">Manhwa / webtoon (atas ke bawah)</option><option value="rtl">Manga Jepang (kanan ke kiri)</option><option value="ltr">Komik kiri ke kanan</option></select></div>
+<div><label for="comicModel">Model vision (opsional)</label><input id="comicModel" placeholder="Gunakan model default"></div>
+</div>
+<button id="readComic">OCR halaman komik</button>
+<p class="hint">Pilih maksimal 30 halaman JPG, PNG, atau WEBP. Gunakan model AI yang mendukung gambar/vision. Hasil transkripsi akan dimasukkan ke editor chapter dan tetap bisa diedit sebelum dibuat narasi.</p>
+</section>
+
+<section class="card">
+<h2>3. Siapkan chapter</h2>
 <label for="title">Judul chapter / bagian</label><input id="title" placeholder="Contoh: Chapter 1 — Awal Perjalanan">
 <label for="source">Teks sumber</label><textarea id="source" placeholder="Teks hasil impor akan muncul di sini. Lu juga bisa langsung menempel teks chapter..."></textarea>
 <div class="row"><div><label for="provider">Provider AI</label><select id="provider"><option value="">Gunakan pengaturan server</option><option value="openrouter">OpenRouter</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option><option value="custom">Custom OpenAI-compatible</option></select></div>
@@ -41,7 +54,7 @@ small{color:#9893a5}.hint{font-size:.85rem;color:#aaa5b7;line-height:1.5}
 <button id="go">Buat narasi</button><div class="status" id="status" aria-live="polite"></div>
 </section>
 
-<section class="card"><h2>3. Hasil narasi</h2><div><button id="play">▶ Putar narasi</button><button id="pause" class="secondary">⏸ Jeda</button><button id="resume" class="secondary">Lanjutkan</button><button id="stop" class="secondary">Hentikan</button></div>
+<section class="card"><h2>4. Hasil narasi</h2><div><button id="play">▶ Putar narasi</button><button id="pause" class="secondary">⏸ Jeda</button><button id="resume" class="secondary">Lanjutkan</button><button id="stop" class="secondary">Hentikan</button></div>
 <p class="hint">Pemutaran saat ini memakai suara bawaan browser/perangkat. TTS server dan ekspor MP3 akan ditambahkan pada tahap berikutnya.</p>
 <article class="output" id="output"></article></section>
 <p><small>API key tetap berada di environment backend, tidak dikirim ke browser dan tidak disimpan di repository.</small></p>
@@ -77,6 +90,26 @@ $("go").addEventListener("click",async()=>{
   $("status").textContent="Selesai · "+data.provider+" / "+data.model+" · "+data.chunks_processed+" potongan";
  }catch(e){$("status").textContent="Belum berhasil: "+e.message}finally{$("go").disabled=false}
 });
+
+$("readComic").addEventListener("click",async()=>{
+ const files=$("comicFiles").files;
+ if(!files.length){$("status").textContent="Pilih satu atau beberapa halaman komik.";return}
+ if(files.length>30){$("status").textContent="Maksimal 30 halaman per proses.";return}
+ const form=new FormData();
+ for(const file of files)form.append("files",file);
+ form.append("direction",$("readingDirection").value);
+ if($("provider").value)form.append("provider",$("provider").value);
+ if($("comicModel").value.trim())form.append("model",$("comicModel").value.trim());
+ $("readComic").disabled=true;$("status").textContent="Membaca gambar dan mengenali teks per halaman...";
+ try{
+  const response=await fetch("/api/import/comic",{method:"POST",body:form});
+  const data=await response.json();if(!response.ok)throw new Error(data.detail||"OCR gagal");
+  $("title").value=data.title;$("source").value=data.text;
+  $("status").textContent="OCR selesai · "+data.pages.length+" halaman · "+data.characters.toLocaleString("id-ID")+" karakter. Periksa hasilnya sebelum membuat narasi.";
+ }catch(e){$("status").textContent="OCR gagal: "+e.message}
+ finally{$("readComic").disabled=false}
+});
+
 function speakText(){
  if(!("speechSynthesis" in window)){ $("status").textContent="Browser ini tidak mendukung pembacaan suara.";return}
  const text=$("output").textContent.trim();if(!text){$("status").textContent="Belum ada narasi untuk diputar.";return}
