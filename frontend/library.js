@@ -92,6 +92,25 @@ async function renameNode(sid,nid,type){let found=false;const all=read().map(s=>
 async function removeSeries(sid){if(!confirm("Hapus seri beserta semua arc, volume, dan chapter di dalamnya?"))return;await persist(read().filter(s=>s.id!==sid))}
 async function editNotes(sid,aid,vid,cid){const all=read();let current="";for(const s of all)if(s.id===sid)for(const a of s.arcs||[])if(a.id===aid)for(const v of a.volumes||[])if(v.id===vid)for(const ch of v.chapters||[])if(ch.id===cid)current=ch.notes||"";const notes=prompt("Catatan kontinuitas chapter ini (tokoh, relasi, lokasi, istilah, kejadian):",current);if(notes===null)return;const updated=all.map(s=>s.id!==sid?s:{...s,arcs:s.arcs.map(a=>a.id!==aid?a:{...a,volumes:a.volumes.map(v=>v.id!==vid?v:{...v,chapters:v.chapters.map(ch=>ch.id===cid?{...ch,notes,notesUpdatedAt:new Date().toISOString()}:ch)})})});await persist(updated)}
 async function deleteChapter(sid,aid,vid,cid){if(!confirm("Hapus chapter ini?"))return;const all=read().map(s=>s.id!==sid?s:{...s,arcs:s.arcs.map(a=>a.id!==aid?a:{...a,volumes:a.volumes.map(v=>v.id!==vid?v:{...v,chapters:v.chapters.filter(c=>c.id!==cid)})})});await persist(all)}
+function buildContinuityContext(chapterId){
+ let selected=null,selectedSeries=null,prior=[];
+ for(const series of read()){
+  for(const arc of series.arcs||[])for(const volume of arc.volumes||[])for(let index=0;index<(volume.chapters||[]).length;index++){
+   const chapter=volume.chapters[index];
+   if(chapter.id===chapterId){selected=chapter;selectedSeries=series;break}
+  }
+  if(selected)break;
+ }
+ if(!selected||!selectedSeries)return "";
+ for(const arc of selectedSeries.arcs||[])for(const volume of arc.volumes||[])for(const chapter of volume.chapters||[]){
+  if(chapter.id===selected.id)break;
+  if(chapter.notes?.trim())prior.push({title:chapter.title,partType:chapter.partType||"Chapter",notes:chapter.notes.trim()});
+ }
+ const entries=prior.slice(-12).map(item=>"- "+item.partType+" "+item.title+": "+item.notes);
+ if(selected.notes?.trim())entries.push("- Catatan bagian aktif ("+(selected.partType||"Chapter")+" "+selected.title+"): "+selected.notes.trim());
+ if(!entries.length)return "";
+ return ("SERi: "+selectedSeries.title+"\\n"+entries.join("\\n")).slice(0,12000);
+}
 function openChapter(chapter){$("title").value=chapter.title;$("source").value=chapter.originalSource||chapter.text||"";window.currentLibraryChapterId=chapter.id;status.textContent="Teks sumber asli dimuat ke editor. Narasi tersimpan terpisah.";$("editor-heading").scrollIntoView({behavior:"smooth"});$("source").focus()}
 async function openNarration(chapter){if(!chapter.narration)return;$("title").value=chapter.title;window.currentLibraryChapterId=chapter.id;await window.restoreStoryNarration?.(chapter.title,chapter.narration,chapter.id);status.textContent="Narasi tersimpan dibuka. Progres dan bookmark chapter ini dipulihkan secara terpisah.";$("result-heading").scrollIntoView({behavior:"smooth"})}
 async function saveChapter(title,narration,originalSource){
@@ -120,7 +139,7 @@ async function importLibrary(file){if(!file)return;try{const data=JSON.parse(awa
 $("addSeries").addEventListener("click",()=>safe(addSeries));
 $("exportLibrary").addEventListener("click",exportLibrary);
 $("importLibrary").addEventListener("change",event=>safe(()=>importLibrary(event.target.files[0])));
-window.storyLibrary={saveChapter,render};
+window.storyLibrary={saveChapter,render,getContinuityContext:buildContinuityContext};
 status.textContent="Memuat perpustakaan cerita...";
 $("addSeries").disabled=true;$("exportLibrary").disabled=true;$("importLibrary").disabled=true;
 loadState().then(()=>{render();$("addSeries").disabled=false;$("exportLibrary").disabled=false;$("importLibrary").disabled=false;status.textContent="Perpustakaan siap. Data disimpan di IndexedDB perangkat ini."}).catch(error=>{status.textContent="Perpustakaan tidak dapat dibuka: "+error.message;render()});
