@@ -4,6 +4,8 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 
 ## 2026-11-07
 
+- Narration verification now flags empty chunks, unusually compressed outputs, and exact duplicate narration between source chunks. The report remains review-required and does not claim semantic completeness.
+
 - Separated reading position, bookmarks, and generated MP3 playback position by library chapter so opening another chapter no longer overwrites the previous chapter's progress.
 
 - Added `FEATURES.md` with the product feature specification gathered from prior brainstorming.
