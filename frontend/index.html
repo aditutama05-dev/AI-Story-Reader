@@ -230,7 +230,8 @@ $("readComic").addEventListener("click",async()=>{
  finally{$("readComic").disabled=false}
 });
 
-$("speechRate").addEventListener("change",savePreferences);$("voiceSelect").addEventListener("change",savePreferences);\nlet speechChunks=[],speechIndex=0;
+$("speechRate").addEventListener("change",savePreferences);$("voiceSelect").addEventListener("change",savePreferences);
+let speechChunks=[],speechIndex=0;
 function speakText(){
  if(!("speechSynthesis" in window)){ $("status").textContent="Browser ini tidak mendukung TTS. Coba aktifkan TalkBack untuk membaca teks narasi.";return}
  const text=$("output").textContent.trim();if(!text){$("status").textContent="Belum ada narasi untuk diputar.";return}
