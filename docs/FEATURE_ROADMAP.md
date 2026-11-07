@@ -47,7 +47,7 @@ This roadmap separates the desired product from what is currently implemented. P
 
 - [x] Initial context-aware chunked narration endpoint.
 - [x] MASTER FORM V2 prompt strengthened for complete chronological narration, dialogue fidelity, detail preservation, and no invention, with regression tests.
-- [ ] Source-to-narration coverage checks.
+- [x] Per-chunk output-length sanity report flags empty or unusually compressed narration and requires human review (not semantic proof).
 - [ ] Detection of missing, repeated, or reordered source sections.
 - [ ] Explicit uncertainty reporting; never claim guaranteed completeness without evidence.
 - [ ] Narration revision workflow that preserves the source.
