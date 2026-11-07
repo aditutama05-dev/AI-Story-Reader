@@ -55,6 +55,9 @@ class NarrateRequest(BaseModel):
     model: str | None = None
     style: str = "MASTER FORM V2"
 
+class URLBatchRequest(BaseModel):
+    urls: list[str] = Field(min_length=2, max_length=10)
+
 class AudioRequest(BaseModel):
     text: str = Field(min_length=1, max_length=1_000_000)
     voice: str = "id-ID-GadisNeural"
@@ -137,6 +140,24 @@ async def import_url(payload: dict):
     if not url:
         raise HTTPException(status_code=400, detail="Masukkan URL chapter.")
     return await extract_webpage_report(url)
+
+@app.post("/api/import/urls")
+async def import_url_pages(payload: URLBatchRequest):
+    """Combine explicitly supplied pages from one source domain in user-provided order."""
+    from urllib.parse import urlparse
+    urls = [value.strip() for value in payload.urls]
+    if any(not value for value in urls) or len(set(urls)) != len(urls):
+        raise HTTPException(status_code=400, detail="URL halaman harus terisi dan tidak boleh duplikat.")
+    hosts = {urlparse(value).hostname for value in urls}
+    if len(hosts) != 1:
+        raise HTTPException(status_code=400, detail="Semua halaman harus berasal dari domain yang sama.")
+    results = []
+    for index, url in enumerate(urls, start=1):
+        result = await extract_webpage_report(url)
+        results.append(result)
+    combined = "\n\n".join(f"[Halaman {index}]\n{item['text']}" for index, item in enumerate(results, start=1))
+    warnings = ["Halaman digabung sesuai urutan URL yang dimasukkan pengguna.", "Pastikan semua URL adalah bagian dari chapter yang sama; endpoint tidak menebak atau mengikuti tautan chapter berikutnya."]
+    return {"title": results[0]["title"], "text": combined, "characters": len(combined), "source_domain": next(iter(hosts)), "segments": [{"index": index, "url": item["source_url"], "characters": len(item["text"])} for index, item in enumerate(results, start=1)], "verification": {"status": "review_required", "page_count": len(results), "warnings": warnings}}
 
 @app.post("/api/import/file")
 async def import_file(file: UploadFile = File(...)):
