@@ -53,3 +53,8 @@ This document describes the current repository state. It must be updated when a 
 - Real Android TalkBack testing has not been completed.
 - Speech voices and behavior depend on the user's browser and installed speech engine.
 - The site does not provide Android Accessibility Service, floating overlay, or background screen capture; these are outside the website product boundary.
+
+
+## Continuity context
+
+Manual notes from preceding parts in the same series can be supplied to the narration model as secondary continuity context (up to 12,000 characters). Notes are not extracted or verified automatically, and they must never override the current chapter source. The system does not yet maintain structured character/relationship/location/event records or attach evidence citations to each continuity fact. Browser-local notes do not sync across devices.
