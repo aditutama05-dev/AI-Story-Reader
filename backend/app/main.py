@@ -68,7 +68,7 @@ class URLBatchRequest(BaseModel):
 
 class AudioRequest(BaseModel):
     text: str = Field(min_length=1, max_length=1_000_000)
-    voice: str = "id-ID-GadisNeural"
+    voice: Literal["id-ID-GadisNeural", "id-ID-ArdiNeural"] = "id-ID-GadisNeural"
     rate: int = Field(default=0, ge=-50, le=50)
 
 class NarrateResponse(BaseModel):
