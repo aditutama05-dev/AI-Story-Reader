@@ -65,6 +65,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Server-generated MP3 export as one complete file per story part (Edge TTS; server network access required).
 - [ ] Word-level synchronization for generated MP3 audio.
 - [ ] Verify audio completeness against the full narration text.
+- [x] Persist and restore generated MP3 playback position per story part when the user regenerates that part's audio.
 
 ## Stage 6 — Comic understanding
 
