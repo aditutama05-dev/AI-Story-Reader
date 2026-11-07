@@ -61,3 +61,8 @@ Manual notes from preceding parts in the same series can be supplied to the narr
 
 
 Structured continuity facts are assembled from preceding story parts in the same series and sent as secondary context. They remain user-curated hints, not authoritative canon: the active chapter source always takes priority. The UI limits each fact and excerpt to 500 characters and each chapter to 100 facts; the combined continuity context is capped at 12,000 characters.
+
+
+### AI-assisted continuity fact extraction
+
+The user can request up to 30 AI-proposed facts from the active chapter. The backend rejects suggestions whose quoted excerpt cannot be matched against the source text (after whitespace normalization), and the UI requires explicit user confirmation before saving. This verifies the excerpt text only, not whether the model's fact interpretation is correct or whether it omitted relevant facts. The feature requires a configured AI provider and the active chapter must be opened from the local library.
