@@ -7,8 +7,8 @@ This document describes the current repository state. It must be updated when a 
 - The frontend supports a configurable absolute API base URL for separate static hosting. The API service still needs to be deployed and connected before AI features work from GitHub Pages.
 - GitHub Pages deployment has not yet been configured or verified.
 - The editor now displays live source/narration character and word counts and warns when source text exceeds the narration API limit. Automated checks cover the navy/bright-blue palette; manual mobile/desktop visual testing is still outstanding.
-- The website has not yet undergone manual cross-device testing.
-- The API supports a single shared `APP_ACCESS_TOKEN` and per-process in-memory rate limits. Production deployment must set a strong token; distributed quotas, per-user accounts, and persistent abuse monitoring are not implemented.
+- The website has not yet undergone manual cross-device testing. The latest GitHub Pages deployment workflow is verified successful; this does not replace real-device UI testing.
+- The API supports an optional shared `APP_ACCESS_TOKEN` and per-process in-memory rate limits. Public BYOK mode leaves the token unset; private deployments may configure a strong token. Distributed quotas, per-user accounts, and persistent abuse monitoring are not implemented.
 
 ## URL extraction
 
@@ -37,7 +37,7 @@ This document describes the current repository state. It must be updated when a 
 - Narration uses context-aware chunks and flags empty, unusually compressed, or exactly duplicated chunk outputs. These structural checks cannot detect paraphrased omissions, altered event order, or semantic inaccuracies; full source-to-narration coverage verification is not implemented.
 - A local IndexedDB Series/Arc/Volume/Chapter library exists with JSON backup/restore. It is not cloud-synced; story parts have explicit type metadata for Chapter, Interlude, Ending, Epilogue, Prologue, Side Story, and custom labels.
 - Manual notes and structured facts (character, relationship, location, term, event, conflict) can be stored per chapter with source excerpts. AI-assisted extraction checks that proposed excerpts match the current source and requires user approval before saving; this validates quote matching, not the model's interpretation or completeness. AI-assisted contradiction checks are review-only and validate the quoted current-source excerpt and prior-fact index, but do not prove semantic contradiction. AI-proposed facts store character offsets; manually curated legacy facts may not. Page/panel/item evidence mapping exists for multi-page URL, scanned-PDF, and comic OCR imports, but not ordinary text imports. The frontend clears imported page/panel mappings and visible continuity evidence when the source editor changes or a different saved chapter is opened. Re-import unchanged source to restore page-level selection; saved facts still require review after source edits.
-- AI output can still omit or distort source details; human review remains important.
+- AI output can still omit or distort source details; human review remains important. Gemini credentials are sent in the `x-goog-api-key` header rather than URL query strings; the visitor key remains transient request-scoped data and is not persisted by the API.
 
 ## Audio
 
