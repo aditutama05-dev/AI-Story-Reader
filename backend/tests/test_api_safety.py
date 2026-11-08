@@ -537,3 +537,39 @@ class APISafetyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GeminiCredentialTransportTests(unittest.IsolatedAsyncioTestCase):
+    async def test_gemini_api_key_is_sent_in_header_not_url(self):
+        captured = {}
+
+        class FakeResponse:
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {"candidates": [{"content": {"parts": [{"text": "hasil"}]}}]}
+
+        class FakeClient:
+            async def post(self, url, **kwargs):
+                captured["url"] = url
+                captured.update(kwargs)
+                return FakeResponse()
+
+        result = await main_module.generate_text(
+            FakeClient(),
+            "gemini",
+            "gemini-2.5-flash",
+            "visitor-secret-key",
+            "",
+            "system",
+            "user",
+        )
+
+        self.assertEqual(result, "hasil")
+        self.assertEqual(
+            captured["url"],
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        )
+        self.assertEqual(captured["headers"]["x-goog-api-key"], "visitor-secret-key")
+        self.assertNotIn("visitor-secret-key", captured["url"])
