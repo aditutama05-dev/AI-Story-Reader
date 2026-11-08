@@ -2,7 +2,7 @@
 
 ## Product target
 
-AI Story Reader is a website used through a normal browser. It must support people who use Android TalkBack, desktop screen readers, keyboard navigation, browser zoom, and browser/device text-to-speech where available.
+Novelith AI is a website used through a normal browser. It must support people who use Android TalkBack, desktop screen readers, keyboard navigation, browser zoom, and browser/device text-to-speech where available.
 
 The project is not a native Android application. It does not install an Android Accessibility Service and does not run a floating window or a background screen-capture service.
 
