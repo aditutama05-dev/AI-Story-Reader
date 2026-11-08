@@ -16,7 +16,7 @@
 
 A root `index.html` fallback is included only for legacy branch/root publishing. The Actions workflow uploads `frontend/` as the site root, so the normal Pages URL should open the frontend directly; it should not append `/frontend/` to the public URL.
 
-The repository contains the `Deploy website to GitHub Pages` workflow, which publishes `frontend/` on pushes to `main` or manual dispatch. The repository Pages source must be set to **GitHub Actions** by an owner/admin before deployment can succeed. The repository configuration and latest run have not been independently verified from the code repository. The repository slug remains `AI-Story-Reader` to preserve the existing URL, while the visible product brand is Novelith AI.
+Verified: the `Deploy website to GitHub Pages` workflow successfully published `frontend/` for commit `d583ef67848911a9aeb21cb05902f56c4b9a62f3` on 2026-11-08 (run `42470842578`). Future pushes to `main` trigger the workflow automatically. The repository slug remains `AI-Story-Reader` to preserve the existing URL, while the visible product brand is Novelith AI. The repository slug remains `AI-Story-Reader` to preserve the existing URL, while the visible product brand is Novelith AI.
 
 ## API connection
 
@@ -48,8 +48,7 @@ Cloudflare Workers does not run the current Python FastAPI application unchanged
 
 These are the only steps that require the repository owner's own GitHub/Render account. No password, personal access token, or provider key should be sent in chat.
 
-1. **GitHub Pages:** open repository Settings → Pages → Build and deployment → Source, choose **GitHub Actions**, and save. This is a one-time setting; later pushes to `main` run the deployment workflow automatically.
-2. **Render API:** sign in to Render, choose New → Blueprint, connect the `aditutama05-dev/AI-Story-Reader` repository, review the detected `render.yaml`, and create the service using the **Free** plan. Confirm that no paid plan or paid add-on is selected. The blueprint intentionally does not require `APP_ACCESS_TOKEN` or a shared `AI_API_KEY`.
+1. **Render API:** sign in to Render, choose New → Blueprint, connect the `aditutama05-dev/AI-Story-Reader` repository, review the detected `render.yaml`, and create the service using the **Free** plan. Confirm that no paid plan or paid add-on is selected. The blueprint intentionally does not require `APP_ACCESS_TOKEN` or a shared `AI_API_KEY`.
 3. When Render finishes, copy the service's public `onrender.com` URL. In `frontend/config.js`, set `window.AI_STORY_READER_API_BASE` to that URL (without a trailing slash), then commit the change. The API CORS allowlist already includes the GitHub Pages origin.
 4. Verify `https://<render-service>/api/health` returns JSON with `status: "ok"`, then test import, personal-key narration, comic OCR, and MP3 generation from the deployed website.
 
@@ -58,7 +57,7 @@ If the user does not want to create a Render account, the frontend can still be 
 ## Release checklist
 
 - [x] Pages deployment workflow is present and configured to publish the `frontend/` directory when the repository Pages source is set to GitHub Actions.
-- [ ] Confirm the repository Settings → Pages source is set to GitHub Actions and verify the latest deployment run in Actions.
+- [x] GitHub Pages deployment succeeds from the `frontend/` directory (latest verified run: `42470842578`).
 - [ ] API is deployed and health check succeeds.
 - [ ] API CORS permits only the required website origins.
 - [ ] Public API base URL is configured.
