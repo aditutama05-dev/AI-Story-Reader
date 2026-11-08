@@ -13,5 +13,3 @@ services:
         value: https://openrouter.ai/api/v1
       - key: CORS_ORIGINS
         value: https://aditutama05-dev.github.io
-      - key: APP_ACCESS_TOKEN
-        sync: false
