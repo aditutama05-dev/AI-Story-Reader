@@ -62,7 +62,8 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <section class="card" aria-labelledby="accessibility-heading">
 <h2 id="accessibility-heading">Aksesibilitas &amp; kenyamanan membaca</h2>
 <p class="hint">Kontrol ini membantu pengguna low vision dan pengguna keyboard. Seluruh teks narasi tetap tersedia sebagai teks yang bisa dibaca TalkBack atau pembaca layar lain. Website ini tidak dapat membaca layar aplikasi lain atau mengambil screenshot perangkat secara diam-diam.</p>
-<div class="library-volume"><h3>Keamanan koneksi API</h3><label for="apiAccessToken">Token akses aplikasi (jika diminta server)</label><input id="apiAccessToken" type="password" autocomplete="off" placeholder="Masukkan token akses pribadi"><div class="library-actions"><button id="saveApiToken" type="button" class="secondary">Simpan untuk sesi ini</button><button id="clearApiToken" type="button" class="secondary">Hapus token sesi</button></div><p class="hint">Token akses hanya disimpan sementara di sesi browser. Kunci provider AI tetap berada di server dan tidak pernah dimasukkan di sini.</p></div>
+<div class="library-volume" id="apiSecuritySettings" hidden><h3>Keamanan koneksi API</h3><label for="apiAccessToken">Token akses aplikasi (jika diminta server)</label><input id="apiAccessToken" type="password" autocomplete="off" placeholder="Masukkan token akses pribadi"><div class="library-actions"><button id="saveApiToken" type="button" class="secondary">Simpan untuk sesi ini</button><button id="clearApiToken" type="button" class="secondary">Hapus token sesi</button></div><p class="hint">Token akses hanya disimpan sementara di sesi browser. Kunci provider AI tetap berada di server dan tidak pernah dimasukkan di sini.</p></div>
+<p id="apiConnectionStatus" class="status" role="status" aria-live="polite">Memeriksa koneksi layanan AI…</p>
 <div class="accessibility-tools" role="group" aria-label="Pengaturan tampilan dan aksesibilitas">
 <label for="textSize">Ukuran teks</label>
 <select id="textSize" aria-label="Ukuran teks"><option value="normal">Normal</option><option value="large">Besar</option><option value="extra">Sangat besar</option></select>
@@ -310,6 +311,26 @@ async function deleteReadingState(){
   transaction.onerror=()=>reject(transaction.error||new Error("Gagal menghapus progres."));
  });
 }
+async function checkApiConfiguration(){
+ const status=$("apiConnectionStatus");
+ const security=$("apiSecuritySettings");
+ try{
+  const response=await fetch(apiUrl("/api/config"),{headers:{Accept:"application/json"}});
+  if(!response.ok)throw new Error("API mengembalikan HTTP "+response.status);
+  const config=await response.json();
+  security.hidden=!config.access_required;
+  if(!config.ai_available){
+   status.textContent="Server API terhubung, tetapi layanan AI belum diaktifkan oleh pengelola. Pengunjung tidak perlu memasukkan API key sendiri.";
+   return;
+  }
+  status.textContent=config.access_required
+   ?"Layanan AI tersedia. Server meminta token akses aplikasi dari pengelola; API key provider tetap tersimpan di server."
+   :"Layanan AI tersedia melalui kuota bersama yang dikelola server. Pengunjung tidak perlu memasang API key.";
+ }catch(error){
+  security.hidden=true;
+  status.textContent="Belum dapat terhubung ke backend AI. Website statis bisa terbuka, tetapi impor server, OCR, narasi AI, dan MP3 belum aktif. ("+error.message+")";
+ }
+}
 function updateTextMetrics(){
  const source=$("source").value;
  const narration=getNarrationText();
@@ -514,6 +535,7 @@ window.restoreStoryNarration=async(title,text,libraryChapterId=null)=>{renderNar
 $("saveApiToken").addEventListener("click",()=>{const token=$("apiAccessToken").value.trim();if(token)sessionStorage.setItem("ai-story-reader-access-token",token);else sessionStorage.removeItem("ai-story-reader-access-token");$("status").textContent=token?"Token akses disimpan untuk sesi browser ini.":"Token kosong; proteksi token server mungkin menolak permintaan."});
 $("clearApiToken").addEventListener("click",()=>{sessionStorage.removeItem("ai-story-reader-access-token");$("apiAccessToken").value="";$("status").textContent="Token akses sesi dihapus."});
 restorePreferences();
+checkApiConfiguration();
 updateTextMetrics();
 restoreSavedChapter();
 if("speechSynthesis" in window){
