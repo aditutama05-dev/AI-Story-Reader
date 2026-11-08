@@ -17,7 +17,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Semantic landmarks, labels, keyboard focus, and accessibility preferences.
 - [x] Add persistent configuration point for the public API base URL (never an API secret).
 - [ ] Verify the site at mobile and desktop viewport sizes.
-- [ ] Publish through GitHub Pages after the API endpoint is ready.
+- [ ] Publish the static website through GitHub Pages (does not depend on the API being deployed; server-backed features remain unavailable until the API URL is configured).
 
 ## Stage 2 — Source import and URL recognition
 
@@ -87,7 +87,7 @@ This roadmap separates the desired product from what is currently implemented. P
 
 ## Stage 7 — Release readiness
 
-- [ ] Deploy frontend to GitHub Pages.
+- [ ] Deploy frontend to GitHub Pages after the owner selects GitHub Actions in repository Settings → Pages.
 - [ ] Deploy API to the selected supported backend platform.
 - [ ] Configure runtime secrets outside the repository.
 - [x] Add per-client in-memory rate limits to expensive/import API routes.
