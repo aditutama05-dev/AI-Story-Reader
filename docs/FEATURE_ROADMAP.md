@@ -7,7 +7,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Repository and initial web/backend scaffold exist.
 - [x] Record product requirements in `FEATURES.md`.
 - [x] Record project context, story model, source ingestion, architecture, accessibility boundaries, and known limitations.
-- [x] Add a GitHub Pages deployment workflow for the static website (repository Pages setting still needs enabling).
+- [x] Add a GitHub Pages deployment workflow for the static website; successful public deployment is verified.
 - [ ] Provide a production API endpoint suitable for a static frontend.
 
 ## Stage 1 — Website foundation
@@ -17,7 +17,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Semantic landmarks, labels, keyboard focus, and accessibility preferences.
 - [x] Add persistent configuration point for the public API base URL (never an API secret).
 - [ ] Verify the site at mobile and desktop viewport sizes.
-- [x] Publish the static website through GitHub Pages (Actions deployment succeeded for commit `d583ef67848911a9aeb21cb05902f56c4b9a62f3`; server-backed features remain unavailable until the API URL is configured).
+- [x] Publish the static website through GitHub Pages (Actions deployment succeeded for commit `45af27c5acf1a1e8f132988ce5ec37637d914ea8`; server-backed features remain unavailable until the API URL is configured).
 
 ## Stage 2 — Source import and URL recognition
 
@@ -104,6 +104,12 @@ This roadmap separates the desired product from what is currently implemented. P
 - MASTER FORM V2 now explicitly requests natural Indonesian narration and faithful Indonesian rendering of non-Indonesian dialogue/OCR while preserving names, titles, special terms, numbers, and meaningful SFX.
 - Regression tests were added for normalization, selected image order, page offsets, and mixed archive rejection. Run `pip install -r backend/requirements.txt` followed by `cd backend && python -m unittest discover -s tests` in a repository checkout; the current connector runtime could not clone GitHub because DNS resolution was unavailable.
 - [ ] Verify the upload queue and reordering with keyboard navigation, Android TalkBack, and real mobile browsers; inspect actual OCR order against representative RTL manga, LTR manhua, and vertical manhwa pages.
+
+## Recent API credential hardening — 2026-11-08
+
+- Moved Gemini API keys from URL query parameters into the `x-goog-api-key` request header for text generation, scanned-PDF OCR, and comic OCR, reducing exposure in URL logs and diagnostics.
+- Updated missing-key errors to explain both visitor-owned API keys and optional server-side configuration.
+- Added a regression test asserting that Gemini credentials are sent in headers and never appear in the request URL.
 
 ## Completion rule
 
