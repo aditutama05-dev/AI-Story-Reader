@@ -28,7 +28,7 @@ This document describes the current repository state. It must be updated when a 
 - URL response bodies are streamed and capped at 8 MB before parsing. Text PDFs are limited to 500 pages and 20 million extracted characters; scanned-PDF OCR remains capped at 30 pages.
 - Text-based PDF extraction reads the text layer; scanned PDF OCR is available through the separate vision-model action, limited to 30 pages per request.
 - CBZ/ZIP comic archives are supported for image pages, up to 30 pages per request.
-- Comic OCR is vision-model transcription, not geometric panel segmentation or dedicated character tracking.
+- Comic OCR now requests structured model-proposed panel order and dialogue/thought/caption/SFX blocks, with balloon sequence and page/panel/item text offsets. The order is not independently checked against image geometry; dedicated character tracking and visual-event narration remain unimplemented.
 - Image upload currently accepts up to 30 pages per request, each limited to 15 MB, with a 100 MB aggregate limit and a 40-megapixel per-image decode limit.
 - Scanned PDF OCR rejects excessive page dimensions and caps total rendered pixel workload before rasterization.
 
@@ -36,7 +36,7 @@ This document describes the current repository state. It must be updated when a 
 
 - Narration uses context-aware chunks and flags empty, unusually compressed, or exactly duplicated chunk outputs. These structural checks cannot detect paraphrased omissions, altered event order, or semantic inaccuracies; full source-to-narration coverage verification is not implemented.
 - A local IndexedDB Series/Arc/Volume/Chapter library exists with JSON backup/restore. It is not cloud-synced; story parts have explicit type metadata for Chapter, Interlude, Ending, Epilogue, Prologue, Side Story, and custom labels.
-- Manual notes and manually curated structured facts (character, relationship, location, term, event, conflict) can be stored per chapter with a supporting source excerpt. Facts are not automatically extracted or verified, excerpts are user-entered rather than independently checked against source text, and AI-proposed facts now store character offsets into the source text, but manually curated legacy facts may not have offsets and page-level evidence mapping is not implemented. Offsets can become stale if source text is edited; re-extract facts after source changes..
+- Manual notes and manually curated structured facts (character, relationship, location, term, event, conflict) can be stored per chapter with a supporting source excerpt. Facts are not automatically extracted or verified, excerpts are user-entered rather than independently checked against source text, and AI-proposed facts now store character offsets into the source text, but manually curated legacy facts may not have offsets. Page/panel/item evidence mapping exists for multi-page URL, scanned-PDF, and comic OCR imports, but not ordinary text imports. Offsets can become stale if source text is edited; re-extract facts after source changes.
 - AI output can still omit or distort source details; human review remains important.
 
 ## Audio
@@ -73,4 +73,4 @@ The user can compare the active chapter against up to 240 structured facts from 
 
 ### Source evidence offsets
 
-Offsets are zero-based character positions into the exact text submitted to the API, not stable identifiers across edits or re-imports. The current locator matches token sequences case-insensitively and tolerates whitespace differences; ambiguous repeated excerpts resolve to the first occurrence. Page-level mapping is not available for ordinary text imports, and older/manual facts may lack offsets.
+Offsets are zero-based character positions into the exact text submitted to the API, not stable identifiers across edits or re-imports. The current locator matches token sequences case-insensitively and tolerates whitespace differences; ambiguous repeated excerpts resolve to the first occurrence. Page-level mapping is available for explicit multi-page URL, scanned-PDF, and comic OCR imports, but not ordinary text imports; older/manual facts may lack offsets.
