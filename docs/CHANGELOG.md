@@ -2,6 +2,10 @@
 
 ## 2026-11-08 — Novelith AI
 
+- Clarified that GitHub Pages can publish the static frontend independently from the API; server-backed features require a separately deployed API and configured public API origin.
+- Simplified the Render Free blueprint for the default bring-your-own-provider-key model by removing the optional shared application access-token prompt. No shared provider key is required; public visitors provide their own key.
+- Added explicit one-time owner steps for enabling GitHub Pages and creating the Render Blueprint, without asking the owner to share passwords, tokens, or API keys in chat.
+
 - Renamed the website-facing brand to **Novelith AI**; `AI` is rendered as a smaller suffix in the header wordmark. The repository slug remains unchanged to preserve existing GitHub Pages links.
 - Added optional per-user provider API keys. The browser stores a key in session storage for the current session and sends it to the backend in `X-Provider-API-Key`; the backend uses request-scoped context and does not persist the key.
 - Documented the hybrid model: GitHub Pages for the free static website, backend service for import/OCR/AI, and IndexedDB for each visitor's local library/progress.
