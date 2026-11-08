@@ -492,6 +492,7 @@ async def narrate(request: NarrateRequest):
         "ketika sumber menjelaskan rangkaian gerakan atau strategi. Jangan mengarang dialog, motif, pikiran, latar, kemampuan, atau kejadian yang tidak didukung sumber. "
         "Jika sumber ambigu atau terpotong, pertahankan ketidakpastian dan jangan menebak. Jaga nama tokoh, sapaan, istilah, gelar, sudut pandang, hubungan, dan fakta dunia cerita secara konsisten. "
         "Jangan menambah pembukaan, penutup, komentar AI, heading, daftar, nomor bagian, atau pemisah buatan. Mulai langsung dari peristiwa sumber dan akhiri pada batas sumber. "
+        "Jika sumber komik memakai penanda struktural seperti [Halaman n], [Panel n], [Dialog n], [Pikiran n], [Caption n], atau [SFX n], gunakan penanda itu hanya untuk memahami urutan dan jenis teks; jangan membacakan labelnya sebagai bagian cerita. Ceritakan isi teksnya secara natural dan jangan menebak identitas pembicara. "
         "Jika input terdiri dari potongan, sambungkan dengan mulus tanpa mengulang narasi sebelumnya dan jangan menghilangkan peristiwa baru pada potongan saat ini.")
     continuity_context = request.continuity_context.strip()
     if continuity_context:
