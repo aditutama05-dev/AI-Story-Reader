@@ -328,7 +328,7 @@ def find_source_span(source: str, excerpt: str) -> tuple[int, int] | None:
     words = excerpt.split()
     if not words:
         return None
-    pattern = r"\\s+".join(re.escape(word) for word in words)
+    pattern = r"\s+".join(re.escape(word) for word in words)
     match = re.search(pattern, source, flags=re.IGNORECASE)
     if not match:
         return None
