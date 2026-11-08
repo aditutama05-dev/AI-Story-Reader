@@ -14,9 +14,9 @@
 4. Run the **Deploy website to GitHub Pages** workflow manually from Actions.
 5. After a successful deployment, GitHub displays the website URL. For this repository, the expected default URL is `https://aditutama05-dev.github.io/AI-Story-Reader/`.
 
-A root `index.html` redirect is also included so the current `main` branch / root publishing mode can route visitors into `frontend/` while Pages is being switched to Actions.
+A root `index.html` fallback is included only for legacy branch/root publishing. The Actions workflow uploads `frontend/` as the site root, so the normal Pages URL should open the frontend directly; it should not append `/frontend/` to the public URL.
 
-The repository contains the `Deploy website to GitHub Pages` workflow, which publishes `frontend/` when run. The repository configuration and most recent run should still be checked in GitHub Actions/Settings before treating the live URL as verified. The repository slug remains `AI-Story-Reader` to preserve this URL, while the visible product brand is Novelith AI.
+The repository contains the `Deploy website to GitHub Pages` workflow, which publishes `frontend/` on pushes to `main` or manual dispatch. The repository Pages source must be set to **GitHub Actions** by an owner/admin before deployment can succeed. The repository configuration and latest run have not been independently verified from the code repository. The repository slug remains `AI-Story-Reader` to preserve the existing URL, while the visible product brand is Novelith AI.
 
 ## API connection
 
@@ -38,11 +38,22 @@ Never place AI provider keys in `frontend/config.js`. The API base URL is public
 
 A shared provider key makes the owner responsible for API charges and abuse risk. The current in-memory per-IP rate limit is only a lightweight trial safeguard, not production-grade billing, account quotas, or bot protection. Before widely sharing the public site, add persistent/distributed rate limiting, provider budget alerts or hard spend caps, monitoring, and a way to disable AI quickly. Do not publish a shared `APP_ACCESS_TOKEN` as a substitute: anyone who obtains it can use the backend.
 
-The Render Blueprint defaults to the Free web-service plan to avoid a required monthly compute charge. Free services can spin down after 15 minutes without traffic and may take about a minute to wake up; their filesystem is ephemeral and the service can restart. The story library, reading progress, and bookmarks therefore stay in browser IndexedDB on each user's device, not on the API container. This is the local-storage portion of the hybrid architecture; the API still needs a running backend host for URL extraction, OCR, and AI processing. Free compute is suitable for a low-traffic trial, not a latency-sensitive production service. See [Render's free-service limits](https://render.com/docs/free).
+The Render Blueprint defaults to the Free web-service plan and does not require a shared application access token; public visitors can use their own provider API key. Do not add a shared provider key unless the owner deliberately chooses to pay for all visitors' usage. Free services can spin down after 15 minutes without traffic and may take about a minute to wake up; their filesystem is ephemeral and the service can restart. The story library, reading progress, and bookmarks therefore stay in browser IndexedDB on each user's device, not on the API container. This is the local-storage portion of the hybrid architecture; the API still needs a running backend host for URL extraction, OCR, and AI processing. Free compute is suitable for a low-traffic trial, not a latency-sensitive production service. See [Render's free-service limits](https://render.com/docs/free).
 
 ## Cloudflare Workers note
 
 Cloudflare Workers does not run the current Python FastAPI application unchanged. If Workers is selected, implement and test an equivalent Worker API before pointing the GitHub Pages frontend at it. The current FastAPI backend can remain the local/reference implementation until endpoint parity is achieved.
+
+## One-time owner actions (account access required)
+
+These are the only steps that require the repository owner's own GitHub/Render account. No password, personal access token, or provider key should be sent in chat.
+
+1. **GitHub Pages:** open repository Settings → Pages → Build and deployment → Source, choose **GitHub Actions**, and save. This is a one-time setting; later pushes to `main` run the deployment workflow automatically.
+2. **Render API:** sign in to Render, choose New → Blueprint, connect the `aditutama05-dev/AI-Story-Reader` repository, review the detected `render.yaml`, and create the service using the **Free** plan. Confirm that no paid plan or paid add-on is selected. The blueprint intentionally does not require `APP_ACCESS_TOKEN` or a shared `AI_API_KEY`.
+3. When Render finishes, copy the service's public `onrender.com` URL. In `frontend/config.js`, set `window.AI_STORY_READER_API_BASE` to that URL (without a trailing slash), then commit the change. The API CORS allowlist already includes the GitHub Pages origin.
+4. Verify `https://<render-service>/api/health` returns JSON with `status: "ok"`, then test import, personal-key narration, comic OCR, and MP3 generation from the deployed website.
+
+If the user does not want to create a Render account, the frontend can still be published on GitHub Pages, and local library features continue to work; server-backed features will remain offline. Render Free is a hobby/testing tier, not a production uptime guarantee.
 
 ## Release checklist
 
