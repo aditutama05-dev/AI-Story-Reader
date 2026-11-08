@@ -74,7 +74,7 @@ class APISafetyTests(unittest.TestCase):
                 data={"direction": "vertical"},
             )
         self.assertEqual(response.status_code, 503)
-        self.assertIn("AI belum dikonfigurasi", response.json()["detail"])
+        self.assertIn("AI belum tersedia", response.json()["detail"])
 
 
 
@@ -405,7 +405,7 @@ class APISafetyTests(unittest.TestCase):
         with patch.dict(os.environ, {"AI_API_KEY": ""}):
             response = self.client.post("/api/import/pdf-ocr", files={"file": ("scan.pdf", payload, "application/pdf")})
         self.assertEqual(response.status_code, 503)
-        self.assertIn("AI belum dikonfigurasi", response.json()["detail"])
+        self.assertIn("AI belum tersedia", response.json()["detail"])
 
 
     def test_scanned_pdf_rejects_excessive_page_dimensions_before_render(self):
