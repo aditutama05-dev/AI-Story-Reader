@@ -38,13 +38,14 @@ def normalize_page_image(content: bytes, content_type: str) -> bytes:
         raise HTTPException(status_code=415, detail="Gunakan gambar JPG, PNG, atau WEBP.")
     try:
         with Image.open(BytesIO(content)) as source:
-            detected_type = Image.MIME.get(source.format)
+            # Check dimensions before consulting format metadata or decoding pixels.
+            if source.width * source.height > MAX_IMAGE_PIXELS:
+                raise HTTPException(status_code=413, detail="Resolusi gambar terlalu besar. Batas 40 megapiksel per halaman.")
+            detected_type = Image.MIME.get(getattr(source, "format", None))
             if detected_type not in ALLOWED_IMAGE_TYPES:
                 raise HTTPException(status_code=415, detail="Isi file bukan gambar JPG, PNG, atau WEBP.")
             if declared_type in ALLOWED_IMAGE_TYPES and declared_type != detected_type:
                 raise HTTPException(status_code=415, detail="Tipe gambar tidak cocok dengan isi file.")
-            if source.width * source.height > MAX_IMAGE_PIXELS:
-                raise HTTPException(status_code=413, detail="Resolusi gambar terlalu besar. Batas 40 megapiksel per halaman.")
             image = ImageOps.exif_transpose(source).convert("RGB")
             image.thumbnail((MAX_IMAGE_EDGE, MAX_IMAGE_EDGE), Image.Resampling.LANCZOS)
             output = BytesIO()
@@ -60,7 +61,7 @@ def normalize_comic_text(value: str) -> str:
     """Normalize OCR whitespace and Unicode without rewriting words or punctuation."""
     normalized = unicodedata.normalize("NFC", value)
     normalized = normalized.replace("\r\n", "\n").replace("\r", "\n").replace("\u00a0", " ")
-    return re.sub(r"[ \\t\\r\\n\\f\\v]+", " ", normalized).strip()
+    return re.sub(r"[ \t\r\n\f\v]+", " ", normalized).strip()
 
 
 def build_ocr_prompt(page_number: int, total_pages: int, direction: str) -> str:
@@ -90,13 +91,13 @@ Keluarkan HANYA satu objek JSON valid tanpa markdown atau teks pembuka/penutup, 
 }}
 
 Ketentuan:
-- Urutkan objek panels menurut urutan baca yang diminta. Urutkan items di dalam setiap panel menurut urutan gelembung/teks yang benar-benar terlihat.
+- Urutkan objek panels menurut urutan baca yang diminta (secara internal akan ditampilkan sebagai [Panel 1], [Panel 2], dan seterusnya). Urutkan items di dalam setiap panel menurut urutan gelembung/teks yang benar-benar terlihat.
 - Satu item mewakili satu gelembung dialog/pikiran atau satu blok teks/caption/SFX. Nomori balloon mulai dari 1 di dalam setiap panel untuk dialog/pikiran; gunakan null untuk caption, SFX, atau teks lain.
 - kind hanya boleh dialogue, thought, caption, sfx, atau other. Jangan menebak identitas pembicara.
 - order_confidence adalah perkiraan model: high, medium, atau low. Jika tata letak membuat urutan ambigu, gunakan medium/low dan jelaskan singkat di warnings.
 - Jika teks memakai susunan vertikal, baca karakter dari atas ke bawah dan kolom sesuai arah visual bahasa/sumber.
 - Pertahankan bahasa dan aksara asli. Jangan menerjemahkan, meringkas, memperbaiki, atau menulis ulang.
-- Pertahankan ejaan, nama, angka, tanda baca, dan efek suara. Teks yang sebagian tidak terbaca ditandai [tidak terbaca] pada posisi yang tepat; jangan menebak.
+- Pertahankan ejaan, nama, angka, tanda baca, dan efek suara. Teks yang sebagian tidak terbaca ditandai [tidak terbaca] pada posisi yang tepat; jangan menebak. Penanda [tidak terbaca] harus dipakai secara literal bila diperlukan.
 - Masukkan semua teks yang terlihat. Jika halaman benar-benar tidak memiliki teks, gunakan "panels": [] dan jelaskan di warnings.
 - Jangan mendeskripsikan karakter/latar atau menambahkan peristiwa yang tidak tertulis.
 """
