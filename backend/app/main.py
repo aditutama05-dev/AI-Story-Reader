@@ -44,6 +44,7 @@ async def protect_expensive_endpoints(request, call_next):
             supplied_token = supplied[7:].strip() if supplied.lower().startswith("bearer ") else ""
             if not hmac.compare_digest(supplied_token, access_token):
                 from fastapi.responses import JSONResponse
+                _request_provider_api_key.reset(key_context)
                 return JSONResponse(status_code=401, content={"detail": "Token akses aplikasi tidak valid atau belum diisi."}, headers={"WWW-Authenticate": "Bearer"})
         client_ip = request.client.host if request.client else "unknown"
         bucket = "ai" if path in {"/api/narrate", "/api/continuity/extract", "/api/continuity/check", "/api/import/comic", "/api/import/pdf-ocr", "/api/audio"} else "import"
@@ -53,6 +54,7 @@ async def protect_expensive_endpoints(request, call_next):
         recent = [stamp for stamp in _rate_buckets.get(key, []) if now - stamp < _RATE_WINDOW_SECONDS]
         if len(recent) >= max(1, limit):
             from fastapi.responses import JSONResponse
+            _request_provider_api_key.reset(key_context)
             return JSONResponse(status_code=429, content={"detail": "Batas permintaan sementara tercapai. Coba lagi dalam satu menit."}, headers={"Retry-After": "60"})
         recent.append(now)
         _rate_buckets[key] = recent
