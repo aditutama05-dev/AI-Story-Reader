@@ -7,6 +7,7 @@ import zipfile
 from io import BytesIO
 from pathlib import Path
 from typing import Literal
+from contextvars import ContextVar
 import httpx
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
@@ -26,10 +27,16 @@ app.add_middleware(CORSMiddleware, allow_origins=os.getenv("CORS_ORIGINS", "*").
 # Lightweight per-process abuse guard. Configure limits through environment variables.
 _rate_buckets: dict[tuple[str, str], list[float]] = {}
 _RATE_WINDOW_SECONDS = 60
+_request_provider_api_key: ContextVar[str] = ContextVar('request_provider_api_key', default='')
 
 @app.middleware("http")
 async def protect_expensive_endpoints(request, call_next):
     path = request.url.path
+    supplied_provider_key = request.headers.get("x-provider-api-key", "").strip()
+    if len(supplied_provider_key) > 512:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=400, content={"detail": "API key terlalu panjang."})
+    key_context = _request_provider_api_key.set(supplied_provider_key)
     if path.startswith("/api/") and path not in {"/api/health", "/api/config"}:
         access_token = os.getenv("APP_ACCESS_TOKEN", "")
         if access_token:
@@ -53,7 +60,10 @@ async def protect_expensive_endpoints(request, call_next):
             for old_key, stamps in list(_rate_buckets.items()):
                 if not stamps or now - stamps[-1] >= _RATE_WINDOW_SECONDS:
                     _rate_buckets.pop(old_key, None)
-    return await call_next(request)
+    try:
+        return await call_next(request)
+    finally:
+        _request_provider_api_key.reset(key_context)
 
 
 class NarrateRequest(BaseModel):
@@ -99,7 +109,7 @@ class NarrateResponse(BaseModel):
 def provider_config(provider: str | None, model: str | None):
     selected = provider or os.getenv("AI_PROVIDER", "openrouter")
     selected_model = model or os.getenv("AI_MODEL", "openai/gpt-4o-mini")
-    api_key = os.getenv("AI_API_KEY", "")
+    api_key = _request_provider_api_key.get() or os.getenv("AI_API_KEY", "")
     base_url = os.getenv("AI_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
     if selected == "openai":
         base_url, selected_model = "https://api.openai.com/v1", model or os.getenv("AI_MODEL", "gpt-4o-mini")
@@ -169,6 +179,7 @@ def public_config():
         "model": os.getenv("AI_MODEL", "openai/gpt-4o-mini"),
         "supported_providers": ["openai", "openrouter", "gemini", "custom"],
         "max_upload_mb": 40,
+        "personal_api_key_supported": True,
     }
 
 @app.post("/api/import/url")
