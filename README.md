@@ -91,15 +91,15 @@ GitHub Actions also checks Python tests, frontend JavaScript syntax, and backend
 
 ## Hosting direction
 
-The intended low-cost hosting split is:
+The low-cost hybrid hosting split is:
 
 - Website: GitHub Pages (static files from `frontend/`).
 - API: a separately deployed backend service.
-- Cloudflare Workers is a candidate for the API, but it requires a JavaScript/TypeScript implementation; it cannot run this FastAPI backend unchanged.
+- A Render free web service is prepared in `render.yaml` for the current FastAPI backend; it can sleep when idle.
 
 When the API is deployed separately, set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the public API origin and configure CORS on the API for the GitHub Pages origin. The API base URL is public configuration, not a secret.
 
-GitHub Pages publication still requires the repository's Pages setting to use GitHub Actions. A workflow can prepare and deploy the static frontend, but the repository owner must enable Pages in Settings if it has not already been enabled.
+GitHub Pages is currently deployed by the Actions workflow. The backend still requires a one-time owner deployment and a public API origin in `frontend/config.js`.
 
 ## Security and privacy
 
