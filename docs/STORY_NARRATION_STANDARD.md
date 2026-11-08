@@ -55,3 +55,7 @@ A narration increment is acceptable only when tests and review demonstrate that 
 4. does not collapse the chapter into a summary;
 5. joins internal chunks into continuous prose;
 6. reports source gaps rather than pretending the input is complete.
+
+## Comic OCR structural markers
+
+When OCR source text contains markers such as [Halaman n], [Panel n], [Dialog n], [Pikiran n], [Caption n], or [SFX n], use them only to understand page/panel sequence and the kind of visible text. Do not read the labels aloud or narrate them as story events. Retell the visible dialogue, thoughts, captions, and sound effects naturally, while preserving their order. Do not invent speaker identities or visual actions that are not supported by the extracted source. The original page images remain necessary for reviewing OCR omissions and visual context.
