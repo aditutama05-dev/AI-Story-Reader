@@ -12,7 +12,7 @@ from PIL import Image
 
 from app.main import app, _rate_buckets
 import app.main as main_module
-from app.vision_ocr import build_comic_source, normalize_page_image, parse_comic_ocr_response
+from app.vision_ocr import build_comic_source, normalize_comic_text, normalize_page_image, parse_comic_ocr_response
 
 
 class APISafetyTests(unittest.TestCase):
@@ -87,6 +87,16 @@ class APISafetyTests(unittest.TestCase):
         self.assertIn("[Dialog 1 · Balon 1] Halo!", parsed["text"])
         self.assertIn("[Pikiran 2 · Balon 2] Apa yang terjadi?", parsed["text"])
         self.assertTrue(any("Urutan baca panel perlu ditinjau" in warning for warning in parsed["warnings"]))
+
+    def test_comic_ocr_normalizes_unicode_and_whitespace_without_rewriting_words(self):
+        raw = json.dumps({"panels": [{"order_confidence": "high", "items": [
+            {"kind": "dialogue", "balloon": 1, "text": "  Ba\\u0301ik!\\u00a0  Aku\\n   datang.  "}
+        ]}], "warnings": []})
+        parsed = parse_comic_ocr_response(raw)
+        item = parsed["panels"][0]["items"][0]
+        self.assertEqual(item["text"], "Báik! Aku datang.")
+        self.assertEqual(parsed["text"][item["source_start"]:item["source_end"]], "Báik! Aku datang.")
+        self.assertEqual(normalize_comic_text("  Halo\\u00a0 dunia\\n  baru. "), "Halo dunia baru.")
 
     def test_comic_ocr_falls_back_to_plain_text_when_provider_returns_non_json(self):
         raw = "[Panel 1]\n[Dialog 1] Teks lama"
@@ -185,6 +195,65 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(data["segments"][0]["panels"][0]["items"][0]["balloon"], 1)
         item = data["segments"][0]["panels"][0]["items"][0]
         self.assertEqual(data["text"][item["source_start"]:item["source_end"]], "Halo!")
+
+    def test_comic_endpoint_preserves_selected_image_order_and_page_offsets(self):
+        image_bytes = BytesIO()
+        Image.new("RGB", (8, 8), "white").save(image_bytes, format="PNG")
+        image = image_bytes.getvalue()
+
+        class FakeResponse:
+            def __init__(self, text):
+                self.text = text
+            def raise_for_status(self):
+                return None
+            def json(self):
+                payload = {"panels": [{"order_confidence": "high", "items": [
+                    {"kind": "dialogue", "balloon": 1, "text": self.text}
+                ]}], "warnings": []}
+                return {"choices": [{"message": {"content": json.dumps(payload)}}]}
+
+        class FakeAsyncClient:
+            def __init__(self, *args, **kwargs):
+                pass
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, exc_type, exc, traceback):
+                return False
+            async def post(self, *args, **kwargs):
+                prompt = kwargs["json"]["messages"][0]["content"][0]["text"]
+                text = "Teks halaman pertama" if "Halaman 1 dari 2" in prompt else "Teks halaman kedua"
+                return FakeResponse(text)
+
+        with patch.object(main_module, "provider_config", return_value=("openrouter", "test-vision", "test-key", "https://example.com/v1")), patch.object(
+            main_module.httpx, "AsyncClient", FakeAsyncClient
+        ):
+            response = self.client.post(
+                "/api/import/comic",
+                files=[
+                    ("files", ("pilihan-kedua.png", image, "image/png")),
+                    ("files", ("pilihan-pertama.png", image, "image/png")),
+                ],
+                data={"direction": "vertical"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual([page["filename"] for page in data["pages"]], ["pilihan-kedua.png", "pilihan-pertama.png"])
+        self.assertLess(data["text"].index("Teks halaman pertama"), data["text"].index("Teks halaman kedua"))
+        for page, segment in zip(data["pages"], data["segments"]):
+            self.assertEqual(data["text"][segment["source_start"]:segment["source_end"]], page["text"])
+
+    def test_comic_endpoint_rejects_mixed_archive_and_image_uploads(self):
+        response = self.client.post(
+            "/api/import/comic",
+            files=[
+                ("files", ("chapter.cbz", b"not-a-real-archive", "application/zip")),
+                ("files", ("page-1.png", b"not-an-image", "image/png")),
+            ],
+            data={"direction": "vertical"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("tidak dapat dicampur", response.json()["detail"])
 
     def test_comic_ocr_page_offsets_match_combined_text(self):
         parsed = parse_comic_ocr_response(json.dumps({
@@ -409,6 +478,8 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("jangan membacakan labelnya", prompts[0].lower())
         self.assertIn("[Panel n]", prompts[0])
+        self.assertIn("Bahasa Indonesia yang natural", prompts[0])
+        self.assertIn("dialog atau teks OCR berasal dari bahasa lain", prompts[0])
 
     def test_narration_verification_flags_empty_compressed_and_duplicate_chunks(self):
         from app.main import build_narration_verification
