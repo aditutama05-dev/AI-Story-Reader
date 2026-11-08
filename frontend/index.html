@@ -313,7 +313,7 @@ async function deleteReadingState(){
 function updateTextMetrics(){
  const source=$("source").value;
  const narration=getNarrationText();
- const countWords=value=>value.trim()?value.trim().split(/\\s+/u).length:0;
+ const countWords=value=>value.trim()?value.trim().split(/\s+/u).length:0;
  const sourceCount=source.length;
  $("sourceMetrics").textContent=sourceCount.toLocaleString("id-ID")+" karakter · "+countWords(source).toLocaleString("id-ID")+" kata · "+(sourceCount>1_000_000?"Melebihi batas input server.":"batas input 1.000.000 karakter");
  $("sourceMetrics").classList.toggle("warning",sourceCount>1_000_000);
