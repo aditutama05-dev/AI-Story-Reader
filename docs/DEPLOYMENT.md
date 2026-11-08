@@ -16,7 +16,7 @@
 
 A root `index.html` redirect is also included so the current `main` branch / root publishing mode can route visitors into `frontend/` while Pages is being switched to Actions.
 
-The workflow is committed. GitHub Pages is not enabled yet: the deployment action was unable to create the Pages site because the connected GitHub integration does not have permission to change that repository setting. An owner must enable Pages and select GitHub Actions once in Settings. After that, run the workflow manually. The workflow is intentionally manual until Pages is enabled so it does not create failing deployments on every code push.
+The GitHub Pages workflow has now completed successfully for the latest website update. The public static site is published at the expected URL above. The repository slug remains `AI-Story-Reader` to preserve this URL, while the visible product brand is Novelith AI.
 
 ## API connection
 
@@ -29,7 +29,7 @@ Before the deployed site can import URLs/files or generate narration:
    - **Bring your own key (default option):** each visitor enters their own provider key in the website. The browser keeps it in `sessionStorage` for the current tab session and sends it to the API in the `X-Provider-API-Key` HTTPS header. The backend uses it only for that request; provider charges go to that visitor's provider account. Do not use this on shared/public devices.
    - **Shared key (optional):** configure `AI_API_KEY` plus `AI_PROVIDER`, `AI_MODEL`, and `AI_BASE_URL` as server secrets. Visitors do not need provider accounts, but the site owner pays for all usage and must enforce strict quotas and spending controls.
    Provider keys are never placed in the repository or public frontend config.
-3. Choose the access model. For a public website, leave `APP_ACCESS_TOKEN` unset so visitors do not need a shared password; the backend uses its server-side provider key and per-IP rate limits. For a restricted private deployment, set a strong `APP_ACCESS_TOKEN`; share it only through a private channel. Never put it in `frontend/config.js` or publish it in the repository.
+3. For a public website, leave `APP_ACCESS_TOKEN` unset so visitors do not need a shared password. For a restricted private deployment, set a strong `APP_ACCESS_TOKEN`; share it only through a private channel. Never put it in `frontend/config.js` or publish it in the repository.
 4. Configure API CORS to allow the GitHub Pages origin.
 5. Set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the API origin (for example, `https://api.example.com`).
 6. Verify `GET /api/health`, URL import, file import, comic OCR, and narration against the deployed API.
