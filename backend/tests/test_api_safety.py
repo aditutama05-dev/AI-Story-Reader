@@ -38,6 +38,22 @@ class APISafetyTests(unittest.TestCase):
         self.assertTrue(response.json()["access_required"])
         self.assertNotIn("private-secret", response.text)
         self.assertNotIn("server-secret", response.text)
+    def test_personal_provider_key_is_request_scoped_and_not_persisted(self):
+        captured = []
+        async def fake_generate(client, provider, model, api_key, base_url, system_prompt, user_prompt):
+            captured.append(api_key)
+            return "Narasi bahasa Indonesia yang cukup panjang untuk melewati pemeriksaan keluaran. " * 8
+        with patch.dict(os.environ, {"AI_API_KEY": ""}), patch.object(main_module, "generate_text", side_effect=fake_generate):
+            response = self.client.post(
+                "/api/narrate",
+                headers={"X-Provider-API-Key": "visitor-private-key"},
+                json={"text": "Tokoh berjalan menuju gerbang dan mengetuk pintunya.", "title": "Chapter 1"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(captured, ["visitor-private-key"])
+        self.assertNotIn("visitor-private-key", response.text)
+        self.assertEqual(main_module._request_provider_api_key.get(), "")
+
     def test_import_endpoint_is_rate_limited_per_client(self):
         with patch.dict(os.environ, {"IMPORT_REQUESTS_PER_MINUTE": "1"}):
             first = self.client.post("/api/import/url", json={"url": ""})
