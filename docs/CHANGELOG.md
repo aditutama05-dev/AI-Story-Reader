@@ -8,7 +8,7 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 - Added accessible source-map controls to select a whole comic page, panel, or individual text block, plus a collapsible OCR warning list.
 - Verify actual uploaded image format with Pillow rather than trusting the client Content-Type; accept JPG/JPEG, PNG, WEBP, and generic binary headers only when the decoded image signature is supported. Retained upload, page-count, pixel-count, and archive limits.
 - Updated MASTER FORM V2 to treat comic page/panel/dialogue/caption/SFX labels as structural metadata, not spoken story content.
-- Added regression tests for panel and balloon ordering, OCR fallback, source offsets, endpoint integration, image MIME mismatches, supported image formats, and narration marker handling. Automated execution has not yet been confirmed in this run.
+- Added regression tests for panel and balloon ordering, OCR fallback, source offsets, endpoint integration, image MIME mismatches, supported image formats, and narration marker handling.
 
 ## 2026-11-07
 
