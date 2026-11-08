@@ -77,7 +77,8 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Multi-page image transcription via vision model.
 - [x] Reading direction options: RTL, LTR, and vertical.
 - [x] CBZ/ZIP page extraction with natural filename ordering and archive size limits.
-- [ ] Panel segmentation and reading-order validation.
+- [x] Structured model-proposed panel and text-block extraction (dialogue, thought, caption, SFX) with per-panel balloon sequence, page/panel/item source offsets, and a plain-text fallback when provider JSON is invalid; all results require human review.
+- [ ] Independent panel segmentation and reading-order validation against original image geometry.
 - [ ] Character identity tracking grounded in visual evidence.
 - [ ] Dialogue, caption, thought, and SFX association with panels.
 - [ ] Visual event narration without unsupported assumptions.
