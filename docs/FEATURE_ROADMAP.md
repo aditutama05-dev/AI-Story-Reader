@@ -102,7 +102,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - Individually uploaded images are submitted in the visible queue order. A CBZ/ZIP archive is handled as a single upload and its entries retain natural filename sorting; mixed archive-plus-image batches are rejected explicitly.
 - Structured OCR text blocks now receive conservative NFC and whitespace normalization before source offsets are calculated. This does not translate or rewrite words, names, punctuation, or SFX.
 - MASTER FORM V2 now explicitly requests natural Indonesian narration and faithful Indonesian rendering of non-Indonesian dialogue/OCR while preserving names, titles, special terms, numbers, and meaningful SFX.
-- Regression tests were added for normalization, selected image order, page offsets, and mixed archive rejection. They still need to be executed in a repository test environment.
+- Regression tests were added for normalization, selected image order, page offsets, and mixed archive rejection. Run `pip install -r backend/requirements.txt` followed by `cd backend && python -m unittest discover -s tests` in a repository checkout; the current connector runtime could not clone GitHub because DNS resolution was unavailable.
 - [ ] Verify the upload queue and reordering with keyboard navigation, Android TalkBack, and real mobile browsers; inspect actual OCR order against representative RTL manga, LTR manhua, and vertical manhwa pages.
 
 ## Completion rule
