@@ -23,7 +23,7 @@ This roadmap separates the desired product from what is currently implemented. P
 
 - [x] Basic single-page HTML URL extraction in the current FastAPI backend.
 - [x] TXT, Markdown, HTML, PDF text layer, DOCX, and EPUB import in the current FastAPI backend.
-- [x] Multi-image OCR request for JPG, PNG, and WEBP pages.
+- [x] Multi-image OCR request for JPG/JPEG, PNG, and WEBP pages.
 - [x] Source URL validation and structured source metadata (basic generic adapter report).
 - [x] Generic HTML article extraction with extraction diagnostics.
 - [x] Modular source adapter interface and registry (generic fallback is active; domain-specific adapters remain planned).
@@ -82,7 +82,8 @@ This roadmap separates the desired product from what is currently implemented. P
 - [ ] Character identity tracking grounded in visual evidence.
 - [x] Model-proposed association of dialogue, thought, caption, and SFX text blocks with their ordered panels and optional balloon sequence; speaker identity is not guessed.
 - [ ] Visual event narration without unsupported assumptions.
-- [ ] Full-chapter comic narration with page/panel traceability.
+- [x] Comic OCR source text can be sent through MASTER FORM V2; page/panel/dialogue/caption/SFX markers are treated as structural metadata, not spoken story text.
+- [ ] Full-chapter comic narration with persistent page/panel traceability in the generated narration.
 
 ## Stage 7 — Release readiness
 
