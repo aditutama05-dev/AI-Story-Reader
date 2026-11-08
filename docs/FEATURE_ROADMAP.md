@@ -108,3 +108,8 @@ This roadmap separates the desired product from what is currently implemented. P
 ## Completion rule
 
 A checkbox is marked complete only after the feature exists in the repository and its behavior has been tested. A design note or planned implementation is not evidence that a feature is complete.
+
+
+## Recent frontend usability work
+
+- [x] Live source and narration character/word counters, including a visible warning when source text exceeds the backend's 1,000,000-character narration input limit.
