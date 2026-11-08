@@ -1,3 +1,4 @@
+import json
 import os
 import unittest
 from io import BytesIO
@@ -5,10 +6,13 @@ from unittest.mock import patch
 import zipfile
 from pathlib import Path
 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from app.main import app, _rate_buckets
 import app.main as main_module
+from app.vision_ocr import build_comic_source, normalize_page_image, parse_comic_ocr_response
 
 
 class APISafetyTests(unittest.TestCase):
@@ -62,19 +66,122 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.json()["verification"]["page_count"], 2)
 
 
+    def test_comic_ocr_parses_panel_order_and_dialogue_balloons(self):
+        raw = json.dumps({
+            "panels": [
+                {"order_confidence": "high", "items": [
+                    {"kind": "dialogue", "balloon": 1, "text": "Halo!"},
+                    {"kind": "thought", "balloon": 2, "text": "Apa yang terjadi?"},
+                    {"kind": "sfx", "balloon": None, "text": "DOR"},
+                ]},
+                {"order_confidence": "medium", "items": [
+                    {"kind": "caption", "balloon": None, "text": "Beberapa saat kemudian."}
+                ]},
+            ],
+            "warnings": [],
+        })
+        parsed = parse_comic_ocr_response(raw)
+        self.assertTrue(parsed["structured"])
+        self.assertEqual([panel["panel"] for panel in parsed["panels"]], [1, 2])
+        self.assertEqual(parsed["panels"][0]["items"][0]["balloon"], 1)
+        self.assertIn("[Dialog 1 · Balon 1] Halo!", parsed["text"])
+        self.assertIn("[Pikiran 2 · Balon 2] Apa yang terjadi?", parsed["text"])
+        self.assertTrue(any("Urutan baca panel perlu ditinjau" in warning for warning in parsed["warnings"]))
+
+    def test_comic_ocr_falls_back_to_plain_text_when_provider_returns_non_json(self):
+        raw = "[Panel 1]\n[Dialog 1] Teks lama"
+        parsed = parse_comic_ocr_response(raw)
+        self.assertFalse(parsed["structured"])
+        self.assertEqual(parsed["text"], raw)
+        self.assertEqual(parsed["panels"], [])
+        self.assertTrue(any("tanpa pemetaan panel" in warning for warning in parsed["warnings"]))
+
+    def test_comic_ocr_maps_page_panel_and_balloon_offsets_to_combined_source(self):
+        parsed = parse_comic_ocr_response(json.dumps({
+            "panels": [{"order_confidence": "high", "items": [
+                {"kind": "dialogue", "balloon": 1, "text": "Halo!"},
+                {"kind": "sfx", "text": "DOR"},
+            ]}],
+            "warnings": [],
+        }))
+        pages = [{
+            "page": 1, "filename": "page-1.png", "text": parsed["text"],
+            "panels": parsed["panels"], "warnings": parsed["warnings"], "structured": True,
+        }]
+        combined, segments = build_comic_source(pages)
+        segment = segments[0]
+        panel = segment["panels"][0]
+        dialogue = panel["items"][0]
+        self.assertEqual(combined[segment["source_start"]:segment["source_end"]], parsed["text"])
+        self.assertEqual(combined[panel["source_start"]:panel["source_end"]], parsed["text"])
+        self.assertEqual(combined[dialogue["source_start"]:dialogue["source_end"]], "Halo!")
+        self.assertEqual(dialogue["balloon"], 1)
+
+    def test_comic_ocr_rejects_mismatched_declared_and_actual_image_types(self):
+        image_bytes = BytesIO()
+        Image.new("RGB", (8, 8), "white").save(image_bytes, format="PNG")
+        with self.assertRaises(HTTPException) as raised:
+            normalize_page_image(image_bytes.getvalue(), "image/jpeg")
+        self.assertEqual(raised.exception.status_code, 415)
+
+    def test_comic_endpoint_returns_structured_panel_and_balloon_evidence(self):
+        image_bytes = BytesIO()
+        Image.new("RGB", (8, 8), "white").save(image_bytes, format="PNG")
+        payload = {"panels": [{"order_confidence": "high", "items": [
+            {"kind": "dialogue", "balloon": 1, "text": "Halo!"},
+        ]}], "warnings": []}
+
+        class FakeResponse:
+            def raise_for_status(self):
+                return None
+            def json(self):
+                return {"choices": [{"message": {"content": json.dumps(payload)}}]}
+
+        class FakeAsyncClient:
+            def __init__(self, *args, **kwargs):
+                pass
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, exc_type, exc, traceback):
+                return False
+            async def post(self, *args, **kwargs):
+                return FakeResponse()
+
+        with patch.object(main_module, "provider_config", return_value=("openrouter", "test-vision", "test-key", "https://example.com/v1")), patch.object(
+            main_module.httpx, "AsyncClient", FakeAsyncClient
+        ):
+            response = self.client.post(
+                "/api/import/comic",
+                files=[("files", ("page-1.png", image_bytes.getvalue(), "image/png"))],
+                data={"direction": "vertical"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["verification"]["status"], "review_required")
+        self.assertEqual(data["verification"]["panel_count"], 1)
+        self.assertEqual(data["verification"]["structured_page_count"], 1)
+        self.assertEqual(data["segments"][0]["panels"][0]["items"][0]["balloon"], 1)
+        item = data["segments"][0]["panels"][0]["items"][0]
+        self.assertEqual(data["text"][item["source_start"]:item["source_end"]], "Halo!")
+
     def test_comic_ocr_page_offsets_match_combined_text(self):
-        pages = [{"page": 1, "filename": "1.png", "text": "Panel pertama."}, {"page": 2, "filename": "2.png", "text": "Panel kedua."}]
-        cursor = 0
-        for index, page in enumerate(pages):
-            if index:
-                cursor += 2
-            cursor += len(f"[Halaman {page['page']}]\\n")
-            page["source_start"] = cursor
-            cursor += len(page["text"])
-            page["source_end"] = cursor
-        combined = "\\n\\n".join(f"[Halaman {page['page']}]\\n{page['text']}" for page in pages)
-        for page in pages:
-            self.assertEqual(combined[page["source_start"]:page["source_end"]], page["text"])
+        parsed = parse_comic_ocr_response(json.dumps({
+            "panels": [{"order_confidence": "high", "items": [
+                {"kind": "dialogue", "balloon": 1, "text": "Panel pertama."}
+            ]}],
+            "warnings": [],
+        }))
+        pages = [{
+            "page": 1, "filename": "1.png", "text": parsed["text"],
+            "panels": parsed["panels"], "warnings": [], "structured": True,
+        }, {
+            "page": 2, "filename": "2.png", "text": "[Panel 1]\n[Caption 1] Panel kedua.",
+            "panels": [], "warnings": [], "structured": False,
+        }]
+        combined, segments = build_comic_source(pages)
+        for segment in segments:
+            self.assertEqual(combined[segment["source_start"]:segment["source_end"]], pages[segment["index"] - 1]["text"])
 
     def test_multi_page_import_returns_exact_source_offsets_for_each_page(self):
         async def fake_extract(url):
