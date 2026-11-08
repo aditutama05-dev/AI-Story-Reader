@@ -30,6 +30,8 @@ def normalize_page_image(content: bytes, content_type: str) -> bytes:
     if len(content) > MAX_IMAGE_BYTES:
         raise HTTPException(status_code=413, detail="Ukuran tiap gambar maksimal 15 MB.")
     declared_type = (content_type or "").split(";", 1)[0].strip().lower()
+    if declared_type == "image/jpg":
+        declared_type = "image/jpeg"
     if declared_type and declared_type not in ALLOWED_IMAGE_TYPES | GENERIC_BINARY_TYPES:
         raise HTTPException(status_code=415, detail="Gunakan gambar JPG, PNG, atau WEBP.")
     try:
