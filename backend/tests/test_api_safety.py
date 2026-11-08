@@ -373,6 +373,22 @@ class APISafetyTests(unittest.TestCase):
         self.assertIn("referensi sekunder", prompts[0][1])
         self.assertIn("utamakan teks sumber", prompts[0][0])
 
+    def test_narration_uses_comic_markers_as_structure_not_spoken_content(self):
+        prompts = []
+        async def fake_generate(client, provider, model, api_key, base_url, system_prompt, user_prompt):
+            prompts.append(system_prompt)
+            return "Narasi natural berdasarkan isi dialog dan kejadian pada panel. " * 8
+        with patch.object(main_module, "provider_config", return_value=("openrouter", "test-model", "test-key", "https://example.com/v1")), patch.object(
+            main_module, "generate_text", side_effect=fake_generate
+        ):
+            response = self.client.post("/api/narrate", json={
+                "text": "[Halaman 1]\n[Panel 1]\n[Dialog 1 · Balon 1] Selamat datang!",
+                "title": "Chapter Komik",
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("jangan membacakan labelnya", prompts[0].lower())
+        self.assertIn("[Panel n]", prompts[0])
+
     def test_narration_verification_flags_empty_compressed_and_duplicate_chunks(self):
         from app.main import build_narration_verification
 
