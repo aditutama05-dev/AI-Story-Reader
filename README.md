@@ -2,7 +2,7 @@
 
 > **Buka aplikasi:** [Novelith AI — Website](https://aditutama05-dev.github.io/AI-Story-Reader/)
 >
- > Website statis sudah berhasil diterbitkan melalui GitHub Actions. Fitur yang membutuhkan API (impor URL/file, OCR, narasi AI, dan MP3) tetap menunggu deployment backend. Halaman README ini adalah dokumentasi proyek, bukan antarmuka aplikasi.
+> Website statis sudah berhasil diterbitkan melalui GitHub Actions. Fitur yang membutuhkan API (impor URL/file, OCR, narasi AI, dan MP3) tetap menunggu deployment backend. Halaman README ini adalah dokumentasi proyek, bukan antarmuka aplikasi.
 
 Novelith AI is a personal **website** for turning novels, light novels, web novels, digital books, manga, manhwa, manhua, and comics into detailed Indonesian narration that can be read and listened to in a browser.
 
