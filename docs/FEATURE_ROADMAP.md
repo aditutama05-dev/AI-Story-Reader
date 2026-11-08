@@ -43,7 +43,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Automatically include notes from preceding parts in the same series as secondary context for narration, with source text taking priority.
 - [x] Manually curated structured continuity facts for characters, relationships, locations, terms, events, and conflicts, each paired with a source excerpt.
 - [x] AI-assisted fact extraction with verbatim source-excerpt matching, user review, and explicit approval before saving.
-- [x] AI-assisted detection of possible contradictions against prior structured facts, with exact current-source quote matching and review-only results; character-offset evidence linking, source-editor highlighting, and imported page-to-source offset mapping for multi-page URLs, scanned PDFs, and comic/manga OCR are implemented.
+- [x] AI-assisted detection of possible contradictions against prior structured facts, with exact current-source quote matching and review-only results; character-offset evidence linking, source-editor highlighting, imported page-to-source offset mapping for multi-page URLs, scanned PDFs, and comic/manga OCR are implemented. Stale imported mappings are cleared when source text changes or another saved chapter is opened.
 - [ ] Continuity notes never replace or override source evidence.
 
 ## Stage 4 — Narration and verification
