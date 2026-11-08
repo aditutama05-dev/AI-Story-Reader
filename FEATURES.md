@@ -1,11 +1,11 @@
-# AI Story Reader — Feature Specification
+# Novelith AI — Feature Specification
 
 > **Status: BRAINSTORMING**  
 > Dokumen ini mencatat rancangan dan kebutuhan fitur yang dikumpulkan dari sesi brainstorming. Poin-poin di bawah belum otomatis berarti fitur sudah tersedia atau sudah disetujui untuk implementasi. Status implementasi harus dicatat terpisah dan diperbarui ketika ada keputusan baru.
 
 ## Tujuan Produk
 
-AI Story Reader adalah **website pribadi** untuk mengubah novel, light novel, web novel, buku digital, manga, manhwa, manhua, dan komik menjadi narasi bahasa Indonesia yang dapat dibaca dan didengarkan.
+Novelith AI adalah **website** untuk mengubah novel, light novel, web novel, buku digital, manga, manhwa, manhua, dan komik menjadi narasi bahasa Indonesia yang dapat dibaca dan didengarkan.
 
 Hasil akhir yang dituju adalah website yang dapat diakses melalui browser, bukan aplikasi desktop atau aplikasi Android native.
 
@@ -160,7 +160,8 @@ Pilihan arsitektur final belum ditetapkan. Kelayakan teknis, batas runtime, peny
 - Memanfaatkan API atau layanan yang sudah dimiliki.
 - Menghindari biaya langganan baru jika memungkinkan.
 - Memperhitungkan biaya penggunaan API, penyimpanan, bandwidth, dan proses pembuatan audio.
-- API key dan secret tidak boleh ditanam di kode frontend atau di-commit ke repository.
+- API key milik pengelola/server tidak boleh ditanam di kode frontend atau di-commit ke repository.
+- Pengguna boleh memasukkan API key provider miliknya sendiri melalui HTTPS; key hanya disimpan sementara di sesi browser dan tidak boleh disimpan permanen oleh server.
 
 ## L. Status dan Prinsip Pengembangan
 
