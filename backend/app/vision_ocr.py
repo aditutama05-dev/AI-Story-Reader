@@ -56,8 +56,8 @@ def normalize_page_image(content: bytes, content_type: str) -> bytes:
 
 def build_ocr_prompt(page_number: int, total_pages: int, direction: str) -> str:
     directions = {
-        "rtl": "Manga Jepang: urutan panel dari kanan ke kiri, lalu dari atas ke bawah. Di dalam panel, baca gelembung dari kanan ke kiri sesuai alur visual.",
-        "ltr": "Komik kiri-ke-kanan: urutkan panel dari kiri ke kanan, lalu dari atas ke bawah. Di dalam panel, ikuti urutan gelembung yang terlihat.",
+        "rtl": "Manga atau komik kanan-ke-kiri: urutan panel dari kanan ke kiri, lalu dari atas ke bawah. Di dalam panel, ikuti urutan gelembung sesuai alur visual.",
+        "ltr": "Komik kiri-ke-kanan, termasuk manhua yang memakai arah ini: urutkan panel dari kiri ke kanan, lalu dari atas ke bawah. Di dalam panel, ikuti urutan gelembung yang terlihat.",
         "vertical": "Webtoon/manhwa vertikal: ikuti alur panel dari bagian paling atas ke bawah halaman; di dalam panel baca gelembung sesuai urutan visual.",
     }
     return f"""Analisis halaman komik ini untuk mengekstrak teks yang benar-benar terlihat.
