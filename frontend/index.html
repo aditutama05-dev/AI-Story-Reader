@@ -35,6 +35,15 @@ button.secondary{background:#1d3b5b;color:#eef6ff}button:disabled{opacity:.55;cu
 .status{color:#79bdff;min-height:24px;margin-top:14px}.output{white-space:pre-wrap;line-height:1.85;color:#eee;margin-top:18px}.output p{padding:3px 8px;border-radius:8px}.output p.speech-current{background:#174b79;outline:2px solid #66b2ff}.speech-current-word{background:#ffd166;color:#06172a;border-radius:3px}
 small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library-series,.library-arc{border:1px solid #31516f;border-radius:12px;padding:12px;margin:10px 0}.library-arc{margin-left:14px;background:#0b1d30}.library-volume{margin:12px 0 12px 22px;padding:10px;border-left:2px solid #31516f}.library-chapter{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 8px 14px}.library-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.library-actions button,.library-chapter button{margin:4px 4px 4px 0}.library-import{display:inline-flex;align-items:center;background:#1d3b5b;color:#eef6ff;border-radius:10px;padding:12px 17px;min-height:44px;cursor:pointer;font-weight:700}
 .hint{font-size:.85rem;color:#a9bfd5;line-height:1.5}
+.comic-queue{display:grid;gap:10px;margin-top:12px}
+.comic-queue-list{display:grid;gap:10px;list-style:none;padding:0;margin:0}
+.comic-page{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px;border:1px solid #31516f;border-radius:12px;background:#0b1d30}
+.comic-page img{width:76px;height:96px;object-fit:contain;background:#091a2c;border-radius:8px}
+.comic-page-meta{min-width:0;overflow-wrap:anywhere}
+.comic-page-meta strong{display:block}
+.comic-page-actions{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end}
+.comic-page-actions button{margin:0;padding:9px 11px}
+@media(max-width:620px){.comic-page{grid-template-columns:64px minmax(0,1fr)}.comic-page img{width:64px;height:84px}.comic-page-actions{grid-column:1/-1;justify-content:flex-start}}
 @media(max-width:620px){.row{grid-template-columns:1fr}main{padding:26px 14px}.card{padding:17px}}
 </style></head>
 <body><a class="skip-link" href="#main-content">Lewati ke konten utama</a><main id="main-content" tabindex="-1">
@@ -76,8 +85,10 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 
 <section class="card" aria-labelledby="comic-heading">
 <h2 id="comic-heading">2. Baca manga / manhwa dari gambar</h2>
-<label for="comicFiles">Pilih halaman gambar atau satu arsip CBZ / ZIP (urutkan sebelum upload)</label>
+<label for="comicFiles">Pilih beberapa halaman gambar, atau satu arsip CBZ / ZIP</label>
 <input id="comicFiles" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,.cbz,.zip,application/zip" multiple>
+<div class="library-actions"><button id="clearComicQueue" type="button" class="secondary" disabled>Kosongkan antrean</button></div>
+<div id="comicQueue" class="comic-queue" role="region" aria-label="Antrean halaman komik" aria-live="polite"><p class="hint">Belum ada halaman dipilih. Untuk gambar, gunakan tombol Naikkan/Turunkan agar urutan baca benar sebelum OCR.</p></div>
 <div class="row">
 <div><label for="readingDirection">Arah baca</label><select id="readingDirection"><option value="vertical">Manhwa / webtoon (atas ke bawah)</option><option value="rtl">Manga / komik kanan ke kiri</option><option value="ltr">Komik / manhua kiri ke kanan</option></select></div>
 <div><label for="comicModel">Model vision (opsional)</label><input id="comicModel" placeholder="Gunakan model default"></div>
@@ -127,6 +138,98 @@ const API_BASE=(window.AI_STORY_READER_API_BASE||"").replace(/\/+$/,"");
 const apiUrl=path=>`${API_BASE}${path}`;
 const apiFetch=(path,options={})=>{const headers=new Headers(options.headers||{});const token=sessionStorage.getItem("ai-story-reader-access-token")||"";if(token)headers.set("Authorization","Bearer "+token);return fetch(apiUrl(path),{...options,headers})};
 const $=id=>document.getElementById(id);
+function isComicArchive(file){return /\.(cbz|zip)$/i.test(file?.name||"")}
+function renderComicQueue(){
+ const container=$("comicQueue");
+ if(!container)return;
+ comicPreviewUrls.forEach(url=>URL.revokeObjectURL(url));
+ comicPreviewUrls=[];
+ container.replaceChildren();
+ $("clearComicQueue").disabled=selectedComicFiles.length===0;
+ $("readComic").disabled=selectedComicFiles.length===0;
+ if(!selectedComicFiles.length){
+  const empty=document.createElement("p");empty.className="hint";
+  empty.textContent="Belum ada halaman dipilih. Untuk gambar, gunakan tombol Naikkan/Turunkan agar urutan baca benar sebelum OCR.";
+  container.append(empty);return;
+ }
+ const list=document.createElement("ol");list.className="comic-queue-list";
+ list.setAttribute("aria-label","Urutan halaman yang akan diproses");
+ const archive=isComicArchive(selectedComicFiles[0]);
+ selectedComicFiles.forEach((file,index)=>{
+  const item=document.createElement("li");item.className="comic-page";
+  if(!archive){
+   const preview=document.createElement("img");const url=URL.createObjectURL(file);comicPreviewUrls.push(url);
+   preview.src=url;preview.alt="Pratinjau halaman "+(index+1);
+   item.append(preview);
+  }else{
+   const preview=document.createElement("div");preview.className="comic-page-meta";preview.setAttribute("aria-hidden","true");preview.textContent="CBZ / ZIP";
+   item.append(preview);
+  }
+  const meta=document.createElement("div");meta.className="comic-page-meta";
+  const title=document.createElement("strong");title.textContent=archive?file.name:"Halaman "+(index+1)+" · "+file.name;
+  const note=document.createElement("p");note.className="hint";
+  note.textContent=archive?"Halaman di dalam arsip akan diurutkan alami berdasarkan nama file.":"Urutan ini akan dipertahankan saat OCR.";
+  meta.append(title,note);item.append(meta);
+  const actions=document.createElement("div");actions.className="comic-page-actions";
+  if(!archive){
+   const up=document.createElement("button");up.type="button";up.className="secondary";up.textContent="Naikkan";up.disabled=index===0;
+   up.setAttribute("aria-label","Naikkan halaman "+(index+1)+" "+file.name);
+   up.addEventListener("click",()=>moveComicPage(index,-1));
+   const down=document.createElement("button");down.type="button";down.className="secondary";down.textContent="Turunkan";down.disabled=index===selectedComicFiles.length-1;
+   down.setAttribute("aria-label","Turunkan halaman "+(index+1)+" "+file.name);
+   down.addEventListener("click",()=>moveComicPage(index,1));
+   actions.append(up,down);
+  }
+  const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Hapus";
+  remove.setAttribute("aria-label","Hapus "+file.name+" dari antrean");
+  remove.addEventListener("click",()=>{selectedComicFiles.splice(index,1);renderComicQueue()});
+  actions.append(remove);item.append(actions);list.append(item);
+ });
+ container.append(list);
+ const count=document.createElement("p");count.className="hint";
+ count.textContent=archive?"Satu arsip dipilih.":selectedComicFiles.length+" halaman dalam urutan yang akan dikirim.";
+ container.append(count);
+}
+function moveComicPage(index,delta){
+ const destination=index+delta;
+ if(destination<0||destination>=selectedComicFiles.length)return;
+ const [file]=selectedComicFiles.splice(index,1);
+ selectedComicFiles.splice(destination,0,file);
+ renderComicQueue();
+}
+function setComicQueue(fileList){
+ const incoming=Array.from(fileList||[]);
+ $("comicFiles").value="";
+ if(!incoming.length)return;
+ const archives=incoming.filter(isComicArchive);
+ if(archives.length&&(incoming.length!==1||archives.length!==1)){
+  $("status").textContent="Pilih satu arsip CBZ/ZIP saja, atau pilih beberapa gambar. Arsip tidak dapat dicampur dengan gambar.";
+  return;
+ }
+ if(!archives.length&&incoming.length>30){
+  $("status").textContent="Maksimal 30 halaman gambar per proses.";
+  return;
+ }
+ const supported=/\.(jpe?g|png|webp)$/i;
+ if(!archives.length&&incoming.some(file=>!supported.test(file.name))){
+  $("status").textContent="Antrean hanya menerima JPG, JPEG, PNG, WEBP, atau satu arsip CBZ/ZIP.";
+  return;
+ }
+ const maxSingle=archives.length?40*1024*1024:15*1024*1024;
+ if(incoming.some(file=>file.size>maxSingle)){
+  $("status").textContent=archives.length?"Arsip CBZ/ZIP dibatasi 40 MB.":"Setiap halaman gambar dibatasi 15 MB.";
+  return;
+ }
+ if(!archives.length&&incoming.reduce((sum,file)=>sum+file.size,0)>100*1024*1024){
+  $("status").textContent="Total seluruh halaman gambar dibatasi 100 MB per proses.";
+  return;
+ }
+ selectedComicFiles=incoming;
+ renderComicQueue();
+ $("status").textContent=archives.length?"Arsip dipilih. Halaman di dalamnya akan diurutkan berdasarkan nama file.":"Antrean siap · "+selectedComicFiles.length+" halaman. Periksa pratinjau dan urutannya sebelum OCR.";
+}
+$("comicFiles").addEventListener("change",()=>setComicQueue($("comicFiles").files));
+$("clearComicQueue").addEventListener("click",()=>{selectedComicFiles=[];$("comicFiles").value="";renderComicQueue()});
 const readingDatabaseName="ai-story-reader-reading-v1";
 let readingDatabasePromise=null;
 let currentReadingRecord=null;
@@ -136,6 +239,8 @@ let progressSaveTimer=null;
 let lastAudioProgressSave=0;
 let resettingAudio=false;
 let importedSourceSegments=[];
+let selectedComicFiles=[];
+let comicPreviewUrls=[];
 function openReadingDatabase(){
  if(!("indexedDB" in window))return Promise.reject(new Error("Penyimpanan progres tidak didukung browser ini."));
  if(readingDatabasePromise)return readingDatabasePromise;
@@ -536,15 +641,13 @@ $("checkContinuity").addEventListener("click",async()=>{
 });
 
 $("readComic").addEventListener("click",async()=>{
- const files=$("comicFiles").files;
- if(!files.length){$("status").textContent="Pilih satu atau beberapa halaman komik.";return}
- if(files.length>30){$("status").textContent="Maksimal 30 halaman per proses.";return}
+ if(!selectedComicFiles.length){$("status").textContent="Pilih satu atau beberapa halaman komik terlebih dahulu.";return}
  const form=new FormData();
- for(const file of files)form.append("files",file);
+ for(const file of selectedComicFiles)form.append("files",file,file.name);
  form.append("direction",$("readingDirection").value);
  if($("provider").value)form.append("provider",$("provider").value);
  if($("comicModel").value.trim())form.append("model",$("comicModel").value.trim());
- $("readComic").disabled=true;$("status").textContent="Membaca gambar dan mengenali teks per halaman...";
+ $("readComic").disabled=true;$("status").textContent="Membaca gambar sesuai urutan antrean dan mengenali teks per halaman...";
  try{
   const response=await apiFetch("/api/import/comic",{method:"POST",body:form});
   const data=await response.json();if(!response.ok)throw new Error(data.detail||"OCR gagal");
@@ -564,7 +667,7 @@ $("readComic").addEventListener("click",async()=>{
   }
   $("status").textContent="OCR selesai · "+data.pages.length+" halaman · "+panelCount+" panel · "+data.characters.toLocaleString("id-ID")+" karakter. Hasil tetap perlu diperiksa terhadap gambar asli sebelum membuat narasi.";
  }catch(e){$("status").textContent="OCR gagal: "+e.message}
- finally{$("readComic").disabled=false}
+ finally{$("readComic").disabled=selectedComicFiles.length===0}
 });
 
 $("speechRate").addEventListener("change",savePreferences);$("voiceSelect").addEventListener("change",savePreferences);
