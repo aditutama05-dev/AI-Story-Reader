@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-08 — Novelith AI
+
+- Renamed the website-facing brand to **Novelith AI**; `AI` is rendered as a smaller suffix in the header wordmark. The repository slug remains unchanged to preserve existing GitHub Pages links.
+- Added optional per-user provider API keys. The browser stores a key in session storage for the current session and sends it to the backend in `X-Provider-API-Key`; the backend uses request-scoped context and does not persist the key.
+- Documented the hybrid model: GitHub Pages for the free static website, backend service for import/OCR/AI, and IndexedDB for each visitor's local library/progress.
+
 Notable repository changes are recorded here. For exact commit history, use GitHub commits.
 
 ## 2026-11-08
@@ -28,7 +34,7 @@ Notable repository changes are recorded here. For exact commit history, use GitH
 
 - Added `FEATURES.md` with the product feature specification gathered from prior brainstorming.
 - Added project context, roadmap, accessibility/screen-access boundaries, source ingestion, story data model, architecture, known limitations, and changelog documentation.
-- Refined product boundary: AI Story Reader is a website; Android-native screen capture/accessibility services are not part of the deliverable.
+- Refined product boundary: Novelith AI is a website; Android-native screen capture/accessibility services are not part of the deliverable.
 - Aligned the website visual direction to dark navy and bright blue, with no purple palette.
 
 - Added a GitHub Pages deployment workflow and deployment guide; Pages must be enabled in repository settings.
