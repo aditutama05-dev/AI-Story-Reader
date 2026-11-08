@@ -16,7 +16,7 @@
 
 A root `index.html` redirect is also included so the current `main` branch / root publishing mode can route visitors into `frontend/` while Pages is being switched to Actions.
 
-The GitHub Pages workflow has now completed successfully for the latest website update. The public static site is published at the expected URL above. The repository slug remains `AI-Story-Reader` to preserve this URL, while the visible product brand is Novelith AI.
+The repository contains the `Deploy website to GitHub Pages` workflow, which publishes `frontend/` when run. The repository configuration and most recent run should still be checked in GitHub Actions/Settings before treating the live URL as verified. The repository slug remains `AI-Story-Reader` to preserve this URL, while the visible product brand is Novelith AI.
 
 ## API connection
 
@@ -46,8 +46,8 @@ Cloudflare Workers does not run the current Python FastAPI application unchanged
 
 ## Release checklist
 
-- [ ] Pages setting uses GitHub Actions.
-- [ ] Pages deployment workflow succeeds.
+- [x] Pages deployment workflow is present and configured to publish the `frontend/` directory when the repository Pages source is set to GitHub Actions.
+- [ ] Confirm the repository Settings → Pages source is set to GitHub Actions and verify the latest deployment run in Actions.
 - [ ] API is deployed and health check succeeds.
 - [ ] API CORS permits only the required website origins.
 - [ ] Public API base URL is configured.
