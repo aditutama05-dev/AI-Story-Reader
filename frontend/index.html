@@ -250,6 +250,20 @@ let progressSaveTimer=null;
 let lastAudioProgressSave=0;
 let resettingAudio=false;
 let importedSourceSegments=[];
+let importedSourceSnapshot=null;
+function invalidateImportedSourceEvidence(message="Teks sumber berubah. Peta halaman/panel dan bukti kontinuitas lama dihapus; impor ulang sumber untuk membuat peta yang akurat."){
+ const hadEvidence=importedSourceSegments.length>0;
+ importedSourceSegments=[];
+ importedSourceSnapshot=null;
+ $("continuityResults")?.replaceChildren();
+ if(hadEvidence&&message)$("status").textContent=message;
+}
+window.invalidateImportedSourceEvidence=invalidateImportedSourceEvidence;
+$("source").addEventListener("input",()=>{
+ if(importedSourceSnapshot!==null&&$("source").value!==importedSourceSnapshot){
+  invalidateImportedSourceEvidence();
+ }
+});
 function openReadingDatabase(){
  if(!("indexedDB" in window))return Promise.reject(new Error("Penyimpanan progres tidak didukung browser ini."));
  if(readingDatabasePromise)return readingDatabasePromise;
@@ -497,6 +511,7 @@ async function importResponse(response){
  $("title").value=data.title||$("title").value;$("source").value=data.text||"";
  $("continuityResults").replaceChildren();
  importedSourceSegments=Array.isArray(data.segments)?data.segments:[];
+ importedSourceSnapshot=importedSourceSegments.length?String(data.text||""):null;
  renderImportedSourceSegments();
  const count=(data.characters||data.text?.length||0).toLocaleString("id-ID");
  if(data.verification){
@@ -663,6 +678,7 @@ $("readComic").addEventListener("click",async()=>{
   $("title").value=data.title;$("source").value=data.text;
   $("continuityResults").replaceChildren();
   importedSourceSegments=Array.isArray(data.segments)?data.segments:[];
+  importedSourceSnapshot=importedSourceSegments.length?String(data.text||""):null;
   renderImportedSourceSegments();
   const panelCount=data.verification?.panel_count||0;
   const warnings=data.verification?.warnings||[];
