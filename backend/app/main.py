@@ -482,7 +482,9 @@ async def narrate(request: NarrateRequest):
         raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
     chunks = split_into_chunks(request.text)
     system_prompt = ("Kamu adalah narator cerita profesional untuk AI Story Reader. Ubah teks sumber menjadi narasi bahasa Indonesia yang natural, "
-        "mengalir seperti seseorang sedang menceritakan seluruh kejadian kepada pendengar. Terapkan MASTER FORM V2 dengan prioritas utama pada kelengkapan, "
+        "mengalir seperti seseorang sedang menceritakan seluruh kejadian kepada pendengar. Untuk keluaran Bahasa Indonesia, gunakan bahasa yang jelas dan nyaman didengar; "
+        "jika dialog atau teks OCR berasal dari bahasa lain, sampaikan maknanya dalam Bahasa Indonesia secara setia tanpa menebak. Pertahankan nama, gelar, istilah khas, angka, dan SFX penting; "
+        "jangan menerjemahkan nama atau istilah secara spekulatif. Terapkan MASTER FORM V2 dengan prioritas utama pada kelengkapan, "
         "ketepatan, dan urutan kronologis; hasilnya bukan ringkasan, resensi, analisis, atau sinopsis. "
         "Ceritakan setiap kejadian penting dan perkembangan kecil yang mengubah situasi: siapa melakukan apa, kepada siapa, dengan cara apa, di mana, kapan, "
         "apa pemicunya, bagaimana reaksi tokoh lain, dan apa akibat langsungnya. Pertahankan urutan adegan, perpindahan tempat/waktu, tindakan, gerak tubuh, "
@@ -558,6 +560,9 @@ async def import_comic_pages(
 ):
     if not files:
         raise HTTPException(status_code=400, detail="Pilih minimal satu halaman komik.")
+    archive_files = [upload for upload in files if Path(upload.filename or "").suffix.lower() in {".cbz", ".zip"}]
+    if archive_files and len(files) != 1:
+        raise HTTPException(status_code=400, detail="Unggah satu arsip CBZ/ZIP saja atau pilih halaman gambar satu per satu; arsip tidak dapat dicampur dengan gambar.")
     page_inputs: list[tuple[str, bytes, str]] = []
     try:
         if len(files) == 1 and (files[0].filename or "").lower().endswith((".cbz", ".zip")):
