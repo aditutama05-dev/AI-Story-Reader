@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from .importers import _validate_archive_limits, _validate_public_url, extract_document, extract_webpage_report
-from .vision_ocr import build_document_page_prompt, build_ocr_prompt, make_gemini_vision_parts, make_openai_vision_content, normalize_page_image
+from .vision_ocr import build_comic_source, build_document_page_prompt, build_ocr_prompt, make_gemini_vision_parts, make_openai_vision_content, normalize_page_image, parse_comic_ocr_response
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 if not (PROJECT_DIR / "frontend").is_dir():
@@ -592,12 +592,14 @@ async def import_comic_pages(
                 if total_upload_bytes > 100 * 1024 * 1024:
                     raise HTTPException(status_code=413, detail="Total seluruh halaman komik dibatasi 100 MB per proses.")
                 page_inputs.append((upload.filename or "page", raw, upload.content_type or ""))
+
     except zipfile.BadZipFile as exc:
         raise HTTPException(status_code=400, detail="Arsip CBZ/ZIP rusak atau tidak valid.") from exc
 
     selected, selected_model, api_key, base_url = provider_config(provider, model)
     if not api_key:
         raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
+
     pages = []
     try:
         async with httpx.AsyncClient(timeout=180) as client:
@@ -623,27 +625,54 @@ async def import_comic_pages(
                     )
                     response.raise_for_status()
                     transcription = response.json()["choices"][0]["message"]["content"]
-                pages.append({"page": index, "filename": filename or f"page-{index}", "text": transcription.strip()})
-        cursor = 0
-        segments = []
-        for index, page in enumerate(pages):
-            if index:
-                cursor += 2
-            prefix = f"[Halaman {page['page']}]\n"
-            cursor += len(prefix)
-            page["source_start"] = cursor
-            cursor += len(page["text"])
-            page["source_end"] = cursor
-            segments.append({"index": page["page"], "filename": page["filename"], "characters": len(page["text"]), "source_start": page["source_start"], "source_end": page["source_end"]})
-        combined = "\n\n".join(f"[Halaman {page['page']}]\n{page['text']}" for page in pages)
-        return {"title": "Hasil OCR komik", "pages": pages, "segments": segments, "text": combined, "characters": len(combined),
-                "provider": selected, "model": selected_model, "reading_direction": direction}
+
+                parsed = parse_comic_ocr_response(transcription)
+                pages.append({
+                    "page": index,
+                    "filename": filename or f"page-{index}",
+                    "text": parsed["text"],
+                    "panels": parsed["panels"],
+                    "warnings": parsed["warnings"],
+                    "structured": parsed["structured"],
+                })
+
+        combined, segments = build_comic_source(pages)
+        panel_count = sum(len(page["panels"]) for page in pages)
+        structured_page_count = sum(1 for page in pages if page["structured"])
+        fallback_page_count = len(pages) - structured_page_count
+        warnings = [
+            "Urutan panel dan balon disusun oleh model vision berdasarkan gambar, bukan diverifikasi secara independen. Periksa ulang panel inset, tata letak tidak biasa, teks kecil, nama, angka, dan SFX.",
+            "Hasil OCR dapat keliru atau melewatkan teks. Sumber gambar asli tetap menjadi acuan; tinjau dan edit transkripsi sebelum membuat narasi.",
+        ]
+        for page in pages:
+            warnings.extend(f"Halaman {page['page']}: {warning}" for warning in page["warnings"])
+        if len(warnings) > 22:
+            warnings = warnings[:22] + ["Sebagian peringatan tambahan tidak ditampilkan."]
+
+        return {
+            "title": "Hasil OCR komik",
+            "pages": pages,
+            "segments": segments,
+            "text": combined,
+            "characters": len(combined),
+            "provider": selected,
+            "model": selected_model,
+            "reading_direction": direction,
+            "verification": {
+                "status": "review_required",
+                "page_count": len(pages),
+                "panel_count": panel_count,
+                "structured_page_count": structured_page_count,
+                "fallback_page_count": fallback_page_count,
+                "warnings": warnings,
+            },
+        }
     except HTTPException:
         raise
     except httpx.HTTPStatusError as exc:
         raise HTTPException(status_code=502, detail=f"Provider AI gagal memproses gambar (HTTP {exc.response.status_code}). Pastikan model mendukung input gambar.") from exc
-    except (KeyError, IndexError, ValueError) as exc:
-        raise HTTPException(status_code=502, detail="Respons OCR dari provider tidak sesuai format.") from exc
+    except (KeyError, IndexError, ValueError, TypeError) as exc:
+        raise HTTPException(status_code=502, detail="Respons OCR dari provider tidak sesuai format atau terlalu besar.") from exc
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Tidak dapat terhubung ke provider OCR/vision.") from exc
 
