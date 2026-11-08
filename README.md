@@ -34,7 +34,7 @@ The product is a browser website, not a native Android or desktop application.
 - Complete-chapter MP3 generation, in-page audio playback, ±15-second seek, and MP3 download.
 - Local chapter restoration, automatic reading-position persistence, bookmark, and resume controls using browser IndexedDB.
 - URL, explicitly ordered same-domain multi-page URL, file, pasted-text, and multi-image input controls.
-- CBZ/ZIP comic archive upload with natural page ordering.
+- CBZ/ZIP comic archive upload with natural page ordering, plus structured panel/dialogue/thought/caption/SFX OCR and page/panel/balloon evidence selection.
 - Series → Arc → Volume → Chapter library with separate original-source and narration storage, using IndexedDB plus JSON backup/restore.
 - Configurable public API base URL in `frontend/config.js`. This file may contain a public API origin only; never put API keys or provider secrets in it.
 
@@ -44,7 +44,8 @@ The product is a browser website, not a native Android or desktop application.
 - URL import with generic HTML extraction, source warnings, and explicit multi-page chapter assembly.
 - In-memory per-client rate limits for import and AI/audio endpoints.
 - TXT, Markdown, HTML, text-based PDF, scanned PDF OCR (vision model), DOCX, and EPUB extraction.
-- Multi-image, CBZ/ZIP, and scanned-PDF OCR for JPG, PNG, and WEBP page images using a vision-capable provider.
+- Multi-image, CBZ/ZIP, and scanned-PDF OCR for JPG/JPEG, PNG, and WEBP page images using a configurable vision-capable provider.
+- Structured comic OCR output preserves model-proposed panel and balloon order, falls back to plain text when JSON is invalid, and remains review-required before narration.
 - Full-chapter MP3 generation using Edge TTS.
 - Context-aware chunked Indonesian narration.
 - Provider configuration for OpenAI, OpenRouter, Gemini, and compatible endpoints through server environment variables.
