@@ -42,7 +42,8 @@ The deliverable is a browser website. The repository currently contains a static
 
 ## Security requirements
 
-- Never expose provider API keys to browser JavaScript.
+- Never expose the operator's shared provider API key to browser JavaScript.
+- Optional visitor-owned provider keys may be entered in the browser, kept in session storage for the active session, and sent only over HTTPS in `X-Provider-API-Key` to AI endpoints. The backend reads them through request-scoped context and does not persist them. Browser session storage is not a secure vault.
 - Validate all URL fetches against SSRF and redirect-based private-network access.
 - Limit upload sizes, image dimensions, request durations, and AI input length.
 - Do not log full private story text or credentials.
