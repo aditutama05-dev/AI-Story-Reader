@@ -42,7 +42,11 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn('id="apiConnectionStatus"', HTML)
         self.assertIn('id="apiSecuritySettings" hidden', HTML)
         self.assertIn('fetch(apiUrl("/api/config")', HTML)
-        self.assertIn("Pengunjung tidak perlu memasang API key", HTML)
+        self.assertIn('id="personalApiKey"', HTML)
+        self.assertIn('X-Provider-API-Key', HTML)
+        self.assertIn("novelith-ai-provider-key", HTML)
+        self.assertIn("NOVELITH", HTML)
+        self.assertIn("<title>Novelith AI", HTML)
         self.assertIn("security.hidden=!config.access_required", HTML)
     def test_url_import_surfaces_verification_warnings(self):
         self.assertIn("data.verification.warnings", HTML)
