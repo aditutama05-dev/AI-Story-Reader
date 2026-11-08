@@ -93,7 +93,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <div><label for="readingDirection">Arah baca</label><select id="readingDirection"><option value="vertical">Manhwa / webtoon (atas ke bawah)</option><option value="rtl">Manga / komik kanan ke kiri</option><option value="ltr">Komik / manhua kiri ke kanan</option></select></div>
 <div><label for="comicModel">Model vision (opsional)</label><input id="comicModel" placeholder="Gunakan model default"></div>
 </div>
-<button id="readComic">OCR halaman komik</button>
+<button id="readComic" disabled>OCR halaman komik</button>
 <p class="hint">Pilih maksimal 30 halaman JPG/JPEG, PNG, atau WEBP. Gunakan model AI yang mendukung gambar/vision. Hasil panel, dialog, pikiran, caption, dan SFX akan dipetakan ke sumber agar bisa ditinjau sebelum narasi.</p>
 </section>
 
@@ -182,7 +182,13 @@ function renderComicQueue(){
   }
   const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Hapus";
   remove.setAttribute("aria-label","Hapus "+file.name+" dari antrean");
-  remove.addEventListener("click",()=>{selectedComicFiles.splice(index,1);renderComicQueue()});
+  remove.addEventListener("click",()=>{
+   selectedComicFiles.splice(index,1);renderComicQueue();
+   const remaining=$("comicQueue").querySelectorAll("li");
+   const target=remaining[Math.min(index,remaining.length-1)];
+   if(target){target.tabIndex=-1;target.focus()}else $("comicFiles").focus();
+   $("status").textContent=file.name+" dihapus dari antrean.";
+  });
   actions.append(remove);item.append(actions);list.append(item);
  });
  container.append(list);
@@ -196,6 +202,9 @@ function moveComicPage(index,delta){
  const [file]=selectedComicFiles.splice(index,1);
  selectedComicFiles.splice(destination,0,file);
  renderComicQueue();
+ const moved=$("comicQueue").querySelectorAll("li")[destination];
+ if(moved){moved.tabIndex=-1;moved.focus()}
+ $("status").textContent=file.name+" dipindahkan ke urutan "+(destination+1)+".";
 }
 function setComicQueue(fileList){
  const incoming=Array.from(fileList||[]);
