@@ -138,6 +138,8 @@ const API_BASE=(window.AI_STORY_READER_API_BASE||"").replace(/\/+$/,"");
 const apiUrl=path=>`${API_BASE}${path}`;
 const apiFetch=(path,options={})=>{const headers=new Headers(options.headers||{});const token=sessionStorage.getItem("ai-story-reader-access-token")||"";if(token)headers.set("Authorization","Bearer "+token);return fetch(apiUrl(path),{...options,headers})};
 const $=id=>document.getElementById(id);
+let selectedComicFiles=[];
+let comicPreviewUrls=[];
 function isComicArchive(file){return /\.(cbz|zip)$/i.test(file?.name||"")}
 function renderComicQueue(){
  const container=$("comicQueue");
@@ -248,8 +250,6 @@ let progressSaveTimer=null;
 let lastAudioProgressSave=0;
 let resettingAudio=false;
 let importedSourceSegments=[];
-let selectedComicFiles=[];
-let comicPreviewUrls=[];
 function openReadingDatabase(){
  if(!("indexedDB" in window))return Promise.reject(new Error("Penyimpanan progres tidak didukung browser ini."));
  if(readingDatabasePromise)return readingDatabasePromise;
