@@ -100,7 +100,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <section class="card" aria-labelledby="editor-heading">
 <h2 id="editor-heading">3. Siapkan chapter</h2>
 <label for="title">Judul chapter / bagian</label><input id="title" placeholder="Contoh: Chapter 1 — Awal Perjalanan">
-<label for="source">Teks sumber</label><textarea id="source" placeholder="Teks hasil impor akan muncul di sini. Lu juga bisa langsung menempel teks chapter..."></textarea>
+<label for="source">Teks sumber</label><textarea id="source" placeholder="Teks hasil impor akan muncul di sini. Lu juga bisa langsung menempel teks chapter..."></textarea><p id="sourceMetrics" class="hint" aria-live="off">0 karakter · 0 kata · batas input 1.000.000 karakter</p>
 <div class="row"><div><label for="provider">Provider AI</label><select id="provider"><option value="">Gunakan pengaturan server</option><option value="openrouter">OpenRouter</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option><option value="custom">Custom OpenAI-compatible</option></select></div>
 <div><label for="model">Model (opsional)</label><input id="model" placeholder="Kosongkan untuk model default"></div></div>
 <button id="extractFacts" type="button" class="secondary">Ekstrak fakta kontinuitas otomatis</button>
@@ -129,6 +129,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <button id="clearProgress" type="button" class="secondary" disabled>Hapus progres tersimpan</button>
 </div>
 <article class="output" id="output" tabindex="0" role="region" aria-label="Teks lengkap hasil narasi"></article>
+<p id="narrationMetrics" class="hint" aria-live="off">Belum ada narasi.</p>
 </section>
 <p><small>API key tetap berada di environment backend, tidak dikirim ke browser dan tidak disimpan di repository.</small></p>
 </main>
@@ -264,6 +265,7 @@ $("source").addEventListener("input",()=>{
   invalidateImportedSourceEvidence();
  }
 });
+$("source").addEventListener("input",updateTextMetrics);
 function openReadingDatabase(){
  if(!("indexedDB" in window))return Promise.reject(new Error("Penyimpanan progres tidak didukung browser ini."));
  if(readingDatabasePromise)return readingDatabasePromise;
@@ -308,6 +310,16 @@ async function deleteReadingState(){
   transaction.onerror=()=>reject(transaction.error||new Error("Gagal menghapus progres."));
  });
 }
+function updateTextMetrics(){
+ const source=$("source").value;
+ const narration=getNarrationText();
+ const countWords=value=>value.trim()?value.trim().split(/\\s+/u).length:0;
+ const sourceCount=source.length;
+ $("sourceMetrics").textContent=sourceCount.toLocaleString("id-ID")+" karakter · "+countWords(source).toLocaleString("id-ID")+" kata · "+(sourceCount>1_000_000?"Melebihi batas input server.":"batas input 1.000.000 karakter");
+ $("sourceMetrics").classList.toggle("warning",sourceCount>1_000_000);
+ const narrationCount=narration.length;
+ $("narrationMetrics").textContent=narrationCount?narrationCount.toLocaleString("id-ID")+" karakter · "+countWords(narration).toLocaleString("id-ID")+" kata":"Belum ada narasi.";
+}
 function renderNarration(text){
  const output=$("output");
  output.replaceChildren();
@@ -321,6 +333,7 @@ function renderNarration(text){
   for(const token of value.match(/\S+|\s+/gu)||[]){if(/^\s+$/u.test(token)){paragraph.appendChild(document.createTextNode(token))}else{const word=document.createElement("span");word.className="speech-word";word.dataset.wordStart=String(offset);word.dataset.wordEnd=String(offset+token.length);word.textContent=token;paragraph.appendChild(word)}offset+=token.length}
   output.appendChild(paragraph);
  });
+ updateTextMetrics();
 }
 function getNarrationText(){
  return Array.from($("output").querySelectorAll("[data-paragraph-index]"))
@@ -501,6 +514,7 @@ window.restoreStoryNarration=async(title,text,libraryChapterId=null)=>{renderNar
 $("saveApiToken").addEventListener("click",()=>{const token=$("apiAccessToken").value.trim();if(token)sessionStorage.setItem("ai-story-reader-access-token",token);else sessionStorage.removeItem("ai-story-reader-access-token");$("status").textContent=token?"Token akses disimpan untuk sesi browser ini.":"Token kosong; proteksi token server mungkin menolak permintaan."});
 $("clearApiToken").addEventListener("click",()=>{sessionStorage.removeItem("ai-story-reader-access-token");$("apiAccessToken").value="";$("status").textContent="Token akses sesi dihapus."});
 restorePreferences();
+updateTextMetrics();
 restoreSavedChapter();
 if("speechSynthesis" in window){
  loadVoices();
@@ -508,7 +522,7 @@ if("speechSynthesis" in window){
 }
 async function importResponse(response){
  const data=await response.json();if(!response.ok)throw new Error(data.detail||"Impor gagal");
- $("title").value=data.title||$("title").value;$("source").value=data.text||"";
+ $("title").value=data.title||$("title").value;$("source").value=data.text||"";updateTextMetrics();
  $("continuityResults").replaceChildren();
  importedSourceSegments=Array.isArray(data.segments)?data.segments:[];
  sourceEvidenceSnapshot=importedSourceSegments.length?String(data.text||""):null;
@@ -676,7 +690,7 @@ $("readComic").addEventListener("click",async()=>{
  try{
   const response=await apiFetch("/api/import/comic",{method:"POST",body:form});
   const data=await response.json();if(!response.ok)throw new Error(data.detail||"OCR gagal");
-  $("title").value=data.title;$("source").value=data.text;
+  $("title").value=data.title;$("source").value=data.text;updateTextMetrics();
   $("continuityResults").replaceChildren();
   importedSourceSegments=Array.isArray(data.segments)?data.segments:[];
   sourceEvidenceSnapshot=importedSourceSegments.length?String(data.text||""):null;
