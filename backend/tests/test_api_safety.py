@@ -124,6 +124,27 @@ class APISafetyTests(unittest.TestCase):
             normalize_page_image(image_bytes.getvalue(), "image/jpeg")
         self.assertEqual(raised.exception.status_code, 415)
 
+    def test_comic_ocr_accepts_jpg_jpeg_png_webp_and_generic_binary_headers(self):
+        formats = [
+            ("JPEG", "image/jpeg"),
+            ("PNG", "image/png"),
+            ("WEBP", "image/webp"),
+        ]
+        for image_format, declared_type in formats:
+            with self.subTest(image_format=image_format):
+                image_bytes = BytesIO()
+                Image.new("RGB", (12, 12), "white").save(image_bytes, format=image_format)
+                normalized = normalize_page_image(image_bytes.getvalue(), declared_type)
+                with Image.open(BytesIO(normalized)) as result:
+                    self.assertEqual(result.format, "JPEG")
+                generic = normalize_page_image(image_bytes.getvalue(), "application/octet-stream")
+                with Image.open(BytesIO(generic)) as result:
+                    self.assertEqual(result.format, "JPEG")
+
+        jpg_bytes = BytesIO()
+        Image.new("RGB", (12, 12), "white").save(jpg_bytes, format="JPEG")
+        self.assertTrue(normalize_page_image(jpg_bytes.getvalue(), "image/jpg"))
+
     def test_comic_endpoint_returns_structured_panel_and_balloon_evidence(self):
         image_bytes = BytesIO()
         Image.new("RGB", (8, 8), "white").save(image_bytes, format="PNG")
