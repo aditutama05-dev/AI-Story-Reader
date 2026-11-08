@@ -16,7 +16,7 @@
 
 A root `index.html` fallback is included only for legacy branch/root publishing. The Actions workflow uploads `frontend/` as the site root, so the normal Pages URL should open the frontend directly; it should not append `/frontend/` to the public URL.
 
-Verified: the `Deploy website to GitHub Pages` workflow successfully published `frontend/` for commit `d583ef67848911a9aeb21cb05902f56c4b9a62f3` on 2026-11-08 (run `42470842578`). Future pushes to `main` trigger the workflow automatically. The repository slug remains `AI-Story-Reader` to preserve the existing URL, while the visible product brand is Novelith AI.
+Verified: the `Deploy website to GitHub Pages` workflow successfully published `frontend/` for commit `45af27c5acf1a1e8f132988ce5ec37637d914ea8` on 2026-11-08 (run `42470903901`). Future pushes to `main` trigger the workflow automatically. A later run for commit `bad38b126f8a0b5b6e61d4698b5b744af519ce62` is currently running after the latest documentation and credential-hardening changes. The repository slug remains `AI-Story-Reader` to preserve the existing URL, while the visible product brand is Novelith AI.
 
 ## API connection
 
@@ -57,7 +57,7 @@ If the user does not want to create a Render account, the frontend can still be 
 ## Release checklist
 
 - [x] Pages deployment workflow is present and configured to publish the `frontend/` directory when the repository Pages source is set to GitHub Actions.
-- [x] GitHub Pages deployment succeeds from the `frontend/` directory (latest verified run: `42470842578`).
+- [x] GitHub Pages deployment succeeds from the `frontend/` directory (latest completed successful run: `42470903901`; later run `42471292833` was in progress at last check).
 - [ ] API is deployed and health check succeeds.
 - [ ] API CORS permits only the required website origins.
 - [ ] Public API base URL is configured.
