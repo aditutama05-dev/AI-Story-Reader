@@ -1,8 +1,8 @@
-# Project Context — AI Story Reader
+# Project Context — Novelith AI
 
 ## Product identity
 
-AI Story Reader is a personal **website** for turning novels, light novels, web novels, digital books, manga, manhwa, manhua, and comics into detailed Indonesian narration that can be read and listened to in a browser.
+Novelith AI is a personal **website** for turning novels, light novels, web novels, digital books, manga, manhwa, manhua, and comics into detailed Indonesian narration that can be read and listened to in a browser.
 
 The target deliverable is a website. A native Android application, desktop application, Android Accessibility Service, floating overlay, and background screen-capture service are not part of this product's target architecture.
 
@@ -17,7 +17,13 @@ The target deliverable is a website. A native Android application, desktop appli
 7. A chapter may consist of multiple source pages; join only pages that are demonstrably part of that same chapter and preserve their order.
 8. Deliver chapter-level audio as one complete file when audio export is implemented.
 9. Prioritize accessible browser interaction, including TalkBack and other screen readers.
-10. Prefer free/open-source components and services already available to the project owner. Keep secrets out of frontend code and Git.
+10. Prefer free/open-source components and free hosting tiers where practical. Keep secrets out of source files and Git; support optional per-user provider keys over HTTPS.
+
+## Brand identity
+
+- Product name: **Novelith AI** (spelled N-o-v-e-l-i-t-h, followed by AI).
+- The `AI` suffix is a secondary, smaller typographic element in the wordmark.
+- The final logo artwork will be supplied by the owner and should replace the text wordmark in the website header when added to `frontend/assets/`.
 
 ## Visual direction
 
@@ -30,7 +36,7 @@ The target deliverable is a website. A native Android application, desktop appli
 
 ## Context carried forward from earlier project discussion
 
-The earlier Android project/repository named `Livechat-Reading` was discussed as a reference point for concepts such as OCR, TTS, accessibility, screen capture, and floating reading. Those Android-specific mechanisms are **not** copied into AI Story Reader as native Android capabilities. AI Story Reader implements the relevant user-facing reading and accessibility behavior within normal browser capabilities.
+The earlier Android project/repository named `Livechat-Reading` was discussed as a reference point for concepts such as OCR, TTS, accessibility, screen capture, and floating reading. Those Android-specific mechanisms are **not** copied into Novelith AI as native Android capabilities. Novelith AI implements the relevant user-facing reading and accessibility behavior within normal browser capabilities.
 
 ## Source of truth
 
