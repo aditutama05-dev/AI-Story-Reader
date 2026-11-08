@@ -1,10 +1,10 @@
-# AI Story Reader
+# Novelith AI
 
-> **Buka aplikasi:** [AI Story Reader — Website](https://aditutama05-dev.github.io/AI-Story-Reader/)
+> **Buka aplikasi:** [Novelith AI — Website](https://aditutama05-dev.github.io/AI-Story-Reader/)
 >
 > Jika tautan belum menampilkan aplikasi, GitHub Pages belum aktif untuk repository ini. Halaman README ini adalah dokumentasi proyek, bukan antarmuka aplikasi.
 
-AI Story Reader is a personal **website** for turning novels, light novels, web novels, digital books, manga, manhwa, manhua, and comics into detailed Indonesian narration that can be read and listened to in a browser.
+Novelith AI is a personal **website** for turning novels, light novels, web novels, digital books, manga, manhwa, manhua, and comics into detailed Indonesian narration that can be read and listened to in a browser.
 
 The product is a browser website, not a native Android or desktop application.
 
@@ -50,9 +50,9 @@ The product is a browser website, not a native Android or desktop application.
 - Context-aware chunked Indonesian narration.
 - Provider configuration for OpenAI, OpenRouter, Gemini, and compatible endpoints through server environment variables.
 
-## Shared AI service for public visitors
+## Pilihan penggunaan AI: API key pribadi atau layanan bersama
 
-The intended public model uses one provider credential configured by the site owner as the backend secret `AI_API_KEY`. Visitors use the website without creating a provider account or entering an API key; their requests are processed by the shared backend and usage costs are paid by the service owner. Leave `APP_ACCESS_TOKEN` unset for an open public trial, or set it only for a private deployment. The current per-IP rate limit is a basic safeguard, not sufficient by itself for a large public launch. Add provider spending limits, monitoring, and persistent abuse protection before broad promotion. Never place provider keys in frontend files or repository history.
+Pengguna dapat memasukkan API key provider miliknya sendiri. Kunci dikirim melalui header HTTPS ke backend, hanya disimpan di `sessionStorage` browser selama sesi, dan tidak disimpan permanen oleh website. Biaya penggunaan ditagihkan langsung oleh provider kepada pemilik API key. Pengelola juga dapat menyediakan satu key bersama melalui secret backend `AI_API_KEY`; dalam mode itu pengelola menanggung seluruh biaya dan risiko penyalahgunaan. Jangan pernah menaruh key di file frontend atau Git. Backend tetap diperlukan untuk impor URL, OCR, dan pemrosesan AI; GitHub Pages hanya meng-host file website statis. Perpustakaan, progres, dan bookmark tetap tersimpan lokal di IndexedDB perangkat pengguna.
 ## Run locally
 
 From the repository root:
