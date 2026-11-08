@@ -85,6 +85,7 @@ Ketentuan:
 - Satu item mewakili satu gelembung dialog/pikiran atau satu blok teks/caption/SFX. Nomori balloon mulai dari 1 di dalam setiap panel untuk dialog/pikiran; gunakan null untuk caption, SFX, atau teks lain.
 - kind hanya boleh dialogue, thought, caption, sfx, atau other. Jangan menebak identitas pembicara.
 - order_confidence adalah perkiraan model: high, medium, atau low. Jika tata letak membuat urutan ambigu, gunakan medium/low dan jelaskan singkat di warnings.
+- Jika teks memakai susunan vertikal, baca karakter dari atas ke bawah dan kolom sesuai arah visual bahasa/sumber.
 - Pertahankan bahasa dan aksara asli. Jangan menerjemahkan, meringkas, memperbaiki, atau menulis ulang.
 - Pertahankan ejaan, nama, angka, tanda baca, dan efek suara. Teks yang sebagian tidak terbaca ditandai [tidak terbaca] pada posisi yang tepat; jangan menebak.
 - Masukkan semua teks yang terlihat. Jika halaman benar-benar tidak memiliki teks, gunakan "panels": [] dan jelaskan di warnings.
