@@ -102,7 +102,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <h2 id="editor-heading">3. Siapkan chapter</h2>
 <label for="title">Judul chapter / bagian</label><input id="title" placeholder="Contoh: Chapter 1 — Awal Perjalanan">
 <label for="source">Teks sumber</label><textarea id="source" placeholder="Teks hasil impor akan muncul di sini. Lu juga bisa langsung menempel teks chapter..."></textarea><p id="sourceMetrics" class="hint" aria-live="off">0 karakter · 0 kata · batas input 1.000.000 karakter</p>
-<div class="row"><div><label for="provider">Provider AI</label><select id="provider"><option value="">Gunakan pengaturan server</option><option value="openrouter">OpenRouter</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option><option value="custom">Custom OpenAI-compatible</option></select></div>
+<div class="row"><div><label for="provider">Provider AI</label><p class="hint">Pengunjung memakai provider dan API key bersama yang dikonfigurasi pengelola server. Tidak perlu memasukkan API key pribadi.</p><select id="provider"><option value="">Gunakan provider bersama dari server</option></select></div>
 <div><label for="model">Model (opsional)</label><input id="model" placeholder="Kosongkan untuk model default"></div></div>
 <button id="extractFacts" type="button" class="secondary">Ekstrak fakta kontinuitas otomatis</button>
 <button id="checkContinuity" type="button" class="secondary">Periksa kontradiksi kontinuitas</button>
