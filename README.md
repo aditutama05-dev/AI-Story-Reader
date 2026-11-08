@@ -99,7 +99,7 @@ The low-cost hybrid hosting split is:
 
 When the API is deployed separately, set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the public API origin and configure CORS on the API for the GitHub Pages origin. The API base URL is public configuration, not a secret.
 
-GitHub Pages is currently deployed by the Actions workflow. The backend still requires a one-time owner deployment and a public API origin in `frontend/config.js`.
+A GitHub Pages Actions workflow is present, but the repository Pages source and successful public deployment still need owner-side verification. The backend has not been deployed yet; after deployment, its public API origin must be set in `frontend/config.js`. The static website can be published independently, but server-dependent import, OCR, AI narration, and MP3 generation remain unavailable until the API is connected.
 
 ## Security and privacy
 
