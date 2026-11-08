@@ -157,9 +157,19 @@ def health():
 
 @app.get("/api/config")
 def public_config():
-    return {"configured": bool(os.getenv("AI_API_KEY")), "provider": os.getenv("AI_PROVIDER", "openrouter"),
-            "model": os.getenv("AI_MODEL", "openai/gpt-4o-mini"),
-            "supported_providers": ["openai", "openrouter", "gemini", "custom"], "max_upload_mb": 40}
+    """Expose safe capability flags only; never return provider credentials or private tokens."""
+    ai_available = bool(os.getenv("AI_API_KEY", "").strip())
+    access_required = bool(os.getenv("APP_ACCESS_TOKEN", "").strip())
+    return {
+        "configured": ai_available,
+        "ai_available": ai_available,
+        "access_required": access_required,
+        "public_mode": not access_required,
+        "provider": os.getenv("AI_PROVIDER", "openrouter"),
+        "model": os.getenv("AI_MODEL", "openai/gpt-4o-mini"),
+        "supported_providers": ["openai", "openrouter", "gemini", "custom"],
+        "max_upload_mb": 40,
+    }
 
 @app.post("/api/import/url")
 async def import_url(payload: dict):
