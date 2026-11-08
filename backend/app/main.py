@@ -324,17 +324,15 @@ def build_narration_verification(chunks: list[str], outputs: list[str]) -> dict:
 
 
 def find_source_span(source: str, excerpt: str) -> tuple[int, int] | None:
-    """Locate a whitespace-tolerant exact token sequence and return original character offsets."""
-    source_tokens = list(re.finditer(r"\S+", source))
-    excerpt_tokens = [token.casefold() for token in re.findall(r"\S+", excerpt)]
-    if not excerpt_tokens:
+    """Find a case-insensitive exact phrase while tolerating whitespace differences."""
+    words = excerpt.split()
+    if not words:
         return None
-    normalized_source = [match.group(0).casefold() for match in source_tokens]
-    width = len(excerpt_tokens)
-    for index in range(0, len(normalized_source) - width + 1):
-        if normalized_source[index:index + width] == excerpt_tokens:
-            return source_tokens[index].start(), source_tokens[index + width - 1].end()
-    return None
+    pattern = r"\\s+".join(re.escape(word) for word in words)
+    match = re.search(pattern, source, flags=re.IGNORECASE)
+    if not match:
+        return None
+    return match.start(), match.end()
 
 
 @app.post("/api/continuity/extract")
