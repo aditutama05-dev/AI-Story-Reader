@@ -6,7 +6,7 @@ This document describes the current repository state. It must be updated when a 
 
 - The frontend supports a configurable absolute API base URL for separate static hosting. The API service still needs to be deployed and connected before AI features work from GitHub Pages.
 - GitHub Pages deployment has not yet been configured or verified.
-- Automated checks cover the navy/bright-blue palette; manual mobile/desktop visual testing is still outstanding.
+- The editor now displays live source/narration character and word counts and warns when source text exceeds the narration API limit. Automated checks cover the navy/bright-blue palette; manual mobile/desktop visual testing is still outstanding.
 - The website has not yet undergone manual cross-device testing.
 - The API supports a single shared `APP_ACCESS_TOKEN` and per-process in-memory rate limits. Production deployment must set a strong token; distributed quotas, per-user accounts, and persistent abuse monitoring are not implemented.
 
