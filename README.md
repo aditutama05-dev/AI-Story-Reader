@@ -50,6 +50,9 @@ The product is a browser website, not a native Android or desktop application.
 - Context-aware chunked Indonesian narration.
 - Provider configuration for OpenAI, OpenRouter, Gemini, and compatible endpoints through server environment variables.
 
+## Shared AI service for public visitors
+
+The intended public model uses one provider credential configured by the site owner as the backend secret `AI_API_KEY`. Visitors use the website without creating a provider account or entering an API key; their requests are processed by the shared backend and usage costs are paid by the service owner. Leave `APP_ACCESS_TOKEN` unset for an open public trial, or set it only for a private deployment. The current per-IP rate limit is a basic safeguard, not sufficient by itself for a large public launch. Add provider spending limits, monitoring, and persistent abuse protection before broad promotion. Never place provider keys in frontend files or repository history.
 ## Run locally
 
 From the repository root:
