@@ -96,6 +96,15 @@ This roadmap separates the desired product from what is currently implemented. P
 - [ ] Run automated tests and manual TalkBack testing on real Android devices.
 - [ ] Document deployment, backup, and recovery procedures.
 
+## Current manga/manhwa OCR increment — 2026-11-08
+
+- Implemented an accessible browser-side image queue with per-page thumbnails, manual move-up/move-down ordering, removal, and upload-size/page-count preflight checks.
+- Individually uploaded images are submitted in the visible queue order. A CBZ/ZIP archive is handled as a single upload and its entries retain natural filename sorting; mixed archive-plus-image batches are rejected explicitly.
+- Structured OCR text blocks now receive conservative NFC and whitespace normalization before source offsets are calculated. This does not translate or rewrite words, names, punctuation, or SFX.
+- MASTER FORM V2 now explicitly requests natural Indonesian narration and faithful Indonesian rendering of non-Indonesian dialogue/OCR while preserving names, titles, special terms, numbers, and meaningful SFX.
+- Regression tests were added for normalization, selected image order, page offsets, and mixed archive rejection. They still need to be executed in a repository test environment.
+- [ ] Verify the upload queue and reordering with keyboard navigation, Android TalkBack, and real mobile browsers; inspect actual OCR order against representative RTL manga, LTR manhua, and vertical manhwa pages.
+
 ## Completion rule
 
 A checkbox is marked complete only after the feature exists in the repository and its behavior has been tested. A design note or planned implementation is not evidence that a feature is complete.
