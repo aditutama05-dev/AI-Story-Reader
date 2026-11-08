@@ -146,8 +146,8 @@ def split_into_chunks(text: str, limit: int = 16000) -> list[str]:
 
 async def generate_text(client, provider, model, api_key, base_url, system_prompt, user_prompt):
     if provider == "gemini":
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-        response = await client.post(url, json={
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        response = await client.post(url, headers={"x-goog-api-key": api_key}, json={
             "systemInstruction": {"parts": [{"text": system_prompt}]},
             "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
             "generationConfig": {"temperature": float(os.getenv("AI_TEMPERATURE", "0.4"))},
@@ -281,15 +281,15 @@ async def import_scanned_pdf(
         document.close()
     selected, selected_model, api_key, base_url = provider_config(provider, model)
     if not api_key:
-        raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
+        raise HTTPException(status_code=503, detail="AI belum tersedia. Masukkan API key pribadi di website atau konfigurasi AI_API_KEY pada environment server.")
     transcriptions = []
     try:
         async with httpx.AsyncClient(timeout=180) as client:
             for index, image_bytes in page_images:
                 prompt = build_document_page_prompt(index, len(page_images))
                 if selected == "gemini":
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{selected_model}:generateContent?key={api_key}"
-                    response = await client.post(url, json={"contents": [{"role": "user", "parts": make_gemini_vision_parts(prompt, image_bytes)}], "generationConfig": {"temperature": 0.1}})
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{selected_model}:generateContent"
+                    response = await client.post(url, headers={"x-goog-api-key": api_key}, json={"contents": [{"role": "user", "parts": make_gemini_vision_parts(prompt, image_bytes)}], "generationConfig": {"temperature": 0.1}})
                     response.raise_for_status()
                     text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
                 else:
@@ -362,7 +362,7 @@ def find_source_span(source: str, excerpt: str) -> tuple[int, int] | None:
 async def extract_continuity_facts(request: ContinuityExtractRequest):
     provider, model, api_key, base_url = provider_config(request.provider, request.model)
     if not api_key:
-        raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
+        raise HTTPException(status_code=503, detail="AI belum tersedia. Masukkan API key pribadi di website atau konfigurasi AI_API_KEY pada environment server.")
     system = (
         "Ekstrak fakta kontinuitas yang eksplisit dari teks cerita. Kembalikan HANYA JSON valid berbentuk "
         '{"facts":[{"category":"character|relationship|location|term|event|conflict","fact":"...","sourceExcerpt":"..."}]}. '
@@ -417,7 +417,7 @@ async def extract_continuity_facts(request: ContinuityExtractRequest):
 async def check_continuity_contradictions(request: ContinuityCheckRequest):
     provider, model, api_key, base_url = provider_config(request.provider, request.model)
     if not api_key:
-        raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
+        raise HTTPException(status_code=503, detail="AI belum tersedia. Masukkan API key pribadi di website atau konfigurasi AI_API_KEY pada environment server.")
     facts = request.prior_facts[:240]
     system = (
         "Periksa apakah teks chapter SAAT INI secara eksplisit bertentangan dengan fakta kontinuitas dari bagian SEBELUMNYA. "
@@ -500,7 +500,7 @@ async def check_continuity_contradictions(request: ContinuityCheckRequest):
 async def narrate(request: NarrateRequest):
     provider, model, api_key, base_url = provider_config(request.provider, request.model)
     if not api_key:
-        raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
+        raise HTTPException(status_code=503, detail="AI belum tersedia. Masukkan API key pribadi di website atau konfigurasi AI_API_KEY pada environment server.")
     chunks = split_into_chunks(request.text)
     system_prompt = ("Kamu adalah narator cerita profesional untuk AI Story Reader. Ubah teks sumber menjadi narasi bahasa Indonesia yang natural, "
         "mengalir seperti seseorang sedang menceritakan seluruh kejadian kepada pendengar. Untuk keluaran Bahasa Indonesia, gunakan bahasa yang jelas dan nyaman didengar; "
@@ -625,7 +625,7 @@ async def import_comic_pages(
 
     selected, selected_model, api_key, base_url = provider_config(provider, model)
     if not api_key:
-        raise HTTPException(status_code=503, detail="AI belum dikonfigurasi. Tambahkan AI_API_KEY pada environment server.")
+        raise HTTPException(status_code=503, detail="AI belum tersedia. Masukkan API key pribadi di website atau konfigurasi AI_API_KEY pada environment server.")
 
     pages = []
     try:
@@ -634,8 +634,8 @@ async def import_comic_pages(
                 image_bytes = normalize_page_image(raw, media_type)
                 prompt = build_ocr_prompt(index, len(page_inputs), direction)
                 if selected == "gemini":
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{selected_model}:generateContent?key={api_key}"
-                    response = await client.post(url, json={
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{selected_model}:generateContent"
+                    response = await client.post(url, headers={"x-goog-api-key": api_key}, json={
                         "contents": [{"role": "user", "parts": make_gemini_vision_parts(prompt, image_bytes)}],
                         "generationConfig": {"temperature": 0.1},
                     })
