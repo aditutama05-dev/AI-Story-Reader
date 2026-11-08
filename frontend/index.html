@@ -250,17 +250,17 @@ let progressSaveTimer=null;
 let lastAudioProgressSave=0;
 let resettingAudio=false;
 let importedSourceSegments=[];
-let importedSourceSnapshot=null;
+let sourceEvidenceSnapshot=null;
 function invalidateImportedSourceEvidence(message="Teks sumber berubah. Peta halaman/panel dan bukti kontinuitas lama dihapus; impor ulang sumber untuk membuat peta yang akurat."){
  const hadEvidence=importedSourceSegments.length>0;
  importedSourceSegments=[];
- importedSourceSnapshot=null;
+ sourceEvidenceSnapshot=null;
  $("continuityResults")?.replaceChildren();
  if(hadEvidence&&message)$("status").textContent=message;
 }
 window.invalidateImportedSourceEvidence=invalidateImportedSourceEvidence;
 $("source").addEventListener("input",()=>{
- if(importedSourceSnapshot!==null&&$("source").value!==importedSourceSnapshot){
+ if(sourceEvidenceSnapshot!==null&&$("source").value!==sourceEvidenceSnapshot){
   invalidateImportedSourceEvidence();
  }
 });
@@ -511,7 +511,7 @@ async function importResponse(response){
  $("title").value=data.title||$("title").value;$("source").value=data.text||"";
  $("continuityResults").replaceChildren();
  importedSourceSegments=Array.isArray(data.segments)?data.segments:[];
- importedSourceSnapshot=importedSourceSegments.length?String(data.text||""):null;
+ sourceEvidenceSnapshot=importedSourceSegments.length?String(data.text||""):null;
  renderImportedSourceSegments();
  const count=(data.characters||data.text?.length||0).toLocaleString("id-ID");
  if(data.verification){
@@ -609,6 +609,7 @@ function renderImportedSourceSegments(){
 function renderContinuityEvidence(items){
  const container=$("continuityResults");container.replaceChildren();
  renderImportedSourceSegments();
+ sourceEvidenceSnapshot=(importedSourceSegments.length||items?.length)?$("source").value:null;
  if(!items?.length)return;
  const heading=document.createElement("strong");heading.textContent="Bukti sumber · pilih temuan untuk menyorot kutipan asli";container.append(heading);
  items.forEach((item,index)=>{
@@ -678,7 +679,7 @@ $("readComic").addEventListener("click",async()=>{
   $("title").value=data.title;$("source").value=data.text;
   $("continuityResults").replaceChildren();
   importedSourceSegments=Array.isArray(data.segments)?data.segments:[];
-  importedSourceSnapshot=importedSourceSegments.length?String(data.text||""):null;
+  sourceEvidenceSnapshot=importedSourceSegments.length?String(data.text||""):null;
   renderImportedSourceSegments();
   const panelCount=data.verification?.panel_count||0;
   const warnings=data.verification?.warnings||[];
