@@ -38,6 +38,12 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertNotIn("#c6a7ff", HTML)
         self.assertIn("AI_STORY_READER_API_BASE", HTML)
 
+    def test_shared_ai_service_status_is_visible_without_exposing_provider_keys(self):
+        self.assertIn('id="apiConnectionStatus"', HTML)
+        self.assertIn('id="apiSecuritySettings" hidden', HTML)
+        self.assertIn('fetch(apiUrl("/api/config")', HTML)
+        self.assertIn("Pengunjung tidak perlu memasang API key", HTML)
+        self.assertIn("security.hidden=!config.access_required", HTML)
     def test_url_import_surfaces_verification_warnings(self):
         self.assertIn("data.verification.warnings", HTML)
         self.assertIn("status: perlu diperiksa", HTML)
