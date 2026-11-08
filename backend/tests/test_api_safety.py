@@ -90,13 +90,13 @@ class APISafetyTests(unittest.TestCase):
 
     def test_comic_ocr_normalizes_unicode_and_whitespace_without_rewriting_words(self):
         raw = json.dumps({"panels": [{"order_confidence": "high", "items": [
-            {"kind": "dialogue", "balloon": 1, "text": "  Ba\\u0301ik!\\u00a0  Aku\\n   datang.  "}
+            {"kind": "dialogue", "balloon": 1, "text": "  Ba\u0301ik!\u00a0  Aku\n   datang.  "}
         ]}], "warnings": []})
         parsed = parse_comic_ocr_response(raw)
         item = parsed["panels"][0]["items"][0]
         self.assertEqual(item["text"], "Báik! Aku datang.")
         self.assertEqual(parsed["text"][item["source_start"]:item["source_end"]], "Báik! Aku datang.")
-        self.assertEqual(normalize_comic_text("  Halo\\u00a0 dunia\\n  baru. "), "Halo dunia baru.")
+        self.assertEqual(normalize_comic_text("  Halo\u00a0 dunia\n  baru. "), "Halo dunia baru.")
 
     def test_comic_ocr_falls_back_to_plain_text_when_provider_returns_non_json(self):
         raw = "[Panel 1]\n[Dialog 1] Teks lama"
@@ -478,7 +478,7 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("jangan membacakan labelnya", prompts[0].lower())
         self.assertIn("[Panel n]", prompts[0])
-        self.assertIn("Bahasa Indonesia yang natural", prompts[0])
+        self.assertIn("bahasa Indonesia yang natural", prompts[0])
         self.assertIn("dialog atau teks OCR berasal dari bahasa lain", prompts[0])
 
     def test_narration_verification_flags_empty_compressed_and_duplicate_chunks(self):
