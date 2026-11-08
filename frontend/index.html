@@ -430,21 +430,50 @@ $("go").addEventListener("click",async()=>{
  }catch(e){$("status").textContent="Belum berhasil: "+e.message}finally{$("go").disabled=false}
 });
 
+function addSourceSelectionButton(container,label,start,end){
+ if(!Number.isInteger(start)||!Number.isInteger(end)||end<start)return;
+ const row=document.createElement("div");row.className="library-actions";
+ const button=document.createElement("button");button.type="button";button.className="secondary";
+ button.textContent=label+" · karakter "+start+"–"+end;
+ button.addEventListener("click",()=>{
+  const source=$("source");source.focus();source.setSelectionRange(start,end);
+  source.scrollIntoView({behavior:"auto",block:"center"});
+  $("status").textContent=label+" dipilih pada karakter "+start+" sampai "+end+".";
+ });
+ row.append(button);container.append(row);
+}
+
 function renderImportedSourceSegments(){
  const container=$("continuityResults");
  if(!importedSourceSegments.length)return;
- const heading=document.createElement("strong");heading.textContent="Peta halaman sumber · pilih halaman untuk menyorot teks hasil impor";
+ const heading=document.createElement("strong");heading.textContent="Peta halaman, panel, dan balon sumber · pilih bagian untuk menyorot teks OCR";
  container.append(heading);
  importedSourceSegments.forEach(segment=>{
-  const row=document.createElement("div");row.className="library-actions";
-  const button=document.createElement("button");button.type="button";button.className="secondary";
-  button.textContent=(segment.url?"Halaman ":"Halaman PDF ")+segment.index+(segment.url?" · "+segment.url:"")+" · karakter "+segment.source_start+"–"+segment.source_end;
-  button.addEventListener("click",()=>{
-   const source=$("source");source.focus();source.setSelectionRange(segment.source_start,segment.source_end);
-   source.scrollIntoView({behavior:"auto",block:"center"});
-   $("status").textContent="Halaman sumber "+segment.index+" dipilih pada karakter "+segment.source_start+" sampai "+segment.source_end+".";
+  const pageLabel=segment.url
+   ?"Halaman "+segment.index+" · "+segment.url
+   :segment.filename
+    ?"Halaman komik "+segment.index+" · "+segment.filename
+    :"Halaman PDF "+segment.index;
+  addSourceSelectionButton(container,pageLabel,segment.source_start,segment.source_end);
+  if(!Array.isArray(segment.panels)||!segment.panels.length)return;
+
+  const details=document.createElement("details");
+  const summary=document.createElement("summary");summary.textContent="Rincian panel ("+segment.panels.length+")";
+  details.append(summary);
+  segment.panels.forEach(panel=>{
+   const panelDetails=document.createElement("details");
+   const panelSummary=document.createElement("summary");
+   panelSummary.textContent="Panel "+panel.panel+" · urutan "+(panel.order_confidence||"belum dinilai")+" · "+(panel.items?.length||0)+" blok teks";
+   panelDetails.append(panelSummary);
+   addSourceSelectionButton(panelDetails,"Pilih seluruh Panel "+panel.panel,panel.source_start,panel.source_end);
+   (panel.items||[]).forEach(item=>{
+    const kindLabels={dialogue:"Dialog",thought:"Pikiran",caption:"Caption",sfx:"SFX",other:"Teks"};
+    const label=(kindLabels[item.kind]||"Teks")+" "+item.sequence+(item.balloon?" · Balon "+item.balloon:"");
+    addSourceSelectionButton(panelDetails,"Panel "+panel.panel+" · "+label,item.source_start,item.source_end);
+   });
+   details.append(panelDetails);
   });
-  row.append(button);container.append(row);
+  container.append(details);
  });
 }
 
@@ -520,7 +549,12 @@ $("readComic").addEventListener("click",async()=>{
   const response=await apiFetch("/api/import/comic",{method:"POST",body:form});
   const data=await response.json();if(!response.ok)throw new Error(data.detail||"OCR gagal");
   $("title").value=data.title;$("source").value=data.text;
-  $("status").textContent="OCR selesai · "+data.pages.length+" halaman · "+data.characters.toLocaleString("id-ID")+" karakter. Periksa hasilnya sebelum membuat narasi.";
+  $("continuityResults").replaceChildren();
+  importedSourceSegments=Array.isArray(data.segments)?data.segments:[];
+  renderImportedSourceSegments();
+  const panelCount=data.verification?.panel_count||0;
+  const warnings=(data.verification?.warnings||[]).join(" ");
+  $("status").textContent="OCR selesai · "+data.pages.length+" halaman · "+panelCount+" panel · "+data.characters.toLocaleString("id-ID")+" karakter. "+warnings+" Periksa hasilnya sebelum membuat narasi.";
  }catch(e){$("status").textContent="OCR gagal: "+e.message}
  finally{$("readComic").disabled=false}
 });
