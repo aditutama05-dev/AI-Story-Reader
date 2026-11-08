@@ -298,7 +298,7 @@ def build_narration_verification(chunks: list[str], outputs: list[str]) -> dict:
     """Run conservative structural checks without claiming semantic completeness."""
     metrics, seen, duplicates, compressed, empty = [], {}, [], [], []
     for index, (source, narration) in enumerate(zip(chunks, outputs), start=1):
-        normalized = re.sub(r"\\s+", " ", narration).strip().casefold()
+        normalized = re.sub(r"\s+", " ", narration).strip().casefold()
         duplicate_of = seen.get(normalized) if normalized else None
         if normalized and duplicate_of is None:
             seen[normalized] = index
