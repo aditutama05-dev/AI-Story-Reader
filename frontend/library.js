@@ -162,7 +162,7 @@ function buildContinuityContext(chapterId){
  if(!entries.length)return "";
  return ("Seri: "+selectedSeries.title+"\nFAKTA KONTINUITAS TERIKAT KE SUMBER:\n"+entries.join("\n")).slice(0,12000);
 }
-function openChapter(chapter){$("title").value=chapter.title;$("source").value=chapter.originalSource||chapter.text||"";window.currentLibraryChapterId=chapter.id;status.textContent="Teks sumber asli dimuat ke editor. Narasi tersimpan terpisah.";$("editor-heading").scrollIntoView({behavior:"smooth"});$("source").focus()}
+function openChapter(chapter){window.invalidateImportedSourceEvidence?.(null);$("title").value=chapter.title;$("source").value=chapter.originalSource||chapter.text||"";window.currentLibraryChapterId=chapter.id;status.textContent="Teks sumber asli dimuat ke editor. Narasi tersimpan terpisah.";$("editor-heading").scrollIntoView({behavior:"smooth"});$("source").focus()}
 async function openNarration(chapter){if(!chapter.narration)return;$("title").value=chapter.title;window.currentLibraryChapterId=chapter.id;await window.restoreStoryNarration?.(chapter.title,chapter.narration,chapter.id);status.textContent="Narasi tersimpan dibuka. Progres dan bookmark chapter ini dipulihkan secara terpisah.";$("result-heading").scrollIntoView({behavior:"smooth"})}
 async function saveChapter(title,narration,originalSource){
  let found=false;
