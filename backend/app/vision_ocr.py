@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import re
+import unicodedata
 from io import BytesIO
 
 from fastapi import HTTPException
@@ -52,6 +54,13 @@ def normalize_page_image(content: bytes, content_type: str) -> bytes:
         raise
     except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError) as exc:
         raise HTTPException(status_code=400, detail="Gambar tidak dapat dibaca atau rusak.") from exc
+
+
+def normalize_comic_text(value: str) -> str:
+    """Normalize OCR whitespace and Unicode without rewriting words or punctuation."""
+    normalized = unicodedata.normalize("NFC", value)
+    normalized = normalized.replace("\r\n", "\n").replace("\r", "\n").replace("\u00a0", " ")
+    return re.sub(r"[ \\t\\r\\n\\f\\v]+", " ", normalized).strip()
 
 
 def build_ocr_prompt(page_number: int, total_pages: int, direction: str) -> str:
@@ -140,7 +149,10 @@ def parse_comic_ocr_response(raw_response: str) -> dict:
             if not isinstance(item_value, dict):
                 continue
             item_text = item_value.get("text")
-            if not isinstance(item_text, str) or not item_text.strip():
+            if not isinstance(item_text, str):
+                continue
+            item_text = normalize_comic_text(item_text)
+            if not item_text:
                 continue
             kind = str(item_value.get("kind", item_value.get("type", "other"))).strip().lower()
             if kind not in _KIND_LABELS:
