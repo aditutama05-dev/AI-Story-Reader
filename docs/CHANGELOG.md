@@ -2,6 +2,14 @@
 
 Notable repository changes are recorded here. For exact commit history, use GitHub commits.
 
+## 2026-11-08
+
+- Structured comic OCR as ordered panels and text blocks (dialogue, thought, caption, SFX, other), with per-panel balloon numbering and page/panel/text-block source offsets. Invalid provider JSON falls back to editable plain text and remains review-required.
+- Added accessible source-map controls to select a whole comic page, panel, or individual text block, plus a collapsible OCR warning list.
+- Verify actual uploaded image format with Pillow rather than trusting the client Content-Type; accept JPG/JPEG, PNG, WEBP, and generic binary headers only when the decoded image signature is supported. Retained upload, page-count, pixel-count, and archive limits.
+- Updated MASTER FORM V2 to treat comic page/panel/dialogue/caption/SFX labels as structural metadata, not spoken story content.
+- Added regression tests for panel and balloon ordering, OCR fallback, source offsets, endpoint integration, image MIME mismatches, supported image formats, and narration marker handling. Automated execution has not yet been confirmed in this run.
+
 ## 2026-11-07
 
 - Added source-evidence character offsets for AI-extracted continuity facts and contradiction findings, plus accessible controls to select the exact quoted excerpt in the source editor.
