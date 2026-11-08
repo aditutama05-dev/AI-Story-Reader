@@ -80,7 +80,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Structured model-proposed panel and text-block extraction (dialogue, thought, caption, SFX) with per-panel balloon sequence, page/panel/item source offsets, and a plain-text fallback when provider JSON is invalid; all results require human review.
 - [ ] Independent panel segmentation and reading-order validation against original image geometry.
 - [ ] Character identity tracking grounded in visual evidence.
-- [ ] Dialogue, caption, thought, and SFX association with panels.
+- [x] Model-proposed association of dialogue, thought, caption, and SFX text blocks with their ordered panels and optional balloon sequence; speaker identity is not guessed.
 - [ ] Visual event narration without unsupported assumptions.
 - [ ] Full-chapter comic narration with page/panel traceability.
 
