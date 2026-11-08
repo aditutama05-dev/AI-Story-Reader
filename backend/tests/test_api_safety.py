@@ -293,7 +293,7 @@ class APISafetyTests(unittest.TestCase):
             item["source_start"] = cursor
             cursor += len(item["text"])
             item["source_end"] = cursor
-        combined = "\\n\\n".join(item["text"] for item in pages)
+        combined = "\n\n".join(item["text"] for item in pages)
         for item in pages:
             self.assertEqual(combined[item["source_start"]:item["source_end"]], item["text"])
 
