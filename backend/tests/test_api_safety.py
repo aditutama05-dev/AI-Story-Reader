@@ -20,6 +20,24 @@ class APISafetyTests(unittest.TestCase):
         _rate_buckets.clear()
         self.client = TestClient(app)
 
+    def test_public_config_exposes_shared_ai_mode_without_secrets(self):
+        with patch.dict(os.environ, {"AI_API_KEY": "server-secret", "APP_ACCESS_TOKEN": ""}):
+            response = self.client.get("/api/config")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ai_available"])
+        self.assertTrue(data["public_mode"])
+        self.assertFalse(data["access_required"])
+        self.assertNotIn("server-secret", response.text)
+        self.assertNotIn("AI_API_KEY", data)
+
+    def test_private_config_reports_that_access_token_is_required(self):
+        with patch.dict(os.environ, {"AI_API_KEY": "server-secret", "APP_ACCESS_TOKEN": "private-secret"}):
+            response = self.client.get("/api/config")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["access_required"])
+        self.assertNotIn("private-secret", response.text)
+        self.assertNotIn("server-secret", response.text)
     def test_import_endpoint_is_rate_limited_per_client(self):
         with patch.dict(os.environ, {"IMPORT_REQUESTS_PER_MINUTE": "1"}):
             first = self.client.post("/api/import/url", json={"url": ""})
