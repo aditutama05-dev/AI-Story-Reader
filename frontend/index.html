@@ -77,13 +77,13 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <section class="card" aria-labelledby="comic-heading">
 <h2 id="comic-heading">2. Baca manga / manhwa dari gambar</h2>
 <label for="comicFiles">Pilih halaman gambar atau satu arsip CBZ / ZIP (urutkan sebelum upload)</label>
-<input id="comicFiles" type="file" accept="image/jpeg,image/png,image/webp,.cbz,.zip,application/zip" multiple>
+<input id="comicFiles" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,.cbz,.zip,application/zip" multiple>
 <div class="row">
 <div><label for="readingDirection">Arah baca</label><select id="readingDirection"><option value="vertical">Manhwa / webtoon (atas ke bawah)</option><option value="rtl">Manga Jepang (kanan ke kiri)</option><option value="ltr">Komik kiri ke kanan</option></select></div>
 <div><label for="comicModel">Model vision (opsional)</label><input id="comicModel" placeholder="Gunakan model default"></div>
 </div>
 <button id="readComic">OCR halaman komik</button>
-<p class="hint">Pilih maksimal 30 halaman JPG, PNG, atau WEBP. Gunakan model AI yang mendukung gambar/vision. Hasil transkripsi akan dimasukkan ke editor chapter dan tetap bisa diedit sebelum dibuat narasi.</p>
+<p class="hint">Pilih maksimal 30 halaman JPG/JPEG, PNG, atau WEBP. Gunakan model AI yang mendukung gambar/vision. Hasil panel, dialog, pikiran, caption, dan SFX akan dipetakan ke sumber agar bisa ditinjau sebelum narasi.</p>
 </section>
 
 <section class="card" aria-labelledby="editor-heading">
@@ -553,8 +553,16 @@ $("readComic").addEventListener("click",async()=>{
   importedSourceSegments=Array.isArray(data.segments)?data.segments:[];
   renderImportedSourceSegments();
   const panelCount=data.verification?.panel_count||0;
-  const warnings=(data.verification?.warnings||[]).join(" ");
-  $("status").textContent="OCR selesai · "+data.pages.length+" halaman · "+panelCount+" panel · "+data.characters.toLocaleString("id-ID")+" karakter. "+warnings+" Periksa hasilnya sebelum membuat narasi.";
+  const warnings=data.verification?.warnings||[];
+  if(warnings.length){
+   const warningDetails=document.createElement("details");
+   const warningSummary=document.createElement("summary");warningSummary.textContent="Peringatan OCR ("+warnings.length+") · wajib ditinjau";
+   const warningList=document.createElement("ul");
+   warnings.forEach(warning=>{const item=document.createElement("li");item.textContent=warning;warningList.append(item)});
+   warningDetails.append(warningSummary,warningList);
+   $("continuityResults").append(warningDetails);
+  }
+  $("status").textContent="OCR selesai · "+data.pages.length+" halaman · "+panelCount+" panel · "+data.characters.toLocaleString("id-ID")+" karakter. Hasil tetap perlu diperiksa terhadap gambar asli sebelum membuat narasi.";
  }catch(e){$("status").textContent="OCR gagal: "+e.message}
  finally{$("readComic").disabled=false}
 });
