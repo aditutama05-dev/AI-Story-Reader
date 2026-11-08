@@ -58,12 +58,10 @@ The current backend uses a registered generic BeautifulSoup adapter that prefers
 
 ## Supported user-provided files
 
-Current FastAPI implementation supports TXT, Markdown, HTML, text-based PDF, DOCX, and EPUB extraction. It supports image OCR for multiple JPG, PNG, and WEBP pages.
+Current FastAPI implementation supports TXT, Markdown, HTML, text-based PDF, DOCX, and EPUB extraction. It supports single- or multi-page JPG, JPEG, PNG, and WEBP image OCR, plus CBZ/ZIP comic archives with natural filename ordering. Scanned PDFs can also be rendered and transcribed through a configured vision provider.
 
 Planned but not yet implemented in the current code:
 
-- ZIP/CBZ archive import;
-- OCR for scanned PDF pages;
 - reliable EPUB spine/reading-order parsing;
 - robust chapter-level extraction from all website layouts;
 - JavaScript-rendered source pages;
@@ -85,3 +83,9 @@ A future structured import result should include:
 - a clear indication when completeness cannot be established.
 
 Suggested verification states: `complete`, `review_required`, `incomplete`, and `failed`. The current generic HTML URL importer returns `review_required` with warnings because it cannot establish chapter completeness. Explicit multi-page URL imports include zero-based character ranges for each ordered page segment in the combined source text. Scanned-PDF OCR likewise includes page-level character ranges for each transcription; these map to extracted text, not pixel coordinates on the original PDF page. The state `complete` must require explicit evidence, not just a non-empty text result.
+
+## Comic and manga OCR structure
+
+The comic OCR endpoint asks the configured vision model for a JSON sequence of panels and text blocks. Each block is classified as dialogue, thought, caption, SFX, or other; dialogue/thought blocks may carry a per-panel balloon number. The backend preserves the model's panel and item order, converts the structure into readable source text for the MASTER FORM V2 narration endpoint, and returns page, panel, and text-block character offsets for source review. The browser exposes these offsets as accessible selection buttons.
+
+This is model-proposed segmentation and ordering, not independent computer-vision validation. Invalid or non-JSON provider output is retained as plain text with a warning and without panel-level offsets. All comic OCR results remain in review-required state; users must compare the transcription and ordering against the original images before narration. Provider API keys remain server-side.
