@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ai-story-reader
+    name: novelith-ai
     runtime: docker
     plan: free
     healthCheckPath: /api/health
@@ -13,7 +13,5 @@ services:
         value: https://openrouter.ai/api/v1
       - key: CORS_ORIGINS
         value: https://aditutama05-dev.github.io
-      - key: AI_API_KEY
-        sync: false
       - key: APP_ACCESS_TOKEN
         sync: false
