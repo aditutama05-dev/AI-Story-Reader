@@ -8,7 +8,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Record product requirements in `FEATURES.md`.
 - [x] Record project context, story model, source ingestion, architecture, accessibility boundaries, and known limitations.
 - [x] Add a GitHub Pages deployment workflow for the static website; successful public deployment is verified.
-- [ ] Provide a production API endpoint suitable for a static frontend.
+- [ ] Provide a production API endpoint suitable for a static frontend (Vercel FastAPI deployment scaffold added; owner import and live verification remain).
 
 ## Stage 1 — Website foundation
 
@@ -88,7 +88,7 @@ This roadmap separates the desired product from what is currently implemented. P
 ## Stage 7 — Release readiness
 
 - [x] Deploy frontend to GitHub Pages (Actions run `42470842578` completed successfully on 2026-11-08).
-- [ ] Deploy API to the selected supported backend platform.
+- [ ] Deploy API to Vercel Hobby (FastAPI entrypoint and configuration added; live deployment and health check remain).
 - [ ] Configure runtime secrets outside the repository.
 - [x] Add per-client in-memory rate limits to expensive/import API routes.
 - [ ] Add distributed rate limiting, authentication, request quotas, and production abuse protection.
@@ -111,7 +111,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - Updated missing-key errors to explain both visitor-owned API keys and optional server-side configuration.
 - Added a regression test asserting that Gemini credentials are sent in headers and never appear in the request URL.
 
-## Completion rule
+## Hosting and copyright update — 2026-11-09\n\n- Added a Vercel Python/FastAPI deployment entrypoint and root dependency manifest as an alternative to Render, whose signup requested a payment card. This is a deployment scaffold only; a repository owner must import the project and confirm that the account can use the free Hobby plan without entering payment details.\n- Tightened the backend's default CORS allowlist to the project's GitHub Pages origin rather than `*`. Additional trusted origins can be explicitly configured with `CORS_ORIGINS`.\n- Added a repository-level `LICENSE` notice reserving all rights to `aditutama05-dev`; this is a proprietary all-rights-reserved notice, not an OSI-approved open-source license. Third-party component licenses remain separate.\n\n## Completion rule
 
 A checkbox is marked complete only after the feature exists in the repository and its behavior has been tested. A design note or planned implementation is not evidence that a feature is complete.
 
