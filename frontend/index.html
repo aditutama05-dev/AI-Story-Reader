@@ -581,11 +581,32 @@ $("ocrPdf").addEventListener("click",async()=>{
  catch(error){$("status").textContent="OCR PDF gagal: "+error.message}
  finally{$("ocrPdf").disabled=false}
 });
+async function importTextFileLocally(file){
+ if(file.size>10*1024*1024)throw new Error("Mode lokal membatasi file TXT/MD/HTML hingga 10 MB.");
+ const extension=(file.name.split(".").pop()||"").toLowerCase();
+ if(!["txt","md","markdown","html","htm"].includes(extension))throw new Error("Format ini memerlukan backend. Mode lokal hanya bisa membaca TXT, MD, dan HTML.");
+ let text=await file.text();
+ if(extension==="html"||extension==="htm"){
+  const documentText=new DOMParser().parseFromString(text,"text/html");
+  documentText.querySelectorAll("script,style,noscript,nav,footer,header,form,iframe,svg").forEach(node=>node.remove());
+  text=(documentText.body?.innerText||documentText.body?.textContent||"").replace(/\\n{3,}/g,"\\n\\n").trim();
+ }
+ if(!text.trim())throw new Error("Tidak ditemukan teks yang bisa dibaca di file.");
+ $("title").value=file.name.replace(/\\.[^.]+$/,"");
+ $("source").value=text;updateTextMetrics();
+ $("continuityResults").replaceChildren();importedSourceSegments=[];sourceEvidenceSnapshot=null;renderImportedSourceSegments();
+ $("status").textContent="File dibaca langsung di browser tanpa backend · "+text.length.toLocaleString("id-ID")+" karakter. Narasi AI dan fitur server tetap memerlukan backend.";
+}
 $("importFile").addEventListener("click",async()=>{
  const file=$("file").files[0];if(!file){$("status").textContent="Pilih file terlebih dahulu.";return}
- const form=new FormData();form.append("file",file);$("importFile").disabled=true;$("status").textContent="Membaca file...";
- try{await importResponse(await apiFetch("/api/import/file",{method:"POST",body:form}))}
- catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importFile").disabled=false}
+ $("importFile").disabled=true;$("status").textContent="Membaca file...";
+ try{
+  try{await importResponse(await apiFetch("/api/import/file",{method:"POST",body:(()=>{const form=new FormData();form.append("file",file);return form})()}))}
+  catch(apiError){
+   if(["txt","md","markdown","html","htm"].includes((file.name.split(".").pop()||"").toLowerCase()))await importTextFileLocally(file);
+   else throw apiError;
+  }
+ }catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importFile").disabled=false}
 });
 $("go").addEventListener("click",async()=>{
  const text=$("source").value.trim();if(!text){$("status").textContent="Masukkan atau impor teks chapter terlebih dahulu.";return}
