@@ -1,0 +1,57 @@
+name: Live Vercel API smoke test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 */6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check deployed health, public config, and CORS
+        env:
+          API_ORIGIN: https://ai-story-reader-beige.vercel.app
+          FRONTEND_ORIGIN: https://aditutama05-dev.github.io
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          api = os.environ["API_ORIGIN"].rstrip("/")
+          frontend = os.environ["FRONTEND_ORIGIN"]
+
+          def request(path, method="GET", headers=None):
+              req = urllib.request.Request(api + path, method=method, headers=headers or {})
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  return response.status, response.headers, response.read()
+
+          status, _, body = request("/api/health")
+          health = json.loads(body)
+          assert status == 200 and health.get("status") == "ok", health
+          print("Health OK:", health)
+
+          status, _, body = request("/api/config")
+          config = json.loads(body)
+          assert status == 200, config
+          assert config.get("personal_api_key_supported") is True, config
+          assert config.get("max_upload_mb") == 4, config
+          print("Public config OK:", {k: config.get(k) for k in ("provider", "model", "max_upload_mb", "personal_api_key_supported")})
+
+          status, headers, _ = request(
+              "/api/health",
+              method="OPTIONS",
+              headers={
+                  "Origin": frontend,
+                  "Access-Control-Request-Method": "GET",
+                  "Access-Control-Request-Headers": "content-type",
+              },
+          )
+          allowed = headers.get("Access-Control-Allow-Origin")
+          assert status == 200 and allowed == frontend, {"status": status, "allow_origin": allowed}
+          print("CORS OK:", allowed)
+          PY
