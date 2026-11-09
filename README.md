@@ -99,7 +99,7 @@ The low-cost hybrid hosting split is:
 
 When the API is deployed separately, set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the public API origin. The backend defaults CORS to the GitHub Pages origin; configure `CORS_ORIGINS` in Vercel only if additional trusted origins are needed. The API base URL is public configuration, not a secret.
 
-The static frontend is published through GitHub Pages and configured to call the live Vercel API using `frontend/config.js`. The health endpoint is verified; functional smoke tests for URL/file import, OCR, AI narration, and MP3 generation remain to be completed.
+The static frontend is published through GitHub Pages and configured to call the live Vercel API.using `frontend/config.js`. The health endpoint is verified; functional smoke tests for URL/file import, OCR, AI narration, and MP3 generation remain to be completed.
 
 ## Security and privacy
 
