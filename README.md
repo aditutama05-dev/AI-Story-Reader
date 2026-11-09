@@ -95,7 +95,7 @@ The low-cost hybrid hosting split is:
 
 - Website: GitHub Pages (static files from `frontend/`).
 - API: a separately deployed backend service.
-- A Vercel Python Function deployment is prepared at the repository root using the existing FastAPI application. The free Hobby plan is intended for personal projects and has usage limits; confirm the account's signup/billing prompts before proceeding.
+- A Vercel Python Function deployment is prepared at the repository root using the existing FastAPI application. The free Hobby plan is intended for personal projects and has usage limits; confirm the account's signup/billing prompts before proceeding. Vercel Functions also enforce a 4.5 MB request/response body limit, so large PDF/EPUB/comic uploads need a future direct-to-storage flow or a different backend host.
 
 When the API is deployed separately, set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the public API origin. The backend defaults CORS to the GitHub Pages origin; configure `CORS_ORIGINS` in Vercel only if additional trusted origins are needed. The API base URL is public configuration, not a secret.
 
