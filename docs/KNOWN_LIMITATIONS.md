@@ -74,3 +74,7 @@ The user can compare the active chapter against up to 240 structured facts from 
 ### Source evidence offsets
 
 Offsets are zero-based character positions into the exact text submitted to the API, not stable identifiers across edits or re-imports. The current locator matches token sequences case-insensitively and tolerates whitespace differences; ambiguous repeated excerpts resolve to the first occurrence. Page-level mapping is available for explicit multi-page URL, scanned-PDF, and comic OCR imports, but not ordinary text imports; older/manual facts may lack offsets.
+
+## Vercel serverless payload limit
+
+Vercel Functions enforce a 4.5 MB maximum request body and response body. This is lower than the FastAPI application's configured file limits (up to 40 MB for documents and 100 MB for comic batches). On Vercel, larger uploads or responses can fail with HTTP 413 before FastAPI processes them. A future large-file implementation must upload from the browser directly to authenticated object storage and pass a short-lived file reference to the API, or use a backend host with a suitable body-size limit. The existing Vercel scaffold is not yet a full-size manga/PDF hosting solution.
