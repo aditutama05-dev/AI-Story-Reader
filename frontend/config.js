@@ -1,4 +1,4 @@
 // Public API base URL only. Never put API keys or provider secrets in this file.
-// Leave empty when the website and API are served from the same origin.
-// For GitHub Pages, set this to the deployed API origin, e.g. https://api.example.workers.dev
-window.AI_STORY_READER_API_BASE = "";
+// Vercel deployment imported by the owner: https://ai-story-reader-beige.vercel.app
+// Provider credentials remain visitor-owned and are sent only in request headers.
+window.AI_STORY_READER_API_BASE = "https://ai-story-reader-beige.vercel.app";
