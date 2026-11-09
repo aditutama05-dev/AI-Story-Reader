@@ -20,6 +20,7 @@ The product is a browser website, not a native Android or desktop application.
 - [Known limitations](docs/KNOWN_LIMITATIONS.md)
 - [Story narration standard — MASTER FORM V2](docs/STORY_NARRATION_STANDARD.md)
 - [Deployment guide](docs/DEPLOYMENT.md)
+- [Human-only acceptance checklist](docs/HUMAN_TEST_CHECKLIST.md)
 - [Changelog](docs/CHANGELOG.md)
 
 ## Current implementation
