@@ -8,7 +8,7 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Record product requirements in `FEATURES.md`.
 - [x] Record project context, story model, source ingestion, architecture, accessibility boundaries, and known limitations.
 - [x] Add a GitHub Pages deployment workflow for the static website; successful public deployment is verified.
-- [ ] Provide a production API endpoint suitable for a static frontend (Vercel FastAPI deployment scaffold added; owner import and live verification remain).
+- [x] Import the FastAPI backend into Vercel (owner reports deployment Ready); live health and endpoint smoke tests remain.
 
 ## Stage 1 — Website foundation
 
@@ -88,7 +88,7 @@ This roadmap separates the desired product from what is currently implemented. P
 ## Stage 7 — Release readiness
 
 - [x] Deploy frontend to GitHub Pages (Actions run `42470842578` completed successfully on 2026-11-08).
-- [ ] Deploy API to Vercel Hobby (FastAPI entrypoint and configuration added; live deployment and health check remain).
+- [x] Import and deploy API to Vercel (owner reports Ready; live health and functional endpoint verification remain).
 - [ ] Configure runtime secrets outside the repository.
 - [x] Add per-client in-memory rate limits to expensive/import API routes.
 - [ ] Add distributed rate limiting, authentication, request quotas, and production abuse protection.
