@@ -22,7 +22,7 @@ Verified: the `Deploy website to GitHub Pages` workflow successfully published `
 
 GitHub Pages only serves static assets. It does not run Python, FastAPI, or provider API calls.
 
-Before the deployed site can import URLs/files or generate narration:
+The deployed API is connected to the website. The owner verified `/api/health` in a browser and the scheduled smoke workflow checks live health, public configuration, and CORS. Provider-backed import, OCR, narration, and MP3 still need real-key functional testing. For a new deployment or recovery:
 
 1. Deploy the API to a supported backend host.
 2. Choose one AI access model:
@@ -48,7 +48,7 @@ Render is no longer the recommended deployment path because its setup requested 
 4. [x] A scheduled GitHub Actions smoke workflow checks `/api/health`, `/api/config`, and CORS every six hours; it can also be run manually.
 5. [ ] Complete authenticated-provider smoke tests for URL/file import, narration, OCR, and MP3. These require a real provider key and must not place it in CI logs or repository secrets unless the owner explicitly configures protected secrets.
 
-The Vercel account/project creation and authorization must be completed by the repository owner. No credentials or payment details should be shared in chat.
+The Vercel project is already imported and active. No credentials or payment details should be shared in chat.
 
 **Important upload limitation:** Vercel Functions cap both request and response bodies at 4.5 MB, regardless of the larger upload limits accepted by the FastAPI handlers. Therefore large PDFs, EPUBs, comic images/CBZ files, and large OCR/narration responses may fail with HTTP 413 on Vercel even though the application code accepts larger files. Keep Vercel as a lightweight API trial only; supporting large books and manga requires browser-direct uploads to object storage (with authenticated upload tokens) or a host that supports larger request bodies. Do not advertise 40–100 MB uploads as working on this Vercel deployment.
 
@@ -70,5 +70,6 @@ Cloudflare advertises a free Workers tier without a card, but the current backen
 - [x] Backend default CORS allowlist is restricted to the GitHub Pages origin.
 - [x] Public API base URL is configured in `frontend/config.js`.
 - [ ] Provider secrets exist only in backend secret storage.
-- [ ] Import, narration, OCR, and accessibility flows are manually checked.
+- [ ] Real-provider URL/file import, narration, OCR, and MP3 are manually checked with a user-owned API key.
+- [ ] Android TalkBack and responsive mobile/desktop interaction are manually checked.
 - [x] Scheduled live API health/config/CORS smoke workflow added.
