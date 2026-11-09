@@ -48,7 +48,7 @@ async def protect_expensive_endpoints(request, call_next):
                 return JSONResponse(status_code=401, content={"detail": "Token akses aplikasi tidak valid atau belum diisi."}, headers={"WWW-Authenticate": "Bearer"})
         client_ip = request.client.host if request.client else "unknown"
         bucket = "ai" if path in {"/api/narrate", "/api/continuity/extract", "/api/continuity/check", "/api/import/comic", "/api/import/pdf-ocr", "/api/audio"} else "import"
-        limit = int(os.getenv("AI_REQUESTS_PER_MINUTE" if bucket == "ai" else "IMPORT_REQUESTS_PER_MINUTE", "8" if bucket == "ai" else "20"))
+        limit = int(os.getenv("AUDIO_REQUESTS_PER_MINUTE" if path == "/api/audio" else "AI_REQUESTS_PER_MINUTE" if bucket == "ai" else "IMPORT_REQUESTS_PER_MINUTE", "60" if path == "/api/audio" else "8" if bucket == "ai" else "20"))
         now = time.monotonic()
         key = (client_ip, bucket)
         recent = [stamp for stamp in _rate_buckets.get(key, []) if now - stamp < _RATE_WINDOW_SECONDS]
@@ -561,8 +561,8 @@ async def generate_chapter_audio(payload: AudioRequest):
             if item.get("type") == "audio":
                 data = item.get("data", b"")
                 total_bytes += len(data)
-                if total_bytes > 80 * 1024 * 1024:
-                    raise HTTPException(status_code=413, detail="Audio chapter melebihi batas 80 MB.")
+                if total_bytes > 4 * 1024 * 1024:
+                    raise HTTPException(status_code=413, detail="Segmen MP3 terlalu besar. Kurangi panjang teks segmen.")
                 chunks.append(data)
         if not chunks:
             raise HTTPException(status_code=502, detail="Provider TTS tidak menghasilkan audio.")
