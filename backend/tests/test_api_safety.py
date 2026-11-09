@@ -378,6 +378,15 @@ class APISafetyTests(unittest.TestCase):
         self.assertEqual(response.content, b"MP3-PART-1MP3-PART-2")
 
 
+    def test_audio_endpoint_enforces_vercel_safe_segment_size(self):
+        from unittest.mock import patch
+        class LargeCommunicate:
+            async def stream(self):
+                yield {"type": "audio", "data": b"x" * (4 * 1024 * 1024 + 1)}
+        with patch("edge_tts.Communicate", return_value=LargeCommunicate()):
+            response = self.client.post("/api/audio", json={"text": "x"})
+        self.assertEqual(response.status_code, 413)
+
     def test_audio_endpoint_rejects_unsupported_voice(self):
         response = self.client.post(
             "/api/audio",
