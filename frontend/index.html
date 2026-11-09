@@ -824,18 +824,43 @@ $("chapterAudio").addEventListener("loadedmetadata",async()=>{
  }catch{}
 });
 
+function splitAudioText(text,maxChars=1800){
+ const paragraphs=String(text||"").split(String.fromCharCode(10)).map(part=>part.trim()).filter(Boolean);
+ const chunks=[];let current="";
+ for(const paragraph of paragraphs){
+  let remaining=paragraph;
+  while(remaining.length>maxChars){
+   let cut=remaining.lastIndexOf(" ",maxChars);
+   if(cut<Math.floor(maxChars*0.55))cut=maxChars;
+   const piece=remaining.slice(0,cut).trim();
+   if(piece)chunks.push(piece);
+   remaining=remaining.slice(cut).trim();
+  }
+  if(!remaining)continue;
+  if(current&&current.length+2+remaining.length>maxChars){chunks.push(current);current=remaining}
+  else current=current?current+String.fromCharCode(10,10)+remaining:remaining;
+ }
+ if(current)chunks.push(current);
+ return chunks;
+}
 let generatedAudioUrl=null;
 $("generateMp3").addEventListener("click",async()=>{
  const text=getNarrationText().trim();if(!text){$("status").textContent="Belum ada narasi untuk dibuat menjadi MP3.";return}
  const button=$("generateMp3");button.disabled=true;$("status").textContent="Membuat satu file MP3 untuk seluruh chapter...";
  try{
-  const response=await apiFetch("/api/audio",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,voice:$("audioVoice").value,rate:Math.round((Number($("speechRate").value)-1)*100)})});
-  if(!response.ok){let message="Pembuatan MP3 gagal.";try{message=(await response.json()).detail||message}catch{}throw new Error(message)}
-  const blob=await response.blob();if(generatedAudioUrl)URL.revokeObjectURL(generatedAudioUrl);
+  const segments=splitAudioText(text,1800);
+  const audioParts=[];
+  for(let index=0;index<segments.length;index++){
+   $("status").textContent="Membuat audio bagian "+(index+1)+" dari "+segments.length+"...";
+   const response=await apiFetch("/api/audio",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:segments[index],voice:$("audioVoice").value,rate:Math.round((Number($("speechRate").value)-1)*100)})});
+   if(!response.ok){let message="Pembuatan MP3 gagal.";try{message=(await response.json()).detail||message}catch{}throw new Error("Bagian "+(index+1)+": "+message)}
+   audioParts.push(await response.blob());
+  }
+  const blob=new Blob(audioParts,{type:"audio/mpeg"});if(generatedAudioUrl)URL.revokeObjectURL(generatedAudioUrl);
   generatedAudioUrl=URL.createObjectURL(blob);$("chapterAudio").src=generatedAudioUrl;
   $("downloadMp3").href=generatedAudioUrl;$("downloadMp3").hidden=false;
   $("seekBack").disabled=false;$("seekForward").disabled=false;
-  $("status").textContent="MP3 chapter lengkap berhasil dibuat. Audio siap diputar atau diunduh.";
+  $("status").textContent="MP3 lengkap berhasil disusun dari "+segments.length+" segmen. Audio siap diputar atau diunduh.";
  }catch(error){$("status").textContent="MP3 gagal dibuat: "+error.message}
  finally{button.disabled=false}
 });
