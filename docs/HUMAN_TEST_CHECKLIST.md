@@ -5,6 +5,7 @@ This checklist contains only checks that require a person using a real browser, 
 Do not send API keys, access tokens, private book files, or account credentials in chat or screenshots. Use your own test material and a provider key you control. API usage may incur provider charges.
 
 ## 1. Live website and mobile layout
+- [ ] In the library section, check the browser storage quota display. If offered, request persistent storage and confirm the status message. Remember this is browser quota, not the phone's entire free internal storage.
 - [ ] Open https://aditutama05-dev.github.io/AI-Story-Reader/ on Android Chrome or Brave. Confirm the Novelith AI interface loads, not a README/Markdown page.
 - [ ] Scroll through the full page. Confirm cards, text fields, buttons, and the library fit the phone width without horizontal scrolling or overlapping controls.
 - [ ] Open the same site on a desktop browser and check the two-column areas and long text fields.
