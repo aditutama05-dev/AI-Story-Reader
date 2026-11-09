@@ -119,6 +119,13 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn("function editNotes", library)
         self.assertIn("notesUpdatedAt", library)
 
+    def test_local_storage_quota_and_persistence_controls_exist(self):
+        self.assertIn("navigator.storage.estimate()", HTML)
+        self.assertIn("navigator.storage.persist()", HTML)
+        self.assertIn('id="localStorageStatus"', HTML)
+        self.assertIn('id="requestPersistentStorage"', HTML)
+        self.assertIn("bukan seluruh kapasitas memori HP", HTML)
+
     def test_long_chapter_mp3_is_split_into_vercel_safe_requests(self):
         self.assertIn("function splitAudioText(text,maxChars=1800)", HTML)
         self.assertIn("const segments=splitAudioText(text,1800)", HTML)
