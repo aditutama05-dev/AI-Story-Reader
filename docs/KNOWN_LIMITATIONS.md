@@ -4,11 +4,11 @@ This document describes the current repository state. It must be updated when a 
 
 ## Frontend and deployment
 
-- The frontend supports a configurable absolute API base URL for separate static hosting. The API service still needs to be deployed and connected before AI features work from GitHub Pages.
+- The frontend supports a configurable absolute API base URL for separate static hosting. Vercel FastAPI deployment files are prepared, but the API service still needs owner-side import, a successful build/health check, and connection before server-backed features work from GitHub Pages.
 - GitHub Pages deployment has not yet been configured or verified.
 - The editor now displays live source/narration character and word counts and warns when source text exceeds the narration API limit. Automated checks cover the navy/bright-blue palette; manual mobile/desktop visual testing is still outstanding.
 - The website has not yet undergone manual cross-device testing. The latest GitHub Pages deployment workflow is verified successful; this does not replace real-device UI testing.
-- The API supports an optional shared `APP_ACCESS_TOKEN` and per-process in-memory rate limits. Public BYOK mode leaves the token unset; private deployments may configure a strong token. Distributed quotas, per-user accounts, and persistent abuse monitoring are not implemented.
+- The API's default CORS allowlist is the GitHub Pages origin (additional origins require explicit `CORS_ORIGINS` configuration). The API supports an optional shared `APP_ACCESS_TOKEN` and per-process in-memory rate limits. Public BYOK mode leaves the token unset; private deployments may configure a strong token. Distributed quotas, per-user accounts, and persistent abuse monitoring are not implemented.
 
 ## URL extraction
 
