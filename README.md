@@ -95,9 +95,9 @@ The low-cost hybrid hosting split is:
 
 - Website: GitHub Pages (static files from `frontend/`).
 - API: a separately deployed backend service.
-- A Render free web service is prepared in `render.yaml` for the current FastAPI backend; it can sleep when idle.
+- A Vercel Python Function deployment is prepared at the repository root using the existing FastAPI application. The free Hobby plan is intended for personal projects and has usage limits; confirm the account's signup/billing prompts before proceeding.
 
-When the API is deployed separately, set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the public API origin and configure CORS on the API for the GitHub Pages origin. The API base URL is public configuration, not a secret.
+When the API is deployed separately, set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the public API origin. The backend defaults CORS to the GitHub Pages origin; configure `CORS_ORIGINS` in Vercel only if additional trusted origins are needed. The API base URL is public configuration, not a secret.
 
 The GitHub Pages Actions deployment for commit `d583ef67848911a9aeb21cb05902f56c4b9a62f3` succeeded on 2026-11-08 (run `42470842578`). The static frontend is published independently. The backend has not been deployed yet; after deployment, its public API origin must be set in `frontend/config.js`. Server-dependent import, OCR, AI narration, and MP3 generation remain unavailable until the API is connected.
 
