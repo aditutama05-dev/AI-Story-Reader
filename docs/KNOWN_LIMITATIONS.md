@@ -42,7 +42,7 @@ This document describes the current repository state. It must be updated when a 
 ## Audio
 
 - Browser Web Speech API highlights the active word when the browser emits word-boundary events, with paragraph-level fallback.
-- Full-chapter MP3 generation uses Edge TTS and requires outbound server connectivity to the TTS service.
+- Full-chapter MP3 generation uses Edge TTS and requires outbound server connectivity to the TTS service. On Vercel, the browser requests sequential text segments and concatenates their MP3 byte streams into one downloadable file to remain below the 4.5 MB response limit per Function call. Real-device playback across segment boundaries still requires manual verification.
 - The HTML5 audio player supports native playback controls and ±15-second seek.
 - Word-level synchronization for generated MP3 files remains unimplemented. Playback position, reading position, and bookmarks are stored independently per library chapter in the same browser. Non-library imports use a separate temporary current-reading record. Progress does not sync between devices or browsers.
 - Reading progress and bookmarks are stored locally in IndexedDB; they do not sync between devices or browsers.
@@ -78,3 +78,8 @@ Offsets are zero-based character positions into the exact text submitted to the 
 ## Vercel serverless payload limit
 
 Vercel Functions enforce a 4.5 MB maximum request body and response body. The frontend now uses a conservative 4 MB aggregate preflight limit for server uploads, and `/api/config` advertises `max_upload_mb: 4`; TXT/MD/HTML files above that threshold fall back to local browser import when supported. Large PDF/EPUB/CBZ/manga files still cannot be uploaded through this API route. A complete large-file path requires authenticated browser-direct object storage with short-lived upload tokens and an API handoff, or a backend host with a suitable body-size limit. No object-storage credentials or provider were supplied, so that feature is not represented as complete.
+
+
+## Manual acceptance checks
+
+Only visual, real-provider, actual audio playback, and physical-device accessibility checks require a human. The current owner checklist is `docs/HUMAN_TEST_CHECKLIST.md`; automated unit tests, JS syntax, compilation, Docker build, deployment, and live health/config/CORS checks are run by GitHub Actions.
