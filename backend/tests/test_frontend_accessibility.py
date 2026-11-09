@@ -119,6 +119,12 @@ class FrontendAccessibilityTests(unittest.TestCase):
         self.assertIn("function editNotes", library)
         self.assertIn("notesUpdatedAt", library)
 
+    def test_long_chapter_mp3_is_split_into_vercel_safe_requests(self):
+        self.assertIn("function splitAudioText(text,maxChars=1800)", self.html)
+        self.assertIn("const segments=splitAudioText(text,1800)", self.html)
+        self.assertIn("Membuat audio bagian", self.html)
+        self.assertIn("new Blob(audioParts,{type:\"audio/mpeg\"})", self.html)
+
     def test_full_chapter_mp3_and_multi_page_import_controls_exist(self):
         for control_id in ("generateMp3", "chapterAudio", "downloadMp3", "seekBack", "seekForward", "audioVoice", "continuationUrls"):
             self.assertIn('id="' + control_id + '"', HTML)
