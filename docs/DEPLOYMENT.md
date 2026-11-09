@@ -50,6 +50,8 @@ Render is no longer the recommended deployment path because its setup requested 
 
 The Vercel account/project creation and authorization must be completed by the repository owner. No credentials or payment details should be shared in chat.
 
+**Important upload limitation:** Vercel Functions cap both request and response bodies at 4.5 MB, regardless of the larger upload limits accepted by the FastAPI handlers. Therefore large PDFs, EPUBs, comic images/CBZ files, and large OCR/narration responses may fail with HTTP 413 on Vercel even though the application code accepts larger files. Keep Vercel as a lightweight API trial only; supporting large books and manga requires browser-direct uploads to object storage (with authenticated upload tokens) or a host that supports larger request bodies. Do not advertise 40–100 MB uploads as working on this Vercel deployment.
+
 ## Free local-first fallback
 
 If no backend host can be used without a payment card, GitHub Pages can continue serving the website and the library/progress/bookmarks remain stored in each user's browser IndexedDB. This does **not** make the existing FastAPI endpoints run locally in the public website: URL extraction, AI narration, OCR, and MP3 export still require either a deployed API or a separately implemented browser-side version. Do not claim those server-backed functions are available in local-only mode until that browser implementation exists.
