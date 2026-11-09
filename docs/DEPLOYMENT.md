@@ -38,15 +38,15 @@ Never place AI provider keys in `frontend/config.js`. The API base URL is public
 
 A shared provider key makes the owner responsible for API charges and abuse risk. The current in-memory per-IP rate limit is only a lightweight trial safeguard, not production-grade billing, account quotas, or bot protection. Before widely sharing the public site, add persistent/distributed rate limiting, provider budget alerts or hard spend caps, monitoring, and a way to disable AI quickly. Do not publish a shared `APP_ACCESS_TOKEN` as a substitute: anyone who obtains it can use the backend.
 
-## Vercel API deployment (owner reports Ready; health check pending)
+## Vercel API deployment (live health endpoint verified)
 
-Render is no longer the recommended deployment path because its setup requested a payment card. The repository includes a Vercel Python entrypoint (`index.py`), root dependency file (`requirements.txt`), and `vercel.json` for the existing FastAPI application. The owner has now imported the repository and reports that the Vercel deployment reached **Ready**. The reported deployment origin is `https://ai-story-reader-beige.vercel.app`. The owner supplied a live browser screenshot of `/api/health` returning `{"status":"ok","service":"ai-story-reader-api","version":"0.2.0"}` on 2026-11-09; this confirms the deployed FastAPI health route is responding.
+Render is no longer the recommended deployment path because its setup requested a payment card. The repository includes a Vercel Python entrypoint (`index.py`), root dependency file (`requirements.txt`), and `vercel.json` for the existing FastAPI application. The owner has now imported the repository and reports that the Vercel deployment reached **Ready**. The reported deployment origin is `https://ai-story-reader-beige.vercel.app`. The owner supplied a live browser screenshot of `/api/health` returning `{"status":"ok","service":"ai-story-reader-api","version":"0.2.0"}` on 2026-11-09. The frontend API base is configured, and a scheduled GitHub Actions smoke test now checks health, public configuration, and GitHub Pages CORS.
 
-1. Sign in to Vercel using GitHub and import `aditutama05-dev/AI-Story-Reader` as a new project.
-2. Keep the project on the **Hobby / Free** plan. Do not start a Pro trial or add a paid resource.
-3. Deploy and inspect the build logs. Test `https://<vercel-project-domain>/api/health`.
-4. Only after the health endpoint returns `{"status":"ok"}`, set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the verified API origin and commit.
-5. Test URL/file import, personal-key narration, comic OCR, and MP3 generation. A successful deployment alone does not prove all endpoints work.
+1. [x] Owner imported the repository into Vercel and confirmed deployment Ready.
+2. [x] Live `/api/health` response confirmed by owner screenshot.
+3. [x] `frontend/config.js` points to the Vercel API origin.
+4. [x] A scheduled GitHub Actions smoke workflow checks `/api/health`, `/api/config`, and CORS every six hours; it can also be run manually.
+5. [ ] Complete authenticated-provider smoke tests for URL/file import, narration, OCR, and MP3. These require a real provider key and must not place it in CI logs or repository secrets unless the owner explicitly configures protected secrets.
 
 The Vercel account/project creation and authorization must be completed by the repository owner. No credentials or payment details should be shared in chat.
 
@@ -71,3 +71,4 @@ Cloudflare advertises a free Workers tier without a card, but the current backen
 - [x] Public API base URL is configured in `frontend/config.js`.
 - [ ] Provider secrets exist only in backend secret storage.
 - [ ] Import, narration, OCR, and accessibility flows are manually checked.
+- [x] Scheduled live API health/config/CORS smoke workflow added.
