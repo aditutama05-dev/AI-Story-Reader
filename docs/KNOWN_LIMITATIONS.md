@@ -4,7 +4,7 @@ This document describes the current repository state. It must be updated when a 
 
 ## Frontend and deployment
 
-- The frontend supports a configurable absolute API base URL for separate static hosting. Vercel FastAPI deployment files are prepared, but the API service still needs owner-side import, a successful build/health check, and connection before server-backed features work from GitHub Pages.
+- The frontend API base is configured for the live Vercel FastAPI service. The owner verified `/api/health`; scheduled health/config/CORS checks are configured. Provider-backed feature flows still need functional testing.
 - GitHub Pages deployment is configured and its workflow succeeds.
 - The editor now displays live source/narration character and word counts and warns when source text exceeds the narration API limit. Automated checks cover the navy/bright-blue palette; manual mobile/desktop visual testing is still outstanding.
 - The website has not yet undergone manual cross-device testing. The latest GitHub Pages deployment workflow is verified successful; this does not replace real-device UI testing.
@@ -24,7 +24,7 @@ This document describes the current repository state. It must be updated when a 
 
 ## File and comic import
 
-- EPUB extraction follows the package spine order. Complex fixed-layout EPUBs and unusual navigation structures may still need review. ZIP-based EPUB/DOCX inputs are guarded by entry-count, per-member, and total uncompressed-size limits.
+- EPUB extraction follows the package spine order through the backend for uploads within the Vercel request-body limit. Complex fixed-layout EPUBs and unusual navigation structures may still need review. ZIP-based EPUB/DOCX inputs are guarded by entry-count, per-member, and total uncompressed-size limits.
 - URL response bodies are streamed and capped at 8 MB before parsing. Text PDFs are limited to 500 pages and 20 million extracted characters; scanned-PDF OCR remains capped at 30 pages.
 - Text-based PDF extraction reads the text layer; scanned PDF OCR is available through the separate vision-model action, limited to 30 pages per request.
 - CBZ/ZIP comic archives are supported for image pages, up to 30 pages per request.
@@ -83,3 +83,8 @@ Vercel Functions enforce a 4.5 MB maximum request body and response body. The fr
 ## Manual acceptance checks
 
 Only visual, real-provider, actual audio playback, and physical-device accessibility checks require a human. The current owner checklist is `docs/HUMAN_TEST_CHECKLIST.md`; automated unit tests, JS syntax, compilation, Docker build, deployment, and live health/config/CORS checks are run by GitHub Actions.
+
+
+## Browser storage quota visibility
+
+- The library section now displays `navigator.storage.estimate()` usage/quota when supported and offers a user-triggered `navigator.storage.persist()` request. This can reduce browser-initiated eviction but cannot guarantee indefinite retention or expose the device's entire free internal storage. Browser quotas vary by device and browser. Manual Android browser verification remains outstanding.
