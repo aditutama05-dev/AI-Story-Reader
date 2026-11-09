@@ -31,6 +31,12 @@ class APISafetyTests(unittest.TestCase):
         self.assertNotIn("server-secret", response.text)
         self.assertNotIn("AI_API_KEY", data)
 
+    def test_public_config_advertises_vercel_safe_upload_limit(self):
+        response = self.client.get("/api/config")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["max_upload_mb"], 4)
+        self.assertTrue(response.json()["personal_api_key_supported"])
+
     def test_private_config_reports_that_access_token_is_required(self):
         with patch.dict(os.environ, {"AI_API_KEY": "server-secret", "APP_ACCESS_TOKEN": "private-secret"}):
             response = self.client.get("/api/config")
