@@ -703,4 +703,8 @@ async def import_comic_pages(
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Tidak dapat terhubung ke provider OCR/vision.") from exc
 
-app.mount("/", StaticFiles(directory=PROJECT_DIR / "frontend", html=True), name="frontend")
+# GitHub Pages hosts the frontend separately. Keep local combined hosting optional;
+# Vercel excludes frontend/ from the Python Function bundle to reduce its size.
+_frontend_dir = PROJECT_DIR / "frontend"
+if _frontend_dir.is_dir():
+    app.mount("/", StaticFiles(directory=_frontend_dir, html=True), name="frontend")
