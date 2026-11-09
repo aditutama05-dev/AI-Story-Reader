@@ -22,7 +22,7 @@ if not (PROJECT_DIR / "frontend").is_dir():
     PROJECT_DIR = PROJECT_DIR.parent
 app = FastAPI(title="AI Story Reader API", version="0.2.0")
 MAX_BATCH_IMPORT_CHARS = 20_000_000
-app.add_middleware(CORSMiddleware, allow_origins=os.getenv("CORS_ORIGINS", "*").split(","), allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=[origin.strip() for origin in os.getenv("CORS_ORIGINS", "https://aditutama05-dev.github.io").split(",") if origin.strip()], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
 # Lightweight per-process abuse guard. Configure limits through environment variables.
 _rate_buckets: dict[tuple[str, str], list[float]] = {}
