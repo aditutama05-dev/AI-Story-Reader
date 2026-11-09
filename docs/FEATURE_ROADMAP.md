@@ -8,7 +8,8 @@ This roadmap separates the desired product from what is currently implemented. P
 - [x] Record product requirements in `FEATURES.md`.
 - [x] Record project context, story model, source ingestion, architecture, accessibility boundaries, and known limitations.
 - [x] Add a GitHub Pages deployment workflow for the static website; successful public deployment is verified.
-- [x] Import the FastAPI backend into Vercel (owner reports deployment Ready); live health and endpoint smoke tests remain.
+- [x] Import and deploy the FastAPI backend to Vercel; owner-confirmed `/api/health` response.
+- [x] Add scheduled live API health/config/CORS smoke checks.
 
 ## Stage 1 — Website foundation
 
@@ -89,7 +90,7 @@ This roadmap separates the desired product from what is currently implemented. P
 
 - [x] Deploy frontend to GitHub Pages (Actions run `42470842578` completed successfully on 2026-11-08).
 - [x] Import and deploy API to Vercel (owner reports Ready; live health and functional endpoint verification remain).
-- [ ] Configure runtime secrets outside the repository.
+- [ ] Configure a shared AI provider secret (optional; BYOK is supported without one).
 - [x] Add per-client in-memory rate limits to expensive/import API routes.
 - [ ] Add distributed rate limiting, authentication, request quotas, and production abuse protection.
 - [ ] Add privacy/data-retention controls for imported source content and generated audio.
@@ -119,3 +120,14 @@ A checkbox is marked complete only after the feature exists in the repository an
 ## Recent frontend usability work
 
 - [x] Live source and narration character/word counters, including a visible warning when source text exceeds the backend's 1,000,000-character narration input limit.
+
+
+## Vercel integration and release hardening — 2026-11-09
+
+- [x] Configure the GitHub Pages frontend to call the owner-confirmed live Vercel API.
+- [x] Record the live `/api/health` response supplied by the owner.
+- [x] Advertise a Vercel-safe 4 MB upload limit through `/api/config` and add a regression test.
+- [x] Add browser-side aggregate upload preflight checks for documents, scanned PDFs, and comic/CBZ submissions.
+- [x] Add scheduled GitHub Actions smoke checks for deployed health, public capability configuration, and CORS.
+- [ ] Run real provider-backed endpoint tests for URL/file import, AI narration, vision OCR, and Edge TTS. These require a valid provider key and must be performed without committing or exposing credentials.
+- [ ] Implement large-file browser-direct object storage upload. This requires selecting and configuring an object-storage provider and its credentials; it cannot be marked complete from repository-only changes.
