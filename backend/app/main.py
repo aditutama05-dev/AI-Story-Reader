@@ -180,7 +180,7 @@ def public_config():
         "provider": os.getenv("AI_PROVIDER", "openrouter"),
         "model": os.getenv("AI_MODEL", "openai/gpt-4o-mini"),
         "supported_providers": ["openai", "openrouter", "gemini", "custom"],
-        "max_upload_mb": 40,
+        "max_upload_mb": 4,
         "personal_api_key_supported": True,
     }
 
