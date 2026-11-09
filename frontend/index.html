@@ -144,6 +144,8 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 const API_BASE=(window.AI_STORY_READER_API_BASE||"").replace(/\/+$/,"");
 const apiUrl=path=>`${API_BASE}${path}`;
 const apiFetch=(path,options={})=>{const headers=new Headers(options.headers||{});const token=sessionStorage.getItem("ai-story-reader-access-token")||"";const personalKey=sessionStorage.getItem("novelith-ai-provider-key")||"";if(token)headers.set("Authorization","Bearer "+token);if(personalKey&&["/api/narrate","/api/continuity/extract","/api/continuity/check","/api/import/comic","/api/import/pdf-ocr"].includes(path))headers.set("X-Provider-API-Key",personalKey);return fetch(apiUrl(path),{...options,headers})};
+const VERCEL_SAFE_UPLOAD_BYTES=4*1024*1024; // Leave room below Vercel's 4.5 MB function body ceiling.
+const assertUploadFitsVercel=(files,label="File")=>{const total=files.reduce((sum,file)=>sum+file.size,0);if(total>VERCEL_SAFE_UPLOAD_BYTES)throw new Error(label+" melebihi batas aman unggah 4 MB untuk backend Vercel. Pecah file/arsip menjadi bagian lebih kecil; dukungan unggah langsung ke penyimpanan sedang direncanakan.")};
 const $=id=>document.getElementById(id);
 let selectedComicFiles=[];
 let comicPreviewUrls=[];
@@ -575,6 +577,7 @@ $("importUrl").addEventListener("click",async()=>{
 $("ocrPdf").addEventListener("click",async()=>{
  const file=$("file").files[0];if(!file){$("status").textContent="Pilih file PDF hasil scan terlebih dahulu.";return}
  if(!file.name.toLowerCase().endsWith(".pdf")){$("status").textContent="Tombol OCR ini hanya menerima file PDF.";return}
+ try{assertUploadFitsVercel([file],"PDF")}catch(error){$("status").textContent=error.message;return}
  const form=new FormData();form.append("file",file);if($("provider").value)form.append("provider",$("provider").value);if($("model").value.trim())form.append("model",$("model").value.trim());
  $("ocrPdf").disabled=true;$("status").textContent="Merender halaman PDF dan menjalankan OCR...";
  try{await importResponse(await apiFetch("/api/import/pdf-ocr",{method:"POST",body:form}));$("status").textContent+=" Periksa hasil OCR terhadap PDF asli sebelum membuat narasi."}
@@ -601,10 +604,13 @@ $("importFile").addEventListener("click",async()=>{
  const file=$("file").files[0];if(!file){$("status").textContent="Pilih file terlebih dahulu.";return}
  $("importFile").disabled=true;$("status").textContent="Membaca file...";
  try{
-  try{await importResponse(await apiFetch("/api/import/file",{method:"POST",body:(()=>{const form=new FormData();form.append("file",file);return form})()}))}
-  catch(apiError){
-   if(["txt","md","markdown","html","htm"].includes((file.name.split(".").pop()||"").toLowerCase()))await importTextFileLocally(file);
-   else throw apiError;
+  const localReadable=["txt","md","markdown","html","htm"].includes((file.name.split(".").pop()||"").toLowerCase());
+  if(file.size>VERCEL_SAFE_UPLOAD_BYTES){
+   if(localReadable)await importTextFileLocally(file);
+   else throw new Error("File melebihi batas aman unggah 4 MB untuk backend Vercel. Untuk sementara, gunakan file lebih kecil.");
+  }else{
+   try{await importResponse(await apiFetch("/api/import/file",{method:"POST",body:(()=>{const form=new FormData();form.append("file",file);return form})()}))}
+   catch(apiError){if(localReadable)await importTextFileLocally(file);else throw apiError;}
   }
  }catch(e){$("status").textContent="Impor gagal: "+e.message}finally{$("importFile").disabled=false}
 });
@@ -732,6 +738,7 @@ $("checkContinuity").addEventListener("click",async()=>{
 
 $("readComic").addEventListener("click",async()=>{
  if(!selectedComicFiles.length){$("status").textContent="Pilih satu atau beberapa halaman komik terlebih dahulu.";return}
+ try{assertUploadFitsVercel(selectedComicFiles,"Total gambar/arsip komik")}catch(error){$("status").textContent=error.message;return}
  const form=new FormData();
  for(const file of selectedComicFiles)form.append("files",file,file.name);
  form.append("direction",$("readingDirection").value);
