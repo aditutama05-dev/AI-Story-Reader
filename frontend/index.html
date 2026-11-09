@@ -58,6 +58,7 @@ small{color:#9db4ca}.library-tree{margin-top:16px;display:grid;gap:12px}.library
 <div class="library-actions"><button id="addSeries" type="button">Buat seri</button><button id="exportLibrary" type="button" class="secondary">Ekspor cadangan</button><label class="secondary library-import" for="importLibrary">Impor cadangan JSON</label><input id="importLibrary" type="file" accept="application/json" hidden></div>
 <div id="libraryTree" class="library-tree" aria-live="polite"></div>
 <p id="libraryStatus" class="status" role="status" aria-live="polite"></p>
+<div class="hint" id="localStoragePanel"><p id="localStorageStatus" role="status" aria-live="polite">Memeriksa kapasitas penyimpanan lokal perangkat...</p><div class="library-actions"><button id="refreshLocalStorage" type="button" class="secondary">Periksa penyimpanan</button><button id="requestPersistentStorage" type="button" class="secondary">Minta penyimpanan persisten</button></div><p class="hint">Penyimpanan lokal memakai kuota browser, bukan seluruh kapasitas memori HP. Kapasitas dan kebijakan penghapusan ditentukan browser/perangkat. Ekspor cadangan secara berkala.</p></div>
 </section>
 <section class="card" aria-labelledby="accessibility-heading">
 <h2 id="accessibility-heading">Aksesibilitas &amp; kenyamanan membaca</h2>
@@ -274,6 +275,29 @@ $("source").addEventListener("input",()=>{
  }
 });
 $("source").addEventListener("input",updateTextMetrics);
+async function refreshLocalStorageStatus(){
+ const output=$("localStorageStatus");
+ if(!navigator.storage?.estimate){output.textContent="Browser ini tidak menyediakan informasi kuota penyimpanan. Data lokal tetap mengikuti kebijakan browser.";return}
+ try{
+  const estimate=await navigator.storage.estimate();
+  const used=Number(estimate.usage)||0,quota=Number(estimate.quota)||0;
+  const mib=value=>(value/1024/1024).toLocaleString("id-ID",{maximumFractionDigits:1})+" MB";
+  const percent=quota?Math.min(100,used/quota*100):0;
+  let persistent="Status penyimpanan persisten tidak tersedia.";
+  if(navigator.storage.persisted){persistent=await navigator.storage.persisted()?"Penyimpanan persisten sudah aktif.":"Penyimpanan persisten belum aktif; browser masih dapat menghapus data situs dalam kondisi tertentu."}
+  output.textContent="Penyimpanan browser: "+mib(used)+" terpakai dari kuota "+(quota?mib(quota):"tidak dilaporkan")+" ("+percent.toLocaleString("id-ID",{maximumFractionDigits:1})+"%). "+persistent;
+ }catch(error){output.textContent="Gagal memeriksa kuota browser: "+error.message}
+}
+$("refreshLocalStorage").addEventListener("click",refreshLocalStorageStatus);
+$("requestPersistentStorage").addEventListener("click",async()=>{
+ const output=$("localStorageStatus");
+ if(!navigator.storage?.persist){output.textContent="Browser ini tidak mendukung permintaan penyimpanan persisten.";return}
+ try{
+  const granted=await navigator.storage.persist();
+  output.textContent=granted?"Browser memberikan penyimpanan persisten. Tetap ekspor cadangan secara berkala.":"Browser tidak memberikan penyimpanan persisten. Simpan cadangan JSON secara berkala.";
+  await refreshLocalStorageStatus();
+ }catch(error){output.textContent="Permintaan penyimpanan gagal: "+error.message}
+});
 function openReadingDatabase(){
  if(!("indexedDB" in window))return Promise.reject(new Error("Penyimpanan progres tidak didukung browser ini."));
  if(readingDatabasePromise)return readingDatabasePromise;
@@ -545,7 +569,7 @@ window.restoreStoryNarration=async(title,text,libraryChapterId=null)=>{renderNar
 $("saveApiToken").addEventListener("click",()=>{const token=$("apiAccessToken").value.trim();if(token)sessionStorage.setItem("ai-story-reader-access-token",token);else sessionStorage.removeItem("ai-story-reader-access-token");$("status").textContent=token?"Token akses disimpan untuk sesi browser ini.":"Token kosong; proteksi token server mungkin menolak permintaan."});
 $("clearApiToken").addEventListener("click",()=>{sessionStorage.removeItem("ai-story-reader-access-token");$("apiAccessToken").value="";$("status").textContent="Token akses sesi dihapus."});
 restorePreferences();
-checkApiConfiguration();
+checkApiConfiguration();refreshLocalStorageStatus();
 updateTextMetrics();
 restoreSavedChapter();
 if("speechSynthesis" in window){
