@@ -589,10 +589,10 @@ async function importTextFileLocally(file){
  if(extension==="html"||extension==="htm"){
   const documentText=new DOMParser().parseFromString(text,"text/html");
   documentText.querySelectorAll("script,style,noscript,nav,footer,header,form,iframe,svg").forEach(node=>node.remove());
-  text=(documentText.body?.innerText||documentText.body?.textContent||"").replace(/\\n{3,}/g,"\\n\\n").trim();
+  text=(documentText.body?.innerText||documentText.body?.textContent||"").split(String.fromCharCode(10)).reduce((out,line)=>out+(line.trim()?line.trim()+"\n":"\n"),"").replaceAll("\n\n\n","\n\n").trim();
  }
  if(!text.trim())throw new Error("Tidak ditemukan teks yang bisa dibaca di file.");
- $("title").value=file.name.replace(/\\.[^.]+$/,"");
+ $("title").value=file.name.slice(0,file.name.lastIndexOf(".")>0?file.name.lastIndexOf("."):file.name.length);
  $("source").value=text;updateTextMetrics();
  $("continuityResults").replaceChildren();importedSourceSegments=[];sourceEvidenceSnapshot=null;renderImportedSourceSegments();
  $("status").textContent="File dibaca langsung di browser tanpa backend · "+text.length.toLocaleString("id-ID")+" karakter. Narasi AI dan fitur server tetap memerlukan backend.";
