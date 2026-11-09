@@ -40,7 +40,7 @@ A shared provider key makes the owner responsible for API charges and abuse risk
 
 ## Vercel API deployment (owner reports Ready; health check pending)
 
-Render is no longer the recommended deployment path because its setup requested a payment card. The repository includes a Vercel Python entrypoint (`index.py`), root dependency file (`requirements.txt`), and `vercel.json` for the existing FastAPI application. The owner has now imported the repository and reports that the Vercel deployment reached **Ready**. The reported deployment origin is `https://ai-story-reader-beige.vercel.app`. A successful Ready state is not the same as a verified API health response; the external health endpoint still needs a live request test.
+Render is no longer the recommended deployment path because its setup requested a payment card. The repository includes a Vercel Python entrypoint (`index.py`), root dependency file (`requirements.txt`), and `vercel.json` for the existing FastAPI application. The owner has now imported the repository and reports that the Vercel deployment reached **Ready**. The reported deployment origin is `https://ai-story-reader-beige.vercel.app`. The owner supplied a live browser screenshot of `/api/health` returning `{"status":"ok","service":"ai-story-reader-api","version":"0.2.0"}` on 2026-11-09; this confirms the deployed FastAPI health route is responding.
 
 1. Sign in to Vercel using GitHub and import `aditutama05-dev/AI-Story-Reader` as a new project.
 2. Keep the project on the **Hobby / Free** plan. Do not start a Pro trial or add a paid resource.
@@ -66,7 +66,7 @@ Cloudflare advertises a free Workers tier without a card, but the current backen
 - [x] Pages deployment workflow is present and configured to publish the `frontend/` directory when the repository Pages source is set to GitHub Actions.
 - [x] GitHub Pages deployment succeeds from the `frontend/` directory (latest completed successful run: `42470903901`; later run `42471292833` was in progress at last check).
 - [x] Vercel project imported and deployment reported Ready by the owner.
-- [ ] Live API health check returns `{"status":"ok"}` (not yet externally verified).
+- [x] Live API health check returns `{"status":"ok","service":"ai-story-reader-api","version":"0.2.0"}` (verified from owner's browser screenshot, 2026-11-09).
 - [x] Backend default CORS allowlist is restricted to the GitHub Pages origin.
 - [x] Public API base URL is configured in `frontend/config.js`.
 - [ ] Provider secrets exist only in backend secret storage.
