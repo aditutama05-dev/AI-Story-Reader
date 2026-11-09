@@ -2,7 +2,7 @@
 
 > **Buka aplikasi:** [Novelith AI — Website](https://aditutama05-dev.github.io/AI-Story-Reader/)
 >
-> Website statis sudah berhasil diterbitkan melalui GitHub Actions. Fitur yang membutuhkan API (impor URL/file, OCR, narasi AI, dan MP3) tetap menunggu deployment backend. Halaman README ini adalah dokumentasi proyek, bukan antarmuka aplikasi.
+> Website statis diterbitkan melalui GitHub Pages dan API FastAPI sudah dideploy ke Vercel. Endpoint `/api/health` telah dikonfirmasi aktif oleh pemilik deployment pada 2026-11-09. Fitur impor, OCR, narasi AI, dan MP3 kini diarahkan ke API tersebut; uji fungsional tiap fitur masih berlangsung. Halaman README ini adalah dokumentasi proyek, bukan antarmuka aplikasi.
 
 Novelith AI is a personal **website** for turning novels, light novels, web novels, digital books, manga, manhwa, manhua, and comics into detailed Indonesian narration that can be read and listened to in a browser.
 
@@ -99,7 +99,7 @@ The low-cost hybrid hosting split is:
 
 When the API is deployed separately, set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the public API origin. The backend defaults CORS to the GitHub Pages origin; configure `CORS_ORIGINS` in Vercel only if additional trusted origins are needed. The API base URL is public configuration, not a secret.
 
-The static frontend is published through GitHub Pages. Vercel Python/FastAPI deployment files (`index.py`, root `requirements.txt`, and `vercel.json`) are prepared, but the backend is not live until the repository owner imports the project into a free Hobby account and the `/api/health` endpoint is verified. Server-dependent import, OCR, AI narration, and MP3 generation remain unavailable from the public website until the API is connected.
+The static frontend is published through GitHub Pages and configured to call the live Vercel API using `frontend/config.js`. The health endpoint is verified; functional smoke tests for URL/file import, OCR, AI narration, and MP3 generation remain to be completed.
 
 ## Security and privacy
 
