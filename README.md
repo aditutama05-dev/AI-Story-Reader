@@ -99,12 +99,12 @@ The low-cost hybrid hosting split is:
 
 When the API is deployed separately, set `window.AI_STORY_READER_API_BASE` in `frontend/config.js` to the public API origin. The backend defaults CORS to the GitHub Pages origin; configure `CORS_ORIGINS` in Vercel only if additional trusted origins are needed. The API base URL is public configuration, not a secret.
 
-The GitHub Pages Actions deployment for commit `d583ef67848911a9aeb21cb05902f56c4b9a62f3` succeeded on 2026-11-08 (run `42470842578`). The static frontend is published independently. The backend has not been deployed yet; after deployment, its public API origin must be set in `frontend/config.js`. Server-dependent import, OCR, AI narration, and MP3 generation remain unavailable until the API is connected.
+The static frontend is published through GitHub Pages. Vercel Python/FastAPI deployment files (`index.py`, root `requirements.txt`, and `vercel.json`) are prepared, but the backend is not live until the repository owner imports the project into a free Hobby account and the `/api/health` endpoint is verified. Server-dependent import, OCR, AI narration, and MP3 generation remain unavailable from the public website until the API is connected.
 
 ## Security and privacy
 
 - Never commit API keys, passwords, tokens, private source files, or generated private audio.
-- Keep provider credentials in server-side environment variables or platform secrets.
+- For visitor-owned provider keys, use the website's session-scoped BYOK flow; for any shared provider key, keep it only in server-side environment variables or platform secrets.
 - URL fetching must reject private/local network destinations and must not bypass login, paywalls, CAPTCHA, or other access controls.
 - Imported story content should not be logged unnecessarily.
 
