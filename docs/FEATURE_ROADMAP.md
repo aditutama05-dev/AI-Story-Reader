@@ -139,3 +139,12 @@ A checkbox is marked complete only after the feature exists in the repository an
 - [x] Join returned MP3 segments in browser memory into one playable/downloadable audio file.
 - [x] Add regression tests for server segment response-size guard and frontend segmented-audio workflow.
 - [ ] Verify long joined MP3 playback, segment boundaries, and complete download on real mobile browsers.
+
+
+## Local browser storage visibility — 2026-11-09
+
+- [x] Display browser storage usage and estimated quota in the library section when supported.
+- [x] Add a user-triggered request for persistent browser storage.
+- [x] Explain that browser quota is not equivalent to all free phone storage and that backups remain necessary.
+- [x] Add automated frontend regression coverage.
+- [ ] Verify quota/persistence behavior in real Android browsers; grants are controlled by browser policy.
