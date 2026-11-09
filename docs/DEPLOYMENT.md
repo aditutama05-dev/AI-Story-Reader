@@ -38,9 +38,9 @@ Never place AI provider keys in `frontend/config.js`. The API base URL is public
 
 A shared provider key makes the owner responsible for API charges and abuse risk. The current in-memory per-IP rate limit is only a lightweight trial safeguard, not production-grade billing, account quotas, or bot protection. Before widely sharing the public site, add persistent/distributed rate limiting, provider budget alerts or hard spend caps, monitoring, and a way to disable AI quickly. Do not publish a shared `APP_ACCESS_TOKEN` as a substitute: anyone who obtains it can use the backend.
 
-## Vercel API alternative (prepared; owner action required)
+## Vercel API deployment (owner reports Ready; health check pending)
 
-Render is no longer the recommended deployment path because its setup requested a payment card. The repository now includes a Vercel Python entrypoint (`index.py`), root dependency file (`requirements.txt`), and `vercel.json` for the existing FastAPI application. Vercel officially supports FastAPI on its Python runtime, and its Hobby plan is listed as free for personal projects. However, Vercel's public documentation does not explicitly guarantee that every account signup or verification flow will avoid requesting payment details. **Do not enter a card or start a paid trial**; if Vercel asks for payment details, stop and tell me what screen/error it shows.
+Render is no longer the recommended deployment path because its setup requested a payment card. The repository includes a Vercel Python entrypoint (`index.py`), root dependency file (`requirements.txt`), and `vercel.json` for the existing FastAPI application. The owner has now imported the repository and reports that the Vercel deployment reached **Ready**. The reported deployment origin is `https://ai-story-reader-beige.vercel.app`. A successful Ready state is not the same as a verified API health response; the external health endpoint still needs a live request test.
 
 1. Sign in to Vercel using GitHub and import `aditutama05-dev/AI-Story-Reader` as a new project.
 2. Keep the project on the **Hobby / Free** plan. Do not start a Pro trial or add a paid resource.
@@ -65,8 +65,9 @@ Cloudflare advertises a free Workers tier without a card, but the current backen
 
 - [x] Pages deployment workflow is present and configured to publish the `frontend/` directory when the repository Pages source is set to GitHub Actions.
 - [x] GitHub Pages deployment succeeds from the `frontend/` directory (latest completed successful run: `42470903901`; later run `42471292833` was in progress at last check).
-- [ ] API is deployed and health check succeeds.
-- [ ] API CORS permits only the required website origins.
-- [ ] Public API base URL is configured.
+- [x] Vercel project imported and deployment reported Ready by the owner.
+- [ ] Live API health check returns `{"status":"ok"}` (not yet externally verified).
+- [x] Backend default CORS allowlist is restricted to the GitHub Pages origin.
+- [x] Public API base URL is configured in `frontend/config.js`.
 - [ ] Provider secrets exist only in backend secret storage.
 - [ ] Import, narration, OCR, and accessibility flows are manually checked.
