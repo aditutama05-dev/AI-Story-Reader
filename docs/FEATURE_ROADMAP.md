@@ -131,3 +131,11 @@ A checkbox is marked complete only after the feature exists in the repository an
 - [x] Add scheduled GitHub Actions smoke checks for deployed health, public capability configuration, and CORS.
 - [ ] Run real provider-backed endpoint tests for URL/file import, AI narration, vision OCR, and Edge TTS. These require a valid provider key and must be performed without committing or exposing credentials.
 - [ ] Implement large-file browser-direct object storage upload. This requires selecting and configuring an object-storage provider and its credentials; it cannot be marked complete from repository-only changes.
+
+
+## Audio response-limit compatibility — 2026-11-09
+
+- [x] Generate long MP3 chapters as sequential text segments small enough for Vercel Function response limits.
+- [x] Join returned MP3 segments in browser memory into one playable/downloadable audio file.
+- [x] Add regression tests for server segment response-size guard and frontend segmented-audio workflow.
+- [ ] Verify long joined MP3 playback, segment boundaries, and complete download on real mobile browsers.
